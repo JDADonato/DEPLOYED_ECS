@@ -39,3 +39,15 @@
 10. **Frontend Build Compilation & GitHub Push**
     - Successfully ran `npm run build` using Vite to compile and bundle all React and CSS changes for production deployment.
     - Initialized the git repository and successfully pushed the entire working application to `https://github.com/mavvricks/ECSup.git`.
+
+11. **Menu Item Addition Modal**
+    - Built a new, dedicated modal in the "Edit Menu" area to streamline the addition of new menu items with better UX and validations.
+
+12. **Menu Freeze Policy Update**
+    - Adjusted the strict menu freeze logic (which locks the menu selections before an event) from a 30-day cutoff to a more flexible 14-day cutoff.
+
+13. **Post-Booking Notifications and Email Fixes**
+    - Corrected the routing and content generation for automatic emails and internal system notifications dispatched immediately after a booking is confirmed, ensuring all details reflect properly.
+
+14. **Marketing Dashboard Frontend Refinements**
+    - Addressed and resolved various UI/UX frontend issues and visual alignments on the Marketing-side dashboard.
