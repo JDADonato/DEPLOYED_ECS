@@ -4,8 +4,11 @@ import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 import AppErrorBoundary from './Components/common/AppErrorBoundary';
 import DefaultLayout from './Layouts/DefaultLayout';
+import installAuthHistoryGuard from './utils/authHistoryGuard';
 
 const pages = import.meta.glob('./Pages/**/*.jsx');
+
+installAuthHistoryGuard();
 
 createInertiaApp({
     title: (title) => title ? `${title} - Eloquente Catering` : 'Eloquente Catering System',

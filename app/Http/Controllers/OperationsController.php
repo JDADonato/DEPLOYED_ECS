@@ -75,7 +75,10 @@ class OperationsController extends Controller
 
         $booking->load([
             'payments:id,booking_id,status,voided_at',
-            'preparationTasks' => fn ($query) => $query->orderBy('department')->orderBy('id'),
+            'preparationTasks' => fn ($query) => $query
+                ->select(['id', 'booking_id', 'department', 'label', 'status', 'due_at', 'assigned_to', 'completed_at', 'completed_by'])
+                ->orderBy('department')
+                ->orderBy('id'),
             'assignee:id,full_name,username',
             'user:id,full_name,username,email,phone,account_status',
         ]);
@@ -93,9 +96,33 @@ class OperationsController extends Controller
             : Carbon::today()->addDays((int) $request->query('days', 30));
 
         $query = Booking::query()
+            ->select([
+                'id',
+                'user_id',
+                'assigned_to',
+                'food_tasting_id',
+                'event_date',
+                'event_time',
+                'event_name',
+                'event_type',
+                'client_full_name',
+                'client_email',
+                'client_phone',
+                'pax',
+                'venue_city',
+                'venue_address_line',
+                'selected_menu',
+                'special_instructions',
+                'status',
+                'review_status',
+                'total_cost',
+            ])
             ->with([
                 'payments:id,booking_id,status,voided_at',
-                'preparationTasks' => fn ($query) => $query->orderBy('department')->orderBy('id'),
+                'preparationTasks' => fn ($query) => $query
+                    ->select(['id', 'booking_id', 'department', 'label', 'status', 'due_at', 'assigned_to', 'completed_at', 'completed_by'])
+                    ->orderBy('department')
+                    ->orderBy('id'),
                 'assignee:id,full_name,username',
                 'user:id,full_name,username,email,phone,account_status',
             ])
@@ -145,7 +172,14 @@ class OperationsController extends Controller
     private function preparationRow(Booking $booking): array
     {
         EventPreparationService::ensureDefaultTasks($booking);
-        $booking->load(['payments', 'preparationTasks', 'user']);
+        $booking->load([
+            'payments:id,booking_id,status,voided_at',
+            'preparationTasks' => fn ($query) => $query
+                ->select(['id', 'booking_id', 'department', 'label', 'status', 'due_at', 'assigned_to', 'completed_at', 'completed_by'])
+                ->orderBy('department')
+                ->orderBy('id'),
+            'user:id,full_name,username,email,phone,account_status',
+        ]);
 
         $tasks = $booking->preparationTasks;
         $completedTasks = $tasks->where('status', 'Done')->count();
@@ -220,7 +254,15 @@ class OperationsController extends Controller
     private function preparationListRow(Booking $booking): array
     {
         EventPreparationService::ensureDefaultTasks($booking);
-        $booking->load(['payments', 'preparationTasks', 'user', 'assignee']);
+        $booking->load([
+            'payments:id,booking_id,status,voided_at',
+            'preparationTasks' => fn ($query) => $query
+                ->select(['id', 'booking_id', 'department', 'label', 'status', 'due_at', 'assigned_to', 'completed_at', 'completed_by'])
+                ->orderBy('department')
+                ->orderBy('id'),
+            'user:id,full_name,username,email,phone,account_status',
+            'assignee:id,full_name,username',
+        ]);
 
         $tasks = $booking->preparationTasks;
         $completedTasks = $tasks->where('status', 'Done')->count();

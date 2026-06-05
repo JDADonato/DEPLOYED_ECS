@@ -14,6 +14,7 @@ const StaffWorkspaceTopNav = ({
     activeWorkspace,
     onWorkspaceChange,
     searchSlot = null,
+    actionSlot = null,
     notificationVariant = 'light',
     menuOpen = false,
     onMenuToggle,
@@ -73,6 +74,11 @@ const StaffWorkspaceTopNav = ({
                     </div>
                 )}
                 <div className="staff-workspace-navbar-utility-actions">
+                    {actionSlot && (
+                        <div className="staff-workspace-navbar-action-slot">
+                            {actionSlot}
+                        </div>
+                    )}
                     <NotificationBell variant={notificationVariant} placement="inline" />
                     {user && <UserDropdown user={user} />}
                 </div>

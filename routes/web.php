@@ -69,6 +69,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 });
 
+Route::get('/api/session/status', [AuthController::class, 'sessionStatus'])->name('session.status');
+
 Route::middleware('auth')->group(function () {
     Route::get('/api/session/csrf-token', function (Request $request) {
         if (app()->isLocal() || config('app.debug')) {

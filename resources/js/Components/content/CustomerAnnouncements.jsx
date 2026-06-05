@@ -36,7 +36,7 @@ const CustomerAnnouncements = () => {
         await fetch(`/api/customer/announcements/${item.id}/read`, {
             method: 'POST',
             headers: { Accept: 'application/json' },
-        }).catch(() => {});
+        }).catch(() => { });
     };
 
     if (visible.length === 0) return null;

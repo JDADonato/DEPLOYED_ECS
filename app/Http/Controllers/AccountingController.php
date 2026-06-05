@@ -173,14 +173,10 @@ class AccountingController extends Controller
             ]);
         });
 
-        $payload = $bookings->toArray();
-        $payload['meta'] = [
-            ...($payload['meta'] ?? []),
+        return ApiResponse::paginated($bookings, $bookings->getCollection()->values(), [
             ...$versionMeta,
             'changed' => true,
-        ];
-
-        return response()->json($payload);
+        ]);
     }
 
     public function summary()
@@ -235,7 +231,25 @@ class AccountingController extends Controller
      */
     public function getPendingPayments(Request $request)
     {
-        $query = Payment::with(['booking:id,event_date,client_full_name,client_email,client_phone,user_id', 'booking.user:id,full_name,username,email,phone,account_status'])
+        $query = Payment::query()
+            ->select([
+                'id',
+                'booking_id',
+                'amount',
+                'payment_method',
+                'status',
+                'payment_type',
+                'due_date',
+                'verified_by',
+                'verified_at',
+                'paymongo_checkout_session_id',
+                'paymongo_payment_id',
+                'paymongo_reference_number',
+                'voided_at',
+                'void_reason',
+                'superseded_by_payment_id',
+            ])
+            ->with(['booking:id,event_date,client_full_name,client_email,client_phone,package_id,user_id', 'booking.user:id,full_name,username,email,phone,account_status'])
             ->active()
             ->where('status', 'Pending')
             ->whereHas('booking', function ($q) {
@@ -568,7 +582,25 @@ class AccountingController extends Controller
     public function getReconciliation(Request $request)
     {
         $payments = Payment::query()
-            ->with(['booking:id,user_id,event_date,client_full_name,client_email,client_phone,status,total_cost', 'booking.user:id,full_name,username,email,phone,account_status', 'events'])
+            ->select([
+                'id',
+                'booking_id',
+                'amount',
+                'payment_method',
+                'status',
+                'payment_type',
+                'due_date',
+                'paymongo_checkout_session_id',
+                'paymongo_payment_id',
+                'paymongo_reference_number',
+                'voided_at',
+                'created_at',
+            ])
+            ->with([
+                'booking:id,user_id,event_date,client_full_name,client_email,client_phone,status,total_cost',
+                'booking.user:id,full_name,username,email,phone,account_status',
+                'events:id,payment_id,event_type',
+            ])
             ->active()
             ->whereHas('booking', fn ($query) => $query->whereNotIn('status', ['Pending']))
             ->latest()
@@ -785,9 +817,22 @@ class AccountingController extends Controller
     public function getRefundQueue()
     {
         $items = Booking::query()
+            ->select([
+                'id',
+                'user_id',
+                'event_date',
+                'client_full_name',
+                'client_email',
+                'client_phone',
+                'total_cost',
+                'status',
+            ])
             ->with([
                 'user:id,full_name,username,email,phone,account_status',
-                'payments' => fn ($query) => $query->active()->whereIn('status', ['Verified', 'Paid']),
+                'payments' => fn ($query) => $query
+                    ->select(['id', 'booking_id', 'amount', 'status', 'payment_type', 'voided_at'])
+                    ->active()
+                    ->whereIn('status', ['Verified', 'Paid']),
                 'refundCases:id,booking_id,payment_id,amount,non_refundable_amount,status,last_action,provider_refund_id,provider_refund_status,provider_synced_at,notes,updated_at',
             ])
             ->where('status', 'Cancelled')

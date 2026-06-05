@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { useToast } from '../../context/ToastContext';
 import csrfFetch from '../../utils/csrf';
+import logoutWithCleanup from '../../utils/logout';
 
 const OTPModal = () => {
     const { auth } = usePage().props;
@@ -225,7 +226,7 @@ const OTPModal = () => {
                         <div className="border-t border-gray-100 pt-4 mt-2">
                             <button 
                                 type="button" 
-                                onClick={() => router.post('/logout')} 
+                                onClick={() => logoutWithCleanup()} 
                                 className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors px-4 py-2 rounded-lg hover:bg-gray-100"
                             >
                                 Cancel & Exit

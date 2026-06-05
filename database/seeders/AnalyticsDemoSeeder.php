@@ -34,7 +34,7 @@ class AnalyticsDemoSeeder extends Seeder
             return;
         }
 
-        mt_srand(20260520);
+        mt_srand(20260605);
 
         if ($this->generatedAnalyticsBookingsExist()) {
             $this->command?->info('Analytics demo data already exists; keeping existing demo accounts and bookings.');
@@ -53,12 +53,16 @@ class AnalyticsDemoSeeder extends Seeder
         Cache::forget('admin.analytics.v4');
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
 
-        $this->command?->info('Seeded analytics demo data: 125 clients, 216 bookings from 2024-2026, payments, and booking menu items.');
+        $this->command?->info('Seeded extended analytics demo data: 125 clients, 300 bookings from 2023–2026, payments, and booking menu items.');
     }
 
     private function generatedAnalyticsBookingsExist(): bool
     {
-        return Booking::where('client_email', 'like', '%@'.self::DEMO_DOMAIN)->exists();
+        // Only treat data as "already seeded" when the extended 2023 history exists.
+        // If only 2024+ data exists (from the old seeder), we re-seed to extend history.
+        return Booking::where('client_email', 'like', '%@'.self::DEMO_DOMAIN)
+            ->whereDate('event_date', '<', '2024-01-01')
+            ->exists();
     }
 
     private function cleanGeneratedAnalyticsData(): void
@@ -248,9 +252,10 @@ class AnalyticsDemoSeeder extends Seeder
             'other',
         ];
         $months = collect();
-        $cursor = Carbon::create(2024, 1, 1)->startOfMonth();
+        $cursor = Carbon::create(2023, 1, 1)->startOfMonth();
         $last = Carbon::create(2026, 12, 1)->startOfMonth();
         while ($cursor->lte($last)) {
+            // Heavier weighting on peak catering months (May/Jun = graduation/debut, Nov/Dec = weddings/parties)
             $weight = in_array($cursor->month, [5, 6, 11, 12], true) ? 9 : (in_array($cursor->month, [2, 3, 10], true) ? 6 : 4);
             for ($j = 0; $j < $weight; $j++) {
                 $months->push($cursor->copy());
@@ -258,7 +263,7 @@ class AnalyticsDemoSeeder extends Seeder
             $cursor->addMonth();
         }
 
-        for ($i = 0; $i < 216; $i++) {
+        for ($i = 0; $i < 300; $i++) {
             $client = $clients[$i % count($clients)];
             $eventSlug = $eventPattern[$i % count($eventPattern)];
             $eventType = $eventTypes[$eventSlug] ?? $eventTypes->first();

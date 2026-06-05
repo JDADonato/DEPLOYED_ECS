@@ -67,11 +67,9 @@ const StaffWorkspaceLayout = ({
             return {};
         }
     });
-    const [hoverExpanded, setHoverExpanded] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const isCollapsed = sidebarState === 'collapsed';
-    const isPreviewOpen = isCollapsed && hoverExpanded;
-    const shouldHideNavFocus = isCollapsed && !isPreviewOpen;
+    const shouldHideNavFocus = isCollapsed;
     const hasTopNav = Boolean(topNav);
     const shouldShowSidebarBrand = !hasTopNav && !hideSidebarBrand;
     const syncVisibility = workspacePreferences.sync_feedback === 'detailed' ? 'always' : 'exceptions';
@@ -198,7 +196,7 @@ const StaffWorkspaceLayout = ({
     );
 
     return (
-        <div className={`staff-workspace ${workspaceClassName} ${hasTopNav ? 'has-workspace-topnav' : ''} ${isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${densityClass} ${isCollapsed ? 'is-sidebar-collapsed' : 'is-sidebar-expanded'} ${isPreviewOpen ? 'is-sidebar-hover-expanded' : ''}`.trim()}>
+        <div className={`staff-workspace ${workspaceClassName} ${hasTopNav ? 'has-workspace-topnav' : ''} ${isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${densityClass} ${isCollapsed ? 'is-sidebar-collapsed' : 'is-sidebar-expanded'}`.trim()}>
             {hasTopNav && (
                 <div className="staff-workspace-topnav">
                     <StaffWorkspaceTopNav
@@ -219,9 +217,7 @@ const StaffWorkspaceLayout = ({
             <aside
                 ref={sidebarRef}
                 className="staff-sidebar"
-                onMouseEnter={() => isCollapsed && setHoverExpanded(true)}
-                onMouseLeave={() => setHoverExpanded(false)}
-                aria-expanded={!isCollapsed || isPreviewOpen}
+                aria-expanded={!isCollapsed}
             >
                 {shouldShowSidebarBrand && (
                     <div className="staff-sidebar-brand">

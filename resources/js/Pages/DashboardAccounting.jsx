@@ -26,6 +26,7 @@ import StaffSkeleton, { StaffWorkspaceSkeleton } from '../Components/staff/Staff
 import { StaffDecisionBrief, StaffOpsListRow, StaffOpsMetricStrip, StaffOpsPanel, StaffOpsSearchBar } from '../Components/staff/StaffOpsUI';
 import { staffPaymentStatus } from '../utils/statusLabels';
 import csrfFetch from '../utils/csrf';
+import logoutWithCleanup from '../utils/logout';
 import { clearSmartCacheForPrefix, fetchSmartResource, getUserScopedCacheKey, readSmartCache } from '../utils/smartResource';
 import { operationalChannelsForUser } from '../utils/liveChannels';
 import { ACCOUNTING_WORKSPACE_NAV_GROUPS, withNavCounts } from '../utils/staffWorkspaceNav';
@@ -152,6 +153,7 @@ const DashboardAccounting = () => {
     const [ledgerFilter, setLedgerFilter] = useState({ status: 'Verified', startDate: '', endDate: '', clientSearch: '', packageFilter: 'All', method: 'All', payment_type: 'All' });
     const [ledgerPage, setLedgerPage] = useState(1);
     const [ledgerPerPage, setLedgerPerPage] = useState(25);
+    const [ledgerPagination, setLedgerPagination] = useState(null);
     const [reconciliationSearch, setReconciliationSearch] = useState('');
     const [reconciliationTypeFilter, setReconciliationTypeFilter] = useState('all');
     const [reconciliationPage, setReconciliationPage] = useState(1);
@@ -245,7 +247,7 @@ const DashboardAccounting = () => {
         }
 
         return undefined;
-    }, [activeTab, ledgerFilter, bookingPage, debouncedBookingSearchQuery, bookingSortOrder, bookingPaymentFilter, paymentSegment]);
+    }, [activeTab, ledgerFilter, ledgerPage, ledgerPerPage, bookingPage, debouncedBookingSearchQuery, bookingSortOrder, bookingPaymentFilter, paymentSegment]);
 
     useEffect(() => {
         setBookingPage(1);
@@ -375,11 +377,17 @@ const DashboardAccounting = () => {
     const fetchLedger = async ({ silent = false, force = false } = {}) => {
         if (!silent) setLoading(true);
         try {
-            const query = new URLSearchParams(ledgerFilter).toString();
+            const query = new URLSearchParams({
+                ...ledgerFilter,
+                paginated: '1',
+                page: ledgerPage,
+                per_page: ledgerPerPage,
+            }).toString();
             const cacheKey = smartCacheKey(`accounting:ledger:${query}`);
             const cached = readSmartCache(cacheKey);
             if (!force && cached?.data && ledgerPayments.length === 0) {
                 setLedgerPayments(getListData(cached.data));
+                setLedgerPagination(getPaginationMeta(cached.data));
                 setLoading(false);
             }
             const result = await fetchSmartResource('/api/accounting/ledger?' + query, {
@@ -389,6 +397,7 @@ const DashboardAccounting = () => {
             });
             const data = result.raw || result.data;
             setLedgerPayments(getListData(data));
+            setLedgerPagination(getPaginationMeta(data));
         } catch (error) {
             console.error("Error fetching ledger:", error);
         } finally {
@@ -464,7 +473,7 @@ const DashboardAccounting = () => {
     };
 
     const handleLogout = () => {
-        router.post('/logout');
+        logoutWithCleanup();
     };
 
     const getStatusBadge = (status, dueDate) => {
@@ -2192,7 +2201,7 @@ const DashboardAccounting = () => {
                                     grouped[p.booking_id].payments.push(p);
                                 });
                                 const groupedArray = Object.values(grouped);
-                                const pagedGroupedArray = paginate(groupedArray, ledgerPage, ledgerPerPage);
+                                const pagedGroupedArray = ledgerPagination ? groupedArray : paginate(groupedArray, ledgerPage, ledgerPerPage);
 
                                 return (
                                     <>
@@ -2281,7 +2290,7 @@ const DashboardAccounting = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <StaffPagination page={ledgerPage} perPage={ledgerPerPage} total={groupedArray.length} onPageChange={setLedgerPage} onPerPageChange={setLedgerPerPage} />
+                                    <StaffPagination page={ledgerPage} perPage={ledgerPerPage} total={ledgerPagination?.total ?? groupedArray.length} onPageChange={setLedgerPage} onPerPageChange={setLedgerPerPage} />
                                     </>
                                 );
                             })()}

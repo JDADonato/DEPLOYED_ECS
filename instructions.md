@@ -296,7 +296,7 @@ Go to:
 Check:
 
 1. Overview shows business status.
-2. Bookings tab shows booking pipeline.
+2. Bookings tab shows the booking status overview.
 3. Analytics tab shows operational metrics.
 4. Reports tab can build and export reports.
 5. Announcements can be managed.

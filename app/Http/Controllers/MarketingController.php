@@ -225,6 +225,10 @@ class MarketingController extends Controller
             'special_instructions' => ['nullable', 'string', 'max:3000'],
             'transport_fee' => ['nullable', 'numeric', 'min:0'],
             'labor_surcharge' => ['nullable', 'numeric', 'min:0'],
+            'upfront_payment' => ['nullable', 'array'],
+            'upfront_payment.amount' => ['required_with:upfront_payment', 'numeric', 'min:0'],
+            'upfront_payment.method' => ['required_with:upfront_payment', 'string', 'max:50'],
+            'upfront_payment.reference' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
@@ -284,9 +288,24 @@ class MarketingController extends Controller
                     'labor_surcharge' => $data['labor_surcharge'] ?? 0,
                     'total_cost' => $data['total_cost'] ?? $data['budget'] ?? 0,
                     'selected_menu' => $data['selected_menu'] ?? null,
-                    'review_status' => 'Submitted',
+                    'status' => 'Confirmed',
+                    'review_status' => 'Approved For Reservation',
+                    'reviewed_at' => now(),
                     'expires_at' => now()->addHours(24),
                 ]);
+
+                if (!empty($data['upfront_payment']) && $data['upfront_payment']['amount'] > 0) {
+                    $booking->payments()->create([
+                        'payment_type' => 'Walk-in Upfront',
+                        'amount' => $data['upfront_payment']['amount'],
+                        'payment_method' => $data['upfront_payment']['method'],
+                        'paymongo_reference_number' => $data['upfront_payment']['reference'] ?? null,
+                        'status' => 'Verified',
+                        'verified_by' => $actor->username ?? 'staff',
+                        'verified_at' => now(),
+                        'due_date' => now()->toDateString(),
+                    ]);
+                }
 
                 foreach ([
                     'Confirm date and capacity',
@@ -336,6 +355,15 @@ class MarketingController extends Controller
                         'changed_fields' => ['booking', 'payment_schedule'],
                     ]),
                 ]);
+
+                if ($data['customer_mode'] === 'new' && $data['send_invite'] && $customer->email) {
+                    app(\App\Services\NotificationRecipientService::class)
+                        ->sendToUser($customer, new \App\Notifications\CustomerWalkinWelcomeNotification($customer, $temporaryPassword), 'welcome_email');
+                }
+
+                $paymentCalc = app(\App\Services\PaymentCalculationService::class);
+                $paymentCalc->syncPendingTranches($booking);
+                $paymentCalc->updateBookingMilestone($booking);
 
                 return [$booking, $customer, $createdNewCustomer, $temporaryPassword];
             });

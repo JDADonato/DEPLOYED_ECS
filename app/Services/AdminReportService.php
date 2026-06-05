@@ -19,7 +19,7 @@ class AdminReportService
             ['id' => 'revenue_summary', 'name' => 'Revenue Summary', 'category' => 'Finance', 'description' => 'Collected, pending, overdue, and collection rate.'],
             ['id' => 'payment_breakdown', 'name' => 'Payment Status Breakdown', 'category' => 'Finance', 'description' => 'Counts and totals by payment status.'],
             ['id' => 'payment_aging', 'name' => 'Payment Aging', 'category' => 'Finance', 'description' => 'Unpaid balances grouped by urgency.'],
-            ['id' => 'booking_pipeline', 'name' => 'Booking Pipeline', 'category' => 'Sales', 'description' => 'Bookings by operational status.'],
+            ['id' => 'booking_pipeline', 'name' => 'Booking Status Overview', 'category' => 'Sales', 'description' => 'Bookings grouped by current status.'],
             ['id' => 'upcoming_workload', 'name' => 'Upcoming Workload', 'category' => 'Operations', 'description' => 'Next confirmed or pending events.'],
             ['id' => 'package_performance', 'name' => 'Package Performance', 'category' => 'Sales', 'description' => 'Package count and value.'],
             ['id' => 'menu_performance', 'name' => 'Menu Item Performance', 'category' => 'Menu', 'description' => 'Top selected dishes.'],
@@ -586,8 +586,8 @@ class AdminReportService
 
         return $this->insight(
             $pendingCount > 0 ? 'Pending bookings are waiting.' : 'No pending booking queue is visible.',
-            $pendingCount > 0 ? 'Pending bookings are the clearest conversion opportunity because customers already submitted interest.' : 'The selected pipeline has no visible intake backlog.',
-            $pendingCount > 0 ? 'Open Bookings & Intake and resolve pending requests.' : 'Use the pipeline for monitoring rather than urgent action.',
+            $pendingCount > 0 ? 'Pending bookings are the clearest conversion opportunity because customers already submitted interest.' : 'The selected booking status view has no visible intake backlog.',
+            $pendingCount > 0 ? 'Open Bookings & Intake and resolve pending requests.' : 'Use the booking status overview for monitoring rather than urgent action.',
             $pendingCount > 0 ? 'watch' : 'good'
         );
     }
@@ -1084,6 +1084,7 @@ class AdminReportService
                 'trendLine' => round(max($trend, 0), 2),
             ];
         })->values();
+        $evaluation = $this->evaluateRevenueRegression($history->all());
 
         $projection = [];
         $previousTrend = (float) ($history->last()['trendLine'] ?? $history->last()['cumulativeRevenue'] ?? 0);
@@ -1133,6 +1134,7 @@ class AdminReportService
             'is_fallback' => false,
             'alpha' => round($regression['alpha'], 4),
             'beta' => round($regression['beta'], 4),
+            'evaluation' => $evaluation,
             'historical' => $history->all(),
             'projection' => $projection,
             'rows' => $history->concat($projection)->values()->all(),
@@ -1168,10 +1170,16 @@ class AdminReportService
         $start = $this->shiftPeriod($end, -($historyCount - 1), $period);
         $periodExpression = $this->periodExpression('event_date', $period);
 
+        $baseStart = $year
+            ? ($quarter ? Carbon::create($year, (($quarter - 1) * 3) + 1, 1) : Carbon::create($year, 1, 1))
+            : $start;
+            
+        $queryStart = $baseStart->copy()->min($start);
+
         $rows = $this->bookingQuery($filters)
             ->whereIn('status', ['Pending', 'Confirmed', 'Completed'])
             ->whereDate('event_date', '<=', today())
-            ->whereDate('event_date', '>=', $start->toDateString())
+            ->whereDate('event_date', '>=', $queryStart->toDateString())
             ->whereDate('event_date', '<', $this->shiftPeriod($end, 1, $period)->toDateString())
             ->when($year, fn ($q) => $q->whereYear('event_date', $year))
             ->when($quarter, fn ($q) => $q->whereRaw($this->quarterWhereExpression('event_date').' = ?', [$quarter]))
@@ -1183,9 +1191,6 @@ class AdminReportService
             ->get()
             ->keyBy('period_key');
 
-        $baseStart = $year
-            ? ($quarter ? Carbon::create($year, (($quarter - 1) * 3) + 1, 1) : Carbon::create($year, 1, 1))
-            : $start;
         $baseCount = $year
             ? ($quarter && $period === 'monthly' ? 3 : ($period === 'quarterly' ? ($quarter ? 1 : 4) : 12))
             : $historyCount;
@@ -1214,38 +1219,71 @@ class AdminReportService
             ->whereDate('event_date', '<', $this->shiftPeriod($end, 1, $period)->toDateString())
             ->selectRaw("$periodExpression as period_key")
             ->selectRaw('SUM(pax) as pax')
+            ->selectRaw('COUNT(*) as events')
             ->groupBy('period_key')
             ->orderBy('period_key')
             ->get()
             ->keyBy('period_key');
 
-        $seriesValues = collect(range(0, $historyCount - 1))
+        // Use avg pax per booking (CV ~17%) instead of total monthly pax (CV ~39%).
+        // Total monthly pax is dominated by how many events happen each month, which
+        // SMA cannot predict. Average event size is far more stable and forecastable.
+        $avgPaxSeries = collect(range(0, $historyCount - 1))
             ->map(function ($index) use ($start, $period, $smaBasis) {
-                $key = $this->periodKey($this->shiftPeriod($start, $index, $period), $period);
+                $key    = $this->periodKey($this->shiftPeriod($start, $index, $period), $period);
+                $events = (int) ($smaBasis[$key]->events ?? 0);
+                $pax    = (float) ($smaBasis[$key]->pax ?? 0);
 
-                return (float) ($smaBasis[$key]->pax ?? 0);
+                return $events > 0 ? ($pax / $events) : 0.0;
             })
             ->values()
             ->all();
 
-        $sampleSize = count(array_filter($seriesValues, fn ($value) => (float) $value > 0));
+        $eventCountSeries = collect(range(0, $historyCount - 1))
+            ->map(function ($index) use ($start, $period, $smaBasis) {
+                $key = $this->periodKey($this->shiftPeriod($start, $index, $period), $period);
 
-        if ($sampleSize < $window) {
+                return (float) ($smaBasis[$key]->events ?? 0);
+            })
+            ->values()
+            ->all();
+
+        $sampleSize = count(array_filter($avgPaxSeries, fn ($value) => (float) $value > 0));
+
+        if ($sampleSize < 2) {
             return $this->insufficientPaxDemandProjection($history->all(), $period, $horizon, $window, $sampleSize);
         }
 
-        $forecastRows = [];
+        // Auto-select the window with the lowest backtest MAE (try 2, 3, 4, 5)
+        $bestWindow = $this->selectBestSmaWindow($avgPaxSeries, [2, 3, 4, 5]);
+
+        if ($sampleSize < $bestWindow) {
+            $bestWindow = $window; // fallback to the configured window
+        }
+
+        $evaluation        = $this->evaluateSmaBacktest($avgPaxSeries, $bestWindow);
+        $avgPaxRolling     = $avgPaxSeries;
+        $eventCountRolling = $eventCountSeries;
+        $forecastRows      = [];
+
         for ($i = 1; $i <= $horizon; $i++) {
-            $forecast = $this->simpleMovingAverage($seriesValues, $window);
-            $seriesValues[] = $forecast;
+            $forecastAvgPax   = $this->simpleMovingAverage($avgPaxRolling, $bestWindow);
+            $forecastEvents   = max(1, (int) round($this->simpleMovingAverage($eventCountRolling, $bestWindow)));
+            $forecastTotalPax = (int) round($forecastAvgPax * $forecastEvents);
+
+            $avgPaxRolling[]     = $forecastAvgPax;
+            $eventCountRolling[] = (float) $forecastEvents;
+
             $date = $this->shiftPeriod($end, $i, $period);
             $forecastRows[] = [
-                'period' => $this->periodKey($date, $period),
-                'label' => $this->periodLabel($date, $period),
-                'pax' => null,
-                'events' => null,
-                'forecast' => (int) round($forecast),
-                'isForecast' => true,
+                'period'         => $this->periodKey($date, $period),
+                'label'          => $this->periodLabel($date, $period),
+                'pax'            => null,
+                'events'         => null,
+                'forecastAvgPax' => round($forecastAvgPax, 1),
+                'forecastEvents' => $forecastEvents,
+                'forecast'       => $forecastTotalPax,
+                'isForecast'     => true,
             ];
         }
 
@@ -1263,12 +1301,13 @@ class AdminReportService
                 'n' => 'Configured moving-average window.',
             ],
             'period' => $period,
-            'smaWindow' => $window,
+            'smaWindow' => $bestWindow,
             'horizon' => $horizon,
             'historyWindow' => $historyCount,
             'sampleSize' => $sampleSize,
             'is_insufficient_data' => false,
             'is_fallback' => false,
+            'evaluation' => $evaluation,
             'rows' => $history->concat($forecastRows)->values()->all(),
             'summary' => [
                 'historicalPax' => (int) $historicalPax,
@@ -1276,7 +1315,7 @@ class AdminReportService
                 'nextForecast' => $nextForecast,
                 'nextMonthBaseline' => $nextForecast,
                 'peakPeriod' => $peak['label'] ?? 'No historical demand',
-                'method' => 'Simple Moving Average ('.strtoupper((string) $window).'-period SMA)',
+                'method' => 'Simple Moving Average ('.strtoupper((string) $bestWindow).'-period SMA)',
                 'sampleSize' => $sampleSize,
             ],
             'interpretation' => $this->insight(
@@ -1719,6 +1758,7 @@ class AdminReportService
             'is_fallback' => false,
             'alpha' => null,
             'beta' => null,
+            'evaluation' => $this->insufficientRevenueEvaluation(),
             'historical' => $historical,
             'projection' => [],
             'rows' => $historical,
@@ -1759,6 +1799,7 @@ class AdminReportService
             'sampleSize' => $sampleSize,
             'is_insufficient_data' => true,
             'is_fallback' => false,
+            'evaluation' => $this->insufficientSmaEvaluation($window),
             'rows' => $historical,
             'historical' => $historical,
             'summary' => [
@@ -1783,6 +1824,296 @@ class AdminReportService
     private function peso(float $amount): string
     {
         return 'PHP '.number_format($amount, 2);
+    }
+
+    private function evaluateRevenueRegression(array $history): array
+    {
+        // Only include periods that have actual cumulative revenue (non-zero)
+        // This ensures sparse data (few bookings in a wide window) correctly
+        // triggers the insufficient-data path when n < 4
+        $points = collect($history)
+            ->filter(fn ($row) => (float) ($row['cumulativeRevenue'] ?? 0) > 0)
+            ->map(fn ($row) => [
+                'x'       => (float) ($row['x'] ?? 0),
+                'cumY'    => (float) ($row['cumulativeRevenue'] ?? 0),
+                'monthly' => (float) ($row['revenue'] ?? 0),
+                'label'   => (string) ($row['label'] ?? $row['period'] ?? ''),
+            ])
+            ->values()
+            ->all();
+
+        $n = count($points);
+
+        // Rolling-origin cross-validation requires at least 4 periods
+        // (min 3 training + 1 test origin)
+        if ($n < 4) {
+            return $this->insufficientRevenueEvaluation();
+        }
+
+        // Minimum training set = 30% of data or 3 periods, whichever is larger
+        $minTrain = max(3, (int) ceil($n * 0.3));
+
+        // Rolling-origin CV: train on 0..k-1, predict cumulative at position k
+        $actualCum        = [];
+        $predictedCum     = [];
+        $actualMonthly    = [];
+        $predictedMonthly = [];
+        $testLabels       = [];
+
+        for ($k = $minTrain; $k < $n; $k++) {
+            $trainSubset = array_slice($points, 0, $k);
+            $olsInput    = array_map(fn ($p) => ['x' => $p['x'], 'y' => $p['cumY']], $trainSubset);
+            $reg         = $this->ordinaryLeastSquares($olsInput);
+
+            $predCum = max($reg['alpha'] + ($reg['beta'] * $points[$k]['x']), 0);
+
+            // Convert cumulative prediction to monthly delta for practical interpretation
+            $prevCum     = $points[$k - 1]['cumY'];
+            $predMonthly = max($predCum - $prevCum, 0);
+
+            $actualCum[]    = $points[$k]['cumY'];
+            $predictedCum[] = $predCum;
+            $testLabels[]   = $points[$k]['label'];
+
+            // Only record monthly delta when the period has actual revenue
+            if ($points[$k]['monthly'] > 0) {
+                $actualMonthly[]    = $points[$k]['monthly'];
+                $predictedMonthly[] = $predMonthly;
+            }
+        }
+
+        $folds = count($actualCum);
+
+        if ($folds < 2) {
+            return $this->insufficientRevenueEvaluation();
+        }
+
+        // Primary metrics on cumulative revenue (smooth, trend-dominated — R² is meaningful here)
+        $mae  = $this->mae($actualCum, $predictedCum);
+        $rmse = $this->rmse($actualCum, $predictedCum);
+        $r2   = $this->r2($actualCum, $predictedCum);
+
+        // Secondary metric: monthly revenue delta MAE (more actionable for decision-makers)
+        $maeMonthly = count($actualMonthly) >= 2
+            ? $this->roundMetric($this->mae($actualMonthly, $predictedMonthly))
+            : null;
+
+        // MAPE on monthly revenue
+        $mape = null;
+        if (count($actualMonthly) >= 2) {
+            $pctErrors = [];
+            for ($i = 0; $i < count($actualMonthly); $i++) {
+                if ($actualMonthly[$i] > 0) {
+                    $pctErrors[] = abs(($actualMonthly[$i] - $predictedMonthly[$i]) / $actualMonthly[$i]);
+                }
+            }
+            $mape = count($pctErrors) > 0
+                ? round((array_sum($pctErrors) / count($pctErrors)) * 100, 1)
+                : null;
+        }
+
+        return [
+            'method'            => 'Rolling-Origin Cross-Validation',
+            'folds'             => $folds,
+            'minTrainSize'      => $minTrain,
+            'trainSize'         => $minTrain,
+            'testSize'          => $folds,
+            'rmse'              => $this->roundMetric($rmse),
+            'mae'               => $this->roundMetric($mae),
+            'maeMonthly'        => $maeMonthly,
+            'mape'              => $mape,
+            'r2'                => $this->roundMetric($r2, 4),
+            'trainPeriodLabels' => ['Rolling origin: '.$minTrain.'–'.($n - 1).' training periods per fold'],
+            'testPeriodLabels'  => $testLabels,
+            'interpretation'    => 'Rolling-origin cross-validation across '.$folds.' folds. '
+                .'Cumulative revenue Mean Absolute Error: '.$this->peso((float) ($mae ?? 0)).'. '
+                .($maeMonthly !== null
+                    ? 'Monthly revenue Mean Absolute Error: '.$this->peso((float) $maeMonthly).'.'
+                    : 'Insufficient non-zero months for monthly delta evaluation.'),
+        ];
+    }
+
+    private function evaluateSmaBacktest(array $values, int $window): array
+    {
+        $actual    = [];
+        $predicted = [];
+
+        foreach (array_values($values) as $index => $value) {
+            if ($index < $window) {
+                continue;
+            }
+
+            $previous = array_slice($values, $index - $window, $window);
+            if (count($previous) < $window) {
+                continue;
+            }
+
+            $predicted[] = array_sum($previous) / $window;
+            $actual[]    = (float) $value;
+        }
+
+        if (count($actual) < 1) {
+            return $this->insufficientSmaEvaluation($window);
+        }
+
+        $mae  = $this->mae($actual, $predicted);
+        $rmse = $this->rmse($actual, $predicted);
+
+        // MAPE: only computed on non-zero actual values to avoid division by zero
+        $pctErrors = [];
+        for ($i = 0; $i < count($actual); $i++) {
+            if ($actual[$i] > 0) {
+                $pctErrors[] = abs(($actual[$i] - $predicted[$i]) / $actual[$i]);
+            }
+        }
+        $mape = count($pctErrors) > 0
+            ? round((array_sum($pctErrors) / count($pctErrors)) * 100, 1)
+            : null;
+
+        return [
+            'method'         => 'Historical Backtesting',
+            'window'         => $window,
+            'backtestSize'   => count($actual),
+            'rmse'           => $this->roundMetric($rmse),
+            'mae'            => $this->roundMetric($mae),
+            'mape'           => $mape,
+            'unit'           => 'avg guests per booking',
+            'interpretation' => 'The SMA forecast (window='.$window.') has a Mean Absolute Error of '
+                .number_format((float) $mae, 1)
+                .' avg guests/booking, meaning the model predicts individual event size within this margin on average.',
+        ];
+    }
+
+    private function selectBestSmaWindow(array $avgPaxValues, array $candidates): int
+    {
+        $bestWindow = $candidates[0];
+        $bestMae    = PHP_FLOAT_MAX;
+
+        foreach ($candidates as $w) {
+            $eval = $this->evaluateSmaBacktest($avgPaxValues, $w);
+            $mae  = $eval['mae'] ?? null;
+
+            if ($mae !== null && (float) $mae < $bestMae) {
+                $bestMae    = (float) $mae;
+                $bestWindow = $w;
+            }
+        }
+
+        return $bestWindow;
+    }
+
+    private function chronologicalTrainTestSplit(array $points): ?array
+    {
+        $points = array_values($points);
+        $count = count($points);
+
+        if ($count < 4) {
+            return null;
+        }
+
+        $trainSize = min(max((int) floor($count * 0.8), 2), $count - 1);
+        $testSize = $count - $trainSize;
+
+        if ($testSize < 1) {
+            return null;
+        }
+
+        return [
+            'train' => array_slice($points, 0, $trainSize),
+            'test' => array_slice($points, $trainSize),
+        ];
+    }
+
+    private function rmse(array $actual, array $predicted): ?float
+    {
+        $count = min(count($actual), count($predicted));
+        if ($count === 0) {
+            return null;
+        }
+
+        $squared = 0.0;
+        for ($i = 0; $i < $count; $i++) {
+            $error = (float) $actual[$i] - (float) $predicted[$i];
+            $squared += $error * $error;
+        }
+
+        return sqrt($squared / $count);
+    }
+
+    private function mae(array $actual, array $predicted): ?float
+    {
+        $count = min(count($actual), count($predicted));
+        if ($count === 0) {
+            return null;
+        }
+
+        $absolute = 0.0;
+        for ($i = 0; $i < $count; $i++) {
+            $absolute += abs((float) $actual[$i] - (float) $predicted[$i]);
+        }
+
+        return $absolute / $count;
+    }
+
+    private function r2(array $actual, array $predicted): ?float
+    {
+        $count = min(count($actual), count($predicted));
+        if ($count < 2) {
+            return null;
+        }
+
+        $actual = array_slice(array_map('floatval', $actual), 0, $count);
+        $predicted = array_slice(array_map('floatval', $predicted), 0, $count);
+        $mean = array_sum($actual) / $count;
+        $total = 0.0;
+        $residual = 0.0;
+
+        for ($i = 0; $i < $count; $i++) {
+            $total += ($actual[$i] - $mean) * ($actual[$i] - $mean);
+            $residual += ($actual[$i] - $predicted[$i]) * ($actual[$i] - $predicted[$i]);
+        }
+
+        if (abs($total) <= 0.000001) {
+            return null;
+        }
+
+        return 1 - ($residual / $total);
+    }
+
+    private function roundMetric(?float $value, int $precision = 2): ?float
+    {
+        return $value === null ? null : round($value, $precision);
+    }
+
+    private function insufficientRevenueEvaluation(): array
+    {
+        return [
+            'method'            => 'Rolling-Origin Cross-Validation',
+            'folds'             => 0,
+            'minTrainSize'      => 0,
+            'trainSize'         => 0,
+            'testSize'          => 0,
+            'rmse'              => null,
+            'mae'               => null,
+            'maeMonthly'        => null,
+            'mape'              => null,
+            'r2'                => null,
+            'trainPeriodLabels' => [],
+            'testPeriodLabels'  => [],
+            'interpretation'    => 'Model evaluation needs at least 4 periods of verified revenue history before rolling-origin cross-validation metrics can be calculated safely.',
+        ];
+    }
+
+    private function insufficientSmaEvaluation(int $window): array
+    {
+        return [
+            'method' => 'Historical Backtesting',
+            'window' => $window,
+            'backtestSize' => 0,
+            'rmse' => null,
+            'mae' => null,
+            'interpretation' => 'Model evaluation needs more pax history before SMA backtesting metrics can be calculated safely.',
+        ];
     }
 
     private function simpleMovingAverage(array $values, int $window): float

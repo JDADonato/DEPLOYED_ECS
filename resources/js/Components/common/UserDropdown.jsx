@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
+import logoutWithCleanup from '../../utils/logout';
 
 const UserDropdown = ({ user, dashLink }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +22,7 @@ const UserDropdown = ({ user, dashLink }) => {
 
     const handleLogout = (e) => {
         e.preventDefault();
-        router.post('/logout');
+        logoutWithCleanup();
     };
 
     return (

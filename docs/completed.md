@@ -91,12 +91,12 @@ This file consolidates the useful completed items from the old documentation set
   - collection rate
   - payment status breakdown
   - payment aging
-  - booking pipeline
+  - booking status overview
   - upcoming workload
   - package performance
   - menu performance
   - operational alerts
-- Focused analytics endpoints were added for summary, revenue, pipeline, menu performance, customer experience, and operations.
+- Focused analytics endpoints were added for summary, revenue, booking status, menu performance, customer experience, and operations.
 - Reports tab was replaced with a usable report builder.
 - Report builder supports:
   - widget library

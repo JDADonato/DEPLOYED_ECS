@@ -1,5 +1,5 @@
 import { usePage, router } from '@inertiajs/react';
-import { clearSensitiveAuthState } from '../utils/smartResource';
+import logoutWithCleanup from '../utils/logout';
 
 export const useAuth = () => {
     const { auth } = usePage().props;
@@ -21,8 +21,7 @@ export const useAuth = () => {
     };
 
     const logout = () => {
-        clearSensitiveAuthState();
-        router.post('/logout');
+        logoutWithCleanup();
     };
 
     const loading = false;

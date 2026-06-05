@@ -24,6 +24,12 @@ class SecurityHeaders
         $headers->set('Permissions-Policy', config('security.headers.permissions_policy'));
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
+        if (auth()->check() || $request->is('logout', 'api/session/status')) {
+            $headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private');
+            $headers->set('Pragma', 'no-cache');
+            $headers->set('Expires', '0');
+        }
+
         if ($this->shouldSendHsts($request)) {
             $headers->set(
                 'Strict-Transport-Security',

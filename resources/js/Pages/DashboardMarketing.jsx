@@ -3,7 +3,7 @@ import logoImg from '../../images/ECS_LOGO.png';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { router } from '@inertiajs/react';
-import { Filter } from 'lucide-react';
+import { CalendarPlus, Filter } from 'lucide-react';
 import FlashToast from '../Components/common/FlashToast';
 import ConfirmModal from '../Components/common/ConfirmModal';
 import PromptModal from '../Components/common/PromptModal';
@@ -45,6 +45,7 @@ const PreparationBoard = lazy(() => import('../Components/operations/Preparation
 const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTastingQueue'));
 import { getListData } from '../utils/apiResponses';
 import csrfFetch from '../utils/csrf';
+import logoutWithCleanup from '../utils/logout';
 import { bustSmartCache, fetchSmartResource, getUserScopedCacheKey, readSmartCache } from '../utils/smartResource';
 import { operationalChannelsForUser } from '../utils/liveChannels';
 
@@ -240,10 +241,8 @@ const DashboardMarketing = () => {
     const [inquirySearch, setInquirySearch] = useState('');
     const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
     const [bookingReviewView, setBookingReviewView] = useState('needs-action');
-    const [bookingFiltersOpen, setBookingFiltersOpen] = useState(false);
     const [inquirySort, setInquirySort] = useState('eventDateAsc');
-    const [inquiryDateFrom, setInquiryDateFrom] = useState('');
-    const [inquiryDateTo, setInquiryDateTo] = useState('');
+    const [inquiryMonth, setInquiryMonth] = useState('');
     const [inquiryPage, setInquiryPage] = useState(1);
     const [inquiryPerPage, setInquiryPerPage] = useState(25);
     const [availabilityMonth, setAvailabilityMonth] = useState(() => {
@@ -311,8 +310,7 @@ const DashboardMarketing = () => {
         if (['bookings', 'handoff'].includes(targetTab)) {
             setInquirySearch(searchText);
             setInquiryStatusFilter('all');
-            setInquiryDateFrom('');
-            setInquiryDateTo('');
+            setInquiryMonth('');
             setBookingReviewView('needs-action');
             setInquiryPage(1);
         } else if (targetTab === 'leads') {
@@ -364,7 +362,7 @@ const DashboardMarketing = () => {
 
     useEffect(() => {
         setInquiryPage(1);
-    }, [inquirySearch, inquiryStatusFilter, bookingReviewView, inquirySort, inquiryDateFrom, inquiryDateTo, inquiryPerPage]);
+    }, [inquirySearch, inquiryStatusFilter, bookingReviewView, inquirySort, inquiryMonth, inquiryPerPage]);
 
     useEffect(() => {
         const query = marketingNavbarSearch.trim();
@@ -495,7 +493,7 @@ const DashboardMarketing = () => {
         const requestId = bookingRequestRef.current + 1;
         bookingRequestRef.current = requestId;
         try {
-            const params = scope === 'all' ? '' : '?paginated=1&per_page=25';
+            const params = '';
             const cacheKey = smartCacheKey(`marketing:bookings:${scope}`);
             const cached = readSmartCache(cacheKey);
             if (cached?.data && bookings.length === 0) {
@@ -531,8 +529,9 @@ const DashboardMarketing = () => {
             });
             const cacheKey = smartCacheKey(`marketing:calendar:${params.toString()}`);
             const cached = readSmartCache(cacheKey);
-            if (!force && cached?.data && Object.keys(calendarBookings).length === 0) {
-                setCalendarBookings(cached.data);
+            if (!force && cached?.data && calendarBookings.length === 0) {
+                const cachedData = cached.data;
+                setCalendarBookings(Array.isArray(cachedData.events) ? cachedData.events.map(normalizeCalendarEvent) : []);
                 if (!silent) setCalendarLoading(false);
             }
             const result = await fetchSmartResource(`/api/calendar-availability?${params.toString()}`, {
@@ -641,7 +640,7 @@ const DashboardMarketing = () => {
     };
 
     const handleLogout = () => {
-        router.post('/logout');
+        logoutWithCleanup();
     };
 
     const fetchAvailabilityOverrides = async ({ silent = false, force = false } = {}) => {
@@ -1398,8 +1397,6 @@ const DashboardMarketing = () => {
             setMarketingContextPanelOpen(true);
             setInquirySearch(searchText);
             setInquiryStatusFilter('all');
-            setInquiryDateFrom('');
-            setInquiryDateTo('');
             setBookingReviewView('needs-action');
             setActiveTab('bookings');
         }
@@ -1550,8 +1547,6 @@ const DashboardMarketing = () => {
         if (['bookings', 'handoff'].includes(tab)) {
             setInquirySearch(searchText);
             setInquiryStatusFilter('all');
-            setInquiryDateFrom('');
-            setInquiryDateTo('');
             setBookingReviewView('needs-action');
             setInquiryPage(1);
         }
@@ -1731,13 +1726,6 @@ const DashboardMarketing = () => {
                             onAction: () => setActiveTab('leads'),
                         },
                     ]}
-                />
-                <StaffOpsPanel
-                    eyebrow="Walk-in and phone support"
-                    title="Create booking for customer"
-                    description="Link an existing customer or create a walk-in client account while preparing the booking."
-                    actionLabel="Create booking"
-                    onAction={openAssistedBookingModal}
                 />
                 <StaffDecisionBrief
                     source="Marketing read"
@@ -2394,13 +2382,10 @@ const DashboardMarketing = () => {
             .filter((booking) => {
                 const query = inquirySearch.trim().toLowerCase();
                 const reviewStatus = String(booking.review_status || booking.status || '').toLowerCase();
-                const eventTime = booking.event_date ? new Date(booking.event_date).getTime() : 0;
-                const fromTime = inquiryDateFrom ? new Date(inquiryDateFrom).getTime() : null;
-                const toTime = inquiryDateTo ? new Date(inquiryDateTo).getTime() : null;
+                const eventMonth = booking.event_date ? String(booking.event_date).slice(0, 7) : '';
 
                 if (inquiryStatusFilter !== 'all' && reviewStatus !== inquiryStatusFilter) return false;
-                if (fromTime !== null && eventTime < fromTime) return false;
-                if (toTime !== null && eventTime > toTime) return false;
+                if (inquiryMonth && eventMonth !== inquiryMonth) return false;
                 if (!query) return true;
 
                 return [
@@ -2429,12 +2414,6 @@ const DashboardMarketing = () => {
                 return inquirySort === 'oldest' || inquirySort === 'eventDateAsc' ? leftDate - rightDate : rightDate - leftDate;
             });
         const pagedPendingBookings = pendingBookings.slice((inquiryPage - 1) * inquiryPerPage, inquiryPage * inquiryPerPage);
-        const advancedFilterCount = [
-            inquiryStatusFilter !== 'all',
-            inquirySort !== 'eventDateAsc',
-            Boolean(inquiryDateFrom),
-            Boolean(inquiryDateTo),
-        ].filter(Boolean).length;
         const emptyBookingMessage = {
             'needs-action': 'No bookings need action right now.',
             mine: 'No bookings are assigned to you.',
@@ -2442,13 +2421,6 @@ const DashboardMarketing = () => {
         }[bookingReviewView] || 'No bookings match this view.';
         return (
             <div className="staff-ops-workspace">
-                <StaffOpsPanel
-                    eyebrow="Assisted intake"
-                    title="Booking for a walk-in, call, or direct customer?"
-                    description="Create the customer account and booking together so payments, chat, receipts, and feedback still work."
-                    actionLabel="Create booking"
-                    onAction={openAssistedBookingModal}
-                />
                 <StaffCommandBar className="marketing-booking-command-bar">
                     <div className="staff-v2-segmented marketing-booking-view-tabs" role="tablist" aria-label="Booking review views">
                         {BOOKING_WORK_VIEWS.map(option => (
@@ -2500,31 +2472,23 @@ const DashboardMarketing = () => {
                     onChange={handleInquirySearchChange}
                     placeholder="Search booking, customer, phone, or city"
                 >
-                    <button type="button" onClick={() => setBookingFiltersOpen((open) => !open)} className={`staff-row-action marketing-booking-filter-toggle ${bookingFiltersOpen || advancedFilterCount > 0 ? 'is-active' : ''}`}>
-                        Filters{advancedFilterCount > 0 ? ` (${advancedFilterCount})` : ''}
-                    </button>
+                    <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
+                        <option value="all">All active statuses</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="under review">Under Review</option>
+                        <option value="needs customer details">Needs Customer Details</option>
+                        <option value="clarification received">Clarification Received</option>
+                    </select>
+                    <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
+                        <option value="eventDateAsc">Event date ascending</option>
+                        <option value="eventDateDesc">Event date descending</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="az">A-Z</option>
+                        <option value="za">Z-A</option>
+                    </select>
+                    <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
                 </StaffOpsSearchBar>
-                {bookingFiltersOpen && (
-                    <div className="marketing-panel marketing-booking-advanced-filters">
-                        <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control">
-                            <option value="all">All active statuses</option>
-                            <option value="submitted">Submitted</option>
-                            <option value="under review">Under Review</option>
-                            <option value="needs customer details">Needs Customer Details</option>
-                            <option value="clarification received">Clarification Received</option>
-                        </select>
-                        <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control">
-                            <option value="eventDateAsc">Event date ascending</option>
-                            <option value="eventDateDesc">Event date descending</option>
-                            <option value="newest">Newest</option>
-                            <option value="oldest">Oldest</option>
-                            <option value="az">A-Z</option>
-                            <option value="za">Z-A</option>
-                        </select>
-                        <input type="date" value={inquiryDateFrom} onChange={(event) => setInquiryDateFrom(event.target.value)} className="staff-control" aria-label="Event date from" />
-                        <input type="date" value={inquiryDateTo} onChange={(event) => setInquiryDateTo(event.target.value)} className="staff-control" aria-label="Event date to" />
-                    </div>
-                )}
 
                 {(
                     <div className="marketing-panel overflow-hidden">
@@ -3254,6 +3218,20 @@ const DashboardMarketing = () => {
                 logo: logoImg,
                 logoAlt: 'ECS',
                 badge: 'Marketing',
+                actionSlot: (
+                    <button
+                        type="button"
+                        className="staff-navbar-assisted-booking-action"
+                        onClick={openAssistedBookingModal}
+                        aria-label="Create assisted booking for a walk-in, call, or direct customer"
+                    >
+                        <CalendarPlus aria-hidden="true" />
+                        <span>Create booking</span>
+                        <span className="staff-navbar-action-tooltip" role="tooltip">
+                            Create an assisted booking for a walk-in, call, or direct customer.
+                        </span>
+                    </button>
+                ),
                 searchSlot: (
                     <StaffNavbarSearch
                         value={marketingNavbarSearch}
@@ -3344,10 +3322,10 @@ const DashboardMarketing = () => {
                     eyebrow={activeTab === 'today' ? 'Today' : 'Marketing workflow'}
                     title={activeTab === 'today' ? 'Booking workbench' : tabMeta[activeTab]}
                     metrics={[
-                        { label: 'Upcoming', value: dashboardSummary.upcoming },
-                        { label: 'Pending', value: dashboardSummary.pending },
-                        { label: 'This Month', value: dashboardSummary.monthEvents },
-                        { label: 'Pipeline', value: `PHP ${formatMoney(dashboardSummary.pipeline)}` },
+                        { label: 'Upcoming', value: dashboardSummary.upcoming, helpText: 'Upcoming pending or confirmed bookings that still need Marketing visibility.' },
+                        { label: 'Pending', value: dashboardSummary.pending, helpText: 'Booking requests that have not yet been approved or rejected.' },
+                        { label: 'This Month', value: dashboardSummary.monthEvents, helpText: 'Events scheduled in the currently selected calendar month.' },
+                        { label: 'Pending booking amount', value: `PHP ${formatMoney(dashboardSummary.pipeline)}`, helpText: 'Estimated peso amount from bookings that are still pending.' },
                     ]}
                 />
 

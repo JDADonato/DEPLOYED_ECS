@@ -7752,11 +7752,6 @@
     --staff-sidebar-visible-width: var(--staff-sidebar-collapsed-width);
   }
 
-  .staff-workspace.is-sidebar-hover-expanded {
-    --staff-sidebar-current-width: var(--staff-sidebar-collapsed-width);
-    --staff-sidebar-visible-width: var(--staff-sidebar-width);
-  }
-
   .staff-sidebar {
     position: sticky;
     top: 0;
@@ -8541,6 +8536,7 @@
   }
 
   .staff-header-metrics div {
+    position: relative;
     display: grid;
     grid-template-columns: auto auto;
     align-items: baseline;
@@ -8550,6 +8546,15 @@
     border-radius: .65rem;
     background: rgba(255,255,255,.9);
     padding: .35rem .55rem;
+  }
+
+  .staff-header-metrics div.has-help {
+    cursor: help;
+  }
+
+  .staff-header-metrics div.has-help:focus-visible {
+    outline: 3px solid rgba(240,170,11,.35);
+    outline-offset: 2px;
   }
 
   .staff-header-metrics span {
@@ -8569,6 +8574,42 @@
     font-weight: 900;
     white-space: nowrap;
     order: 1;
+  }
+
+  .staff-header-metric-tooltip {
+    pointer-events: none;
+    position: absolute;
+    top: calc(100% + .55rem);
+    right: 0;
+    z-index: 75;
+    width: max-content;
+    max-width: min(17rem, calc(100vw - 2rem));
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: .75rem;
+    background: #fffaf3;
+    box-shadow: 0 16px 34px rgba(26, 26, 26, .16);
+    color: #253247;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.35;
+    opacity: 0;
+    padding: .65rem .75rem;
+    text-align: left;
+    text-transform: none;
+    transform: translateY(-.25rem);
+    transition: opacity .16s ease, transform .16s ease;
+    visibility: hidden;
+    white-space: normal;
+  }
+
+  .staff-header-metrics div.has-help:hover .staff-header-metric-tooltip,
+  .staff-header-metrics div.has-help:focus-visible .staff-header-metric-tooltip,
+  .staff-header-metrics div.has-help:focus-within .staff-header-metric-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
   }
 
   .staff-header-actions {
@@ -9075,27 +9116,23 @@
   }
 
   .marketing-booking-search-row {
-    grid-template-columns: minmax(22rem, 1fr) auto;
-  }
-
-  .marketing-booking-search-row .staff-ops-search-controls {
+    grid-template-columns: minmax(16rem, .86fr) minmax(28rem, 1.14fr);
     align-items: center;
   }
 
-  .marketing-booking-filter-toggle.is-active {
-    border-color: rgba(114,1,1,.35);
-    background: #fff7e8;
-    color: #720101;
+  .marketing-booking-search-row .staff-ops-search-input {
+    min-height: 3rem;
   }
 
-  .marketing-booking-advanced-filters {
+  .marketing-booking-search-row .staff-ops-search-controls {
     display: grid;
-    grid-template-columns: repeat(4, minmax(8.75rem, 1fr));
-    gap: .65rem;
-    padding: 1rem;
+    grid-template-columns: minmax(9.5rem, 1fr) minmax(10rem, 1fr) minmax(8.5rem, .76fr);
+    align-items: center;
+    gap: .55rem;
   }
 
-  .marketing-booking-advanced-filters .staff-control {
+  .marketing-booking-search-row .staff-ops-search-controls .staff-control {
+    width: 100%;
     min-width: 0;
   }
 
@@ -9277,8 +9314,7 @@
       overflow: visible;
     }
 
-    .staff-workspace.is-sidebar-collapsed,
-    .staff-workspace.is-sidebar-hover-expanded {
+    .staff-workspace.is-sidebar-collapsed {
       --staff-sidebar-current-width: 100%;
       --staff-sidebar-visible-width: 100%;
     }
@@ -9481,8 +9517,7 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .marketing-booking-search-row .staff-ops-search-controls,
-    .marketing-booking-advanced-filters {
+    .marketing-booking-search-row .staff-ops-search-controls {
       grid-template-columns: minmax(0, 1fr);
     }
 
@@ -17266,6 +17301,80 @@ select.admin-select:not([multiple])::-ms-expand {
   gap: .85rem;
 }
 
+.staff-workspace-navbar-action-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.staff-navbar-assisted-booking-action {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  border: 1px solid rgba(240, 170, 11, .42);
+  border-radius: 999px;
+  background: #f0aa0b;
+  color: #1a1a1a;
+  font-size: .68rem;
+  font-weight: 950;
+  letter-spacing: .06em;
+  line-height: 1;
+  padding: 0 .85rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+
+.staff-navbar-assisted-booking-action:hover,
+.staff-navbar-assisted-booking-action:focus-visible {
+  background: #ffd15c;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, .18);
+  transform: translateY(-1px);
+}
+
+.staff-navbar-assisted-booking-action svg {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 2.5;
+}
+
+.staff-navbar-action-tooltip {
+  pointer-events: none;
+  position: absolute;
+  top: calc(100% + .65rem);
+  right: 0;
+  z-index: 80;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2rem));
+  border: 1px solid rgba(26, 26, 26, .08);
+  border-radius: .8rem;
+  background: #fffaf3;
+  box-shadow: 0 16px 34px rgba(26, 26, 26, .18);
+  color: #253247;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.35;
+  opacity: 0;
+  padding: .65rem .75rem;
+  text-align: left;
+  text-transform: none;
+  transform: translateY(-.25rem);
+  transition: opacity .16s ease, transform .16s ease;
+  visibility: hidden;
+  white-space: normal;
+}
+
+.staff-navbar-assisted-booking-action:hover .staff-navbar-action-tooltip,
+.staff-navbar-assisted-booking-action:focus-visible .staff-navbar-action-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
 .staff-workspace.staff-role-shell {
   --admin-brand-maroon: #720101;
   --admin-brand-gold: #b7790a;
@@ -17449,6 +17558,25 @@ select.admin-select:not([multiple])::-ms-expand {
     grid-column: 3;
     grid-row: 1;
     gap: .6rem;
+  }
+
+  .staff-navbar-assisted-booking-action {
+    width: 2.35rem;
+    min-width: 2.35rem;
+    padding: 0;
+  }
+
+  .staff-navbar-assisted-booking-action > span:not(.staff-navbar-action-tooltip) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .staff-navbar-action-tooltip {
+    right: -.35rem;
   }
 
   .staff-workspace-navbar.has-search .staff-workspace-navbar-utility-search {

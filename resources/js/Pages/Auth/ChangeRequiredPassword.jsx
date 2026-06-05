@@ -6,6 +6,7 @@ import AuthShell from '../../Components/auth/AuthShell';
 import PasswordStrengthField, { PasswordMatchHint } from '../../Components/auth/PasswordStrengthField';
 import { useToast } from '../../context/ToastContext';
 import { evaluatePassword } from '../../utils/passwordPolicy';
+import { clearSensitiveAuthState } from '../../utils/smartResource';
 
 const dashboardForRole = (role) => {
     if (role === 'Admin') return '/dashboard/admin';
@@ -50,6 +51,7 @@ const ChangeRequiredPassword = () => {
 
     const signOut = async () => {
         setProcessing(true);
+        clearSensitiveAuthState();
 
         try {
             await axios.post('/logout');

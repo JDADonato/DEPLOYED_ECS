@@ -28,6 +28,8 @@ The app is built for four main roles:
 
 This repository includes a portable PHP runtime and `composer.phar`, so global PHP and Composer are not required for normal Windows development.
 
+`composer.phar` is in the repository root, not inside the `php` folder. Use `.\composer.bat install` or `.\php\php.exe composer.phar install`; do not use `.\php\composer.phar install`.
+
 Install these separately:
 
 | Tool | Version |
@@ -52,12 +54,16 @@ Install dependencies:
 npm install
 ```
 
+Wait for `.\composer.bat install` to finish before running any `artisan` command. Laravel commands such as `key:generate`, `migrate`, and `serve` need `vendor/autoload.php`, and that file is created by Composer during this step.
+
 Create your environment file:
 
 ```powershell
 Copy-Item .env.example .env
 .\php\php.exe artisan key:generate
 ```
+
+Only run `key:generate` when `.env` does not already have an `APP_KEY`. If this project was copied with an existing `.env` that already contains `APP_KEY=base64:...`, skip `key:generate`.
 
 Update `.env` for local development. At minimum, check these values:
 
@@ -389,6 +395,58 @@ git diff --check
 Line-ending warnings such as `CRLF will be replaced by LF` are Git normalization warnings, not code failures.
 
 ## Troubleshooting
+
+### `vendor/autoload.php` is missing
+
+If `artisan` shows this error:
+
+```text
+Failed opening required 'vendor/autoload.php'
+```
+
+Composer did not finish creating the PHP dependency autoloader. Run Composer from the repository root:
+
+```powershell
+.\composer.bat install
+```
+
+Equivalent direct command:
+
+```powershell
+.\php\php.exe composer.phar install
+```
+
+Do not run this command:
+
+```powershell
+.\php\composer.phar install
+```
+
+That path is wrong because `composer.phar` is in the repository root, not in the `php` folder.
+
+After Composer finishes, retry the Laravel command:
+
+```powershell
+.\php\php.exe artisan migrate
+```
+
+### Composer says `Resource temporarily unavailable`
+
+If Composer fails with an error like this:
+
+```text
+file_put_contents(.../vendor/composer/installed.php): Failed to open stream: Resource temporarily unavailable
+```
+
+Windows temporarily locked a Composer file. This usually happens when another PHP/Composer command is still running, antivirus or Windows indexing is scanning the folder, or two setup/startup commands are running at the same time.
+
+Close extra terminals that are running this project, wait a few seconds, then run:
+
+```powershell
+.\composer.bat install
+```
+
+If it still happens, close code editors or terminals that might be using the project folder, then try again. Once Composer completes successfully, `vendor/autoload.php` should exist and `artisan` commands can run.
 
 ### CSRF token mismatch or 419
 

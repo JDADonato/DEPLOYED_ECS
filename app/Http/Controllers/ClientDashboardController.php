@@ -28,12 +28,90 @@ class ClientDashboardController extends Controller
         $userId = Auth::id();
 
         $allBookings = Booking::where('user_id', $userId)
-            ->with(['payments' => fn ($query) => $query->active(), 'package'])
+            ->select([
+                'id',
+                'user_id',
+                'event_date',
+                'event_time',
+                'reservation_time',
+                'serving_time',
+                'pax',
+                'budget',
+                'package_id',
+                'event_type',
+                'event_name',
+                'client_full_name',
+                'client_email',
+                'client_phone',
+                'venue_address_line',
+                'venue_building_details',
+                'event_timeline',
+                'color_motif',
+                'theme_uploads',
+                'special_instructions',
+                'selected_menu',
+                'transport_fee',
+                'labor_surcharge',
+                'total_cost',
+                'status',
+                'live_status',
+                'review_status',
+                'clarification_request',
+                'clarification_response',
+                'hidden_from_customer_history_at',
+                'created_at',
+                'updated_at',
+            ])
+            ->with([
+                'payments' => fn ($query) => $query
+                    ->select([
+                        'id',
+                        'booking_id',
+                        'amount',
+                        'payment_method',
+                        'status',
+                        'payment_type',
+                        'due_date',
+                        'verified_by',
+                        'verified_at',
+                        'paymongo_checkout_session_id',
+                        'paymongo_payment_id',
+                        'paymongo_reference_number',
+                        'voided_at',
+                        'void_reason',
+                        'superseded_by_payment_id',
+                        'updated_at',
+                    ])
+                    ->active(),
+                'package:id,name,type,package_category,base_price_per_head,minimum_pax,description,menu_structure',
+            ])
             ->orderBy('event_date', 'desc')
             ->get();
 
         $allBookings->each(fn ($booking) => $paymentService->syncPendingTranches($booking));
-        $allBookings->load(['payments' => fn ($query) => $query->active(), 'package']);
+        $allBookings->load([
+            'payments' => fn ($query) => $query
+                ->select([
+                    'id',
+                    'booking_id',
+                    'amount',
+                    'payment_method',
+                    'status',
+                    'payment_type',
+                    'due_date',
+                    'verified_by',
+                    'verified_at',
+                    'paymongo_checkout_session_id',
+                    'paymongo_payment_id',
+                    'paymongo_reference_number',
+                    'voided_at',
+                    'void_reason',
+                    'superseded_by_payment_id',
+                    'updated_at',
+                ])
+                ->active(),
+            'package:id,name,type,package_category,base_price_per_head,minimum_pax,description,menu_structure',
+        ]);
 
         $bookingIdsForVersion = $allBookings->pluck('id');
         $bookingIdValuesForVersion = $bookingIdsForVersion->all();
@@ -111,7 +189,20 @@ class ClientDashboardController extends Controller
 
         $tastings = FoodTasting::where('user_id', $userId)
             ->orderBy('preferred_date', 'desc')
-            ->get();
+            ->get([
+                'id',
+                'user_id',
+                'guest_name',
+                'guest_email',
+                'guest_phone',
+                'preferred_date',
+                'preferred_time',
+                'notes',
+                'status',
+                'confirmed_at',
+                'completed_at',
+                'updated_at',
+            ]);
 
         $bookingIds = $allBookings->pluck('id');
         $payments = Payment::whereIn('booking_id', $bookingIds)
@@ -120,7 +211,25 @@ class ClientDashboardController extends Controller
             ->orderBy('booking_id')
             ->orderByRaw("CASE WHEN status IN ('Paid', 'Verified') THEN 0 ELSE 1 END")
             ->orderByRaw("CASE payment_type WHEN 'Reservation' THEN 1 WHEN 'DownPayment' THEN 2 WHEN 'Final' THEN 3 END")
-            ->get()
+            ->get([
+                'id',
+                'booking_id',
+                'amount',
+                'payment_method',
+                'status',
+                'payment_type',
+                'due_date',
+                'verified_by',
+                'verified_at',
+                'paymongo_checkout_session_id',
+                'paymongo_payment_id',
+                'paymongo_reference_number',
+                'voided_at',
+                'void_reason',
+                'superseded_by_payment_id',
+                'created_at',
+                'updated_at',
+            ])
             ->map(function ($p) {
                 $data = $p->toArray();
                 $data['event_date'] = $p->booking->event_date ?? null;

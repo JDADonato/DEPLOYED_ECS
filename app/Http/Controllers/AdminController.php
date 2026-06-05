@@ -675,10 +675,10 @@ class AdminController extends Controller
                 'createdByStaff:id,full_name,username',
                 'transferRequestedTo:id,full_name,username',
                 'transferRequestedBy:id,full_name,username',
-                'reviewTasks',
-                'preparationTasks',
+                'reviewTasks:id,booking_id,task_type,label,status,customer_visible,customer_response,completed_at',
+                'preparationTasks:id,booking_id,department,label,status,due_at,completed_at',
                 'payments:id,booking_id,amount,status,payment_type,due_date',
-                'package',
+                'package:id,name,base_price_per_head,menu_structure',
             ])
             ->when(! $request->boolean('include_history'), fn ($q) => $q->whereNotIn('status', ['Cancelled', 'cancelled', 'Completed', 'completed']))
             ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))

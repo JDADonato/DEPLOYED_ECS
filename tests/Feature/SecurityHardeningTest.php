@@ -37,7 +37,7 @@ class SecurityHardeningTest extends TestCase
 
         $user = User::where('username', 'secure_client')->firstOrFail();
 
-        Mail::assertQueued(VerifyEmailOTP::class);
+        Mail::assertSent(VerifyEmailOTP::class);
         $this->assertNotNull($user->otp_code);
         $this->assertFalse(preg_match('/^\d{6}$/', $user->otp_code) === 1);
 
@@ -75,6 +75,44 @@ class SecurityHardeningTest extends TestCase
         Log::shouldHaveReceived('error')
             ->withArgs(fn ($message, $context = []) => $message === 'Failed to send OTP email.'
                 && ($context['user_id'] ?? null) === $user->id);
+    }
+
+    public function test_authenticated_interfaces_and_logout_are_not_browser_cacheable(): void
+    {
+        $admin = $this->user('Admin');
+
+        $dashboard = $this->actingAs($admin)->get('/dashboard/admin')->assertOk();
+        $this->assertStringContainsString('no-store', $dashboard->headers->get('Cache-Control'));
+        $this->assertStringContainsString('private', $dashboard->headers->get('Cache-Control'));
+        $this->assertSame('no-cache', $dashboard->headers->get('Pragma'));
+        $this->assertSame('0', $dashboard->headers->get('Expires'));
+
+        $logout = $this->actingAs($admin)->post('/logout')->assertRedirect('/');
+        $this->assertStringContainsString('no-store', $logout->headers->get('Cache-Control'));
+        $this->assertStringContainsString('private', $logout->headers->get('Cache-Control'));
+        $this->assertSame('no-cache', $logout->headers->get('Pragma'));
+        $this->assertSame('0', $logout->headers->get('Expires'));
+    }
+
+    public function test_session_status_reports_authenticated_user_and_logged_out_state(): void
+    {
+        $marketing = $this->user('Marketing');
+
+        $this->actingAs($marketing)
+            ->getJson('/api/session/status')
+            ->assertOk()
+            ->assertJsonPath('authenticated', true)
+            ->assertJsonPath('user.id', $marketing->id)
+            ->assertJsonPath('user.role', 'Marketing')
+            ->assertHeader('Pragma', 'no-cache');
+
+        $this->post('/logout')->assertRedirect('/');
+
+        $this->getJson('/api/session/status')
+            ->assertOk()
+            ->assertJsonPath('authenticated', false)
+            ->assertJsonPath('user', null)
+            ->assertHeader('Pragma', 'no-cache');
     }
 
     public function test_registration_rejects_weak_passwords_and_marks_current_policy_for_strong_passwords(): void
@@ -119,7 +157,7 @@ class SecurityHardeningTest extends TestCase
 
         $user->refresh();
 
-        Mail::assertQueued(VerifyEmailOTP::class);
+        Mail::assertSent(VerifyEmailOTP::class);
         $this->assertNotSame('111111', $user->otp_code);
         $this->assertFalse(preg_match('/^\d{6}$/', $user->otp_code) === 1);
 

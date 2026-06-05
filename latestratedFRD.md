@@ -311,7 +311,7 @@ Notifications score: 93 / 100
 ### 5.13 Reports And Analytics Requirements
 
 - [~] FR-REP-001: Analytics Dashboard  
-  Admin analytics use real records, filters, business snapshots, conversion funnel, revenue/payment/pipeline/menu/customer/operations/forecast data, OLS regression, and simple moving averages. Mostly complete, but needs manual browser smoke testing on production-like data after recent UI fixes.
+  Admin analytics use real records, filters, business snapshots, conversion funnel, revenue/payment/booking status/menu/customer/operations/forecast data, OLS regression, and simple moving averages. Mostly complete, but needs manual browser smoke testing on production-like data after recent UI fixes.
 
 - [x] FR-REP-002: Report Builder  
   Admin report builder supports reusable blocks, drag/drop arrangement, preview, used block styling, and collapsible library.
@@ -451,4 +451,3 @@ Functional completion: 96.3%
 Launch readiness with local evidence only: 94.4%
 Launch readiness after successful staging validation: estimated 97%+
 ```
-

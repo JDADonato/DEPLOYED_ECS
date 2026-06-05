@@ -123,18 +123,18 @@ const _EventJourneyTracker = ({ booking, payments }) => {
                         <p className="text-[#f0aa0b] text-xs font-bold uppercase tracking-widest mb-1">Your Event Journey</p>
                         <h2 className="text-[#1a1a1a] text-2xl font-display font-bold">{eventDisplayName(booking)}</h2>
                     </div>
-                    <button 
+                    <button
                         onClick={() => router.get('/dashboard/client')}
                         className="bg-[#720101] hover:bg-[#5a0101] text-white text-xs font-black uppercase tracking-widest py-3 px-8 rounded-2xl shadow-xl shadow-[#720101]/20 transition-all active:scale-95"
                     >
                         View Dashboard
                     </button>
                 </div>
-                
+
                 <div className="relative pt-4 pb-12">
                     <div className="absolute top-[2.1rem] left-0 w-full h-1 bg-gray-100 rounded-full"></div>
                     <div className="absolute top-[2.1rem] left-0 h-1 bg-[#720101] rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(114,1,1,0.3)]" style={{ width: `${progressWidth}%` }}></div>
-                    
+
                     <div
                         className="relative grid gap-3 pb-2"
                         style={{ gridTemplateColumns: `repeat(${Math.max(steps.length, 1)}, minmax(0, 1fr))` }}
@@ -143,7 +143,7 @@ const _EventJourneyTracker = ({ booking, payments }) => {
                             const isCompleted = step.done;
                             const isActive = idx === activeStep;
                             const isLocked = step.locked;
-                            
+
                             return (
                                 <button
                                     key={idx}
@@ -155,9 +155,9 @@ const _EventJourneyTracker = ({ booking, payments }) => {
                                     className="group flex min-w-0 flex-col items-center disabled:cursor-not-allowed"
                                 >
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-500 z-10 
-                                        ${isCompleted ? 'bg-[#720101] border-[#720101] text-white' : 
-                                          isActive ? 'bg-white border-[#720101] text-[#720101] shadow-xl' : 
-                                          'bg-white border-gray-100 text-gray-300'}`}>
+                                        ${isCompleted ? 'bg-[#720101] border-[#720101] text-white' :
+                                            isActive ? 'bg-white border-[#720101] text-[#720101] shadow-xl' :
+                                                'bg-white border-gray-100 text-gray-300'}`}>
                                         {isCompleted ? 'OK' : isLocked ? (
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                         ) : idx + 1}
@@ -183,7 +183,7 @@ const buildFloatingJourneySteps = (booking, payments) => {
     const paid = bookingPayments
         .filter((payment) => isSettled(payment.status))
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-    
+
     const isApproved = ['Confirmed', 'Completed'].includes(booking.status);
     const hasReservation = bookingPayments.some((payment) => payment.payment_type === 'Reservation' && isSettled(payment.status)) || (total > 0 && paid / total >= 0.1);
     const eventDetailsDone = Boolean(booking.venue_address_line && booking.event_time && (booking.event_timeline || booking.special_instructions || booking.color_motif));
@@ -574,6 +574,16 @@ const announcementImage = (announcement) => {
     return `/storage/${path.replace(/^\/+/, '')}`;
 };
 
+const formatAnnouncementDate = (announcement) => {
+    const value = announcement?.published_at || announcement?.created_at || announcement?.updated_at;
+    if (!value) return 'Recent update';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Recent update';
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const HomepageAnnouncements = ({ announcements }) => {
     if (!announcements.length) return null;
 
@@ -581,57 +591,115 @@ const HomepageAnnouncements = ({ announcements }) => {
     const image = announcementImage(featured);
 
     return (
-        <section className="bg-white px-5 py-12 sm:px-8">
-            <div className="mx-auto max-w-7xl">
-                <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p className="text-xs font-black uppercase tracking-[.22em] text-[#f0aa0b]">Latest Updates</p>
-                        <h2 className="mt-2 font-display text-3xl font-bold text-[#1a1a1a]">Announcements from Eloquente</h2>
+        <section className="relative overflow-hidden bg-[#fffaf3] py-24">
+            <div className="absolute inset-x-0 top-0 h-px bg-[#720101]/10" />
+            <div className="absolute inset-x-0 bottom-0 h-px bg-[#720101]/10" />
+            <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                <Rv>
+                    <div className="mb-12 grid gap-6 lg:grid-cols-[0.74fr_1fr] lg:items-end">
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-[.22em] text-[#720101]">Latest from Eloquente</p>
+                            <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-[#1a1a1a] md:text-5xl">
+                                Important notes for upcoming celebrations.
+                            </h2>
+                        </div>
+                        <p className="max-w-2xl text-sm font-medium leading-7 text-gray-600 lg:justify-self-end">
+                            Timely advisories, menu updates, and booking reminders from the team, placed here as part of the planning experience.
+                        </p>
                     </div>
-                    <p className="max-w-xl text-sm font-medium leading-6 text-gray-500">
-                        Fresh advisories, menu notes, and booking updates from the team.
-                    </p>
-                </div>
+                </Rv>
 
-                <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
-                    <article className="overflow-hidden rounded-3xl border border-[#720101]/10 bg-[#fffaf3] shadow-sm">
-                        {image && <SmartImage src={image} alt="" aspectRatio="16 / 9" containerClassName="h-64" />}
-                        <div className="p-6 md:p-8">
-                            <span className="inline-flex rounded-full bg-[#720101]/10 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">
-                                {announcementTypeLabels[featured.type] || 'Announcement'}
-                            </span>
-                            <h3 className="mt-4 font-display text-2xl font-bold leading-tight text-[#1a1a1a] md:text-3xl">
+                <div className={`grid gap-10 ${image ? 'lg:grid-cols-[0.9fr_1.1fr]' : 'lg:grid-cols-[0.72fr_1fr]'} lg:items-stretch`}>
+                    {image && (
+                        <Rv>
+                            <div className="relative min-h-[22rem] overflow-hidden rounded-[2rem] bg-[#15110f] lg:min-h-[34rem]">
+                                <SmartImage src={image} alt="" aspectRatio="4 / 5" containerClassName="h-full min-h-[22rem] lg:min-h-[34rem]" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#15110f]/62 via-transparent to-transparent" />
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#f0aa0b]" />
+                            </div>
+                        </Rv>
+                    )}
+
+                    <Rv>
+                        <div className="flex h-full flex-col justify-center">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="rounded-full bg-[#720101]/10 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">
+                                    {announcementTypeLabels[featured.type] || 'Announcement'}
+                                </span>
+                                <span className="text-xs font-bold uppercase tracking-[.16em] text-gray-400">
+                                    {formatAnnouncementDate(featured)}
+                                </span>
+                            </div>
+
+                            <h3 className="mt-6 max-w-4xl font-display text-4xl font-bold leading-tight text-[#1a1a1a] md:text-6xl">
                                 {featured.title}
                             </h3>
-                            <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-gray-600">
+                            <p className="mt-6 max-w-3xl text-base font-medium leading-8 text-gray-600 md:text-lg">
                                 {featured.summary || featured.body}
                             </p>
                             {featured.cta_label && featured.cta_url && (
-                                <Link href={featured.cta_url} className="mt-6 inline-flex items-center rounded-full bg-[#720101] px-6 py-3 text-sm font-black uppercase tracking-wider text-white transition-colors hover:bg-[#5a0101]">
+                                <Link href={featured.cta_url} className="mt-8 inline-flex w-fit items-center rounded-full bg-[#720101] px-7 py-3.5 text-sm font-black uppercase tracking-wider text-white transition-colors hover:bg-[#5a0101]">
                                     {featured.cta_label}
                                 </Link>
                             )}
-                        </div>
-                    </article>
 
-                    <div className="grid gap-4">
-                        {rest.slice(0, 3).map((announcement) => (
-                            <article key={announcement.id} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                                <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">
-                                    {announcementTypeLabels[announcement.type] || 'Announcement'}
-                                </span>
-                                <h3 className="mt-2 text-lg font-black text-[#1a1a1a]">{announcement.title}</h3>
-                                <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-500">
-                                    {announcement.summary || announcement.body}
-                                </p>
-                                {announcement.cta_label && announcement.cta_url && (
-                                    <Link href={announcement.cta_url} className="mt-3 inline-flex text-sm font-black text-[#720101] hover:text-[#f0aa0b]">
-                                        {announcement.cta_label}
-                                    </Link>
-                                )}
-                            </article>
-                        ))}
-                    </div>
+                            {rest.length > 0 && (
+                                <div className="mt-12 grid gap-0 border-y border-[#720101]/10">
+                                    {rest.slice(0, 3).map((announcement, index) => (
+                                        <div key={announcement.id} className="grid gap-3 border-b border-[#720101]/10 py-5 last:border-b-0 sm:grid-cols-[10rem_1fr]">
+                                            <div>
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-[#720101]">
+                                                    {announcementTypeLabels[announcement.type] || 'Announcement'}
+                                                </p>
+                                                <p className="mt-1 text-[11px] font-bold uppercase tracking-[.14em] text-gray-400">
+                                                    {formatAnnouncementDate(announcement)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-display text-xl font-bold leading-tight text-[#1a1a1a]">{announcement.title}</h4>
+                                                <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-600">
+                                                    {announcement.summary || announcement.body}
+                                                </p>
+                                                {announcement.cta_label && announcement.cta_url && (
+                                                    <Link href={announcement.cta_url} className="mt-3 inline-flex text-sm font-black text-[#720101] hover:text-[#f0aa0b]">
+                                                        {announcement.cta_label}
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </Rv>
+
+                    {!image && rest.length > 0 && (
+                        <Rv d="rv-d1">
+                            <div className="grid content-center gap-0 border-y border-[#720101]/10">
+                                {rest.slice(0, 3).map((announcement) => (
+                                    <div key={announcement.id} className="border-b border-[#720101]/10 py-5 last:border-b-0">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">
+                                                {announcementTypeLabels[announcement.type] || 'Announcement'}
+                                            </span>
+                                            <span className="text-[11px] font-bold uppercase tracking-[.14em] text-gray-400">
+                                                {formatAnnouncementDate(announcement)}
+                                            </span>
+                                        </div>
+                                        <h4 className="mt-3 font-display text-xl font-bold leading-tight text-[#1a1a1a]">{announcement.title}</h4>
+                                        <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-600">
+                                            {announcement.summary || announcement.body}
+                                        </p>
+                                        {announcement.cta_label && announcement.cta_url && (
+                                            <Link href={announcement.cta_url} className="mt-3 inline-flex text-sm font-black text-[#720101] hover:text-[#f0aa0b]">
+                                                {announcement.cta_label}
+                                            </Link>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </Rv>
+                    )}
                 </div>
             </div>
         </section>
@@ -787,7 +855,7 @@ const LandingPage = () => {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-white" style={{fontFamily:"'Inter',sans-serif"}}>
+        <div className="min-h-screen flex flex-col bg-white" style={{ fontFamily: "'Inter',sans-serif" }}>
             <Head title="Eloquente Catering | Plan, Book, and Track Your Event">
                 <meta name="description" content="Plan your catering event with Eloquente: check availability, build a menu, submit for review, pay securely, and track progress from your dashboard." />
             </Head>
@@ -796,22 +864,22 @@ const LandingPage = () => {
             <StaffPreviewBanner user={user} label="customer-facing home page" />
 
             {/* HERO */}
-            <section className="relative flex items-center overflow-hidden bg-[#15110f]" style={{minHeight:'100vh',paddingTop: isStaffUser(user) ? 104 : 68}}>
-                <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=85&w=1800" alt="Elegant catered reception service" className="absolute inset-0 w-full h-full object-cover opacity-55"/>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#15110f] via-[#15110f]/88 to-[#720101]/42"/>
+            <section className="relative flex items-center overflow-hidden bg-[#15110f]" style={{ minHeight: '100vh', paddingTop: isStaffUser(user) ? 104 : 68 }}>
+                <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=85&w=1800" alt="Elegant catered reception service" className="absolute inset-0 w-full h-full object-cover opacity-55" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#15110f] via-[#15110f]/88 to-[#720101]/42" />
                 <div className="relative z-10 w-full max-w-7xl mx-auto grid gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1.05fr_0.72fr] lg:items-end">
                     <div className="text-center lg:text-left">
-                        <p className="mb-5 text-sm font-black uppercase tracking-[0.24em] text-[#f0aa0b] md:text-base" style={{opacity:0,animation:'fadeUp .6s .25s forwards'}}>Eloquente Catering Services</p>
-                        <h1 className="font-display text-white leading-[1.08] mb-5" style={{fontSize:'clamp(2.6rem,6vw,5.75rem)',opacity:0,animation:'fadeUp .7s .4s forwards'}}>
+                        <p className="mb-5 text-sm font-black uppercase tracking-[0.24em] text-[#f0aa0b] md:text-base" style={{ opacity: 0, animation: 'fadeUp .6s .25s forwards' }}>Eloquente Catering Services</p>
+                        <h1 className="font-display text-white leading-[1.08] mb-5" style={{ fontSize: 'clamp(2.6rem,6vw,5.75rem)', opacity: 0, animation: 'fadeUp .7s .4s forwards' }}>
                             Where great food speaks for itself
                         </h1>
                         <p className="hidden">
                             Premium catering for weddings, corporate events, and private celebrations - crafted with precision, served with heart.
                         </p>
-                        <p className="text-white/85 text-base md:text-lg leading-relaxed max-w-xl mb-8 mx-auto lg:mx-0" style={{opacity:0,animation:'fadeUp .7s .55s forwards'}}>
+                        <p className="text-white/85 text-base md:text-lg leading-relaxed max-w-xl mb-8 mx-auto lg:mx-0" style={{ opacity: 0, animation: 'fadeUp .7s .55s forwards' }}>
                             Premium menus, polished setup, transparent planning, and service teams prepared for weddings, company events, and private celebrations.
                         </p>
-                        <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start" style={{opacity:0,animation:'fadeUp .7s .7s forwards'}}>
+                        <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start" style={{ opacity: 0, animation: 'fadeUp .7s .7s forwards' }}>
                             <Link href="/book" className="bg-[#f0aa0b] hover:bg-[#d4950a] text-[#1a1a1a] font-bold py-4 px-10 rounded-full text-sm uppercase tracking-wider transition-colors shadow-lg">
                                 Start Booking
                             </Link>
@@ -823,17 +891,17 @@ const LandingPage = () => {
                             </Link>
                         </div>
                     </div>
-                    <div className="hidden lg:block" style={{opacity:0,animation:'fadeUp .8s .6s forwards'}}>
+                    <div className="hidden lg:block" style={{ opacity: 0, animation: 'fadeUp .8s .6s forwards' }}>
                         <div className="rounded-2xl border border-white/10 bg-[#15110f]/90 p-8 shadow-2xl shadow-black/20">
-                                <p className="text-[#f0aa0b] text-xs font-black uppercase tracking-widest mb-4">Service Proof</p>
-                                <div className="space-y-5">
-                                    {[{n:'Events Catered',v:500,s:'+'},{n:'Happy Clients',v:420,s:'+'},{n:'Years of Excellence',v:15,s:''}].map((s,i)=>(
-                                        <div key={i} className="flex items-center justify-between border-b border-white/10 pb-3">
-                                            <span className="text-white text-sm">{s.n}</span>
-                                            <span className="text-white font-display text-2xl font-bold"><Counter end={s.v} suffix={s.s}/></span>
-                                        </div>
-                                    ))}
-                                </div>
+                            <p className="text-[#f0aa0b] text-xs font-black uppercase tracking-widest mb-4">Service Proof</p>
+                            <div className="space-y-5">
+                                {[{ n: 'Events Catered', v: 500, s: '+' }, { n: 'Happy Clients', v: 420, s: '+' }, { n: 'Years of Excellence', v: 15, s: '' }].map((s, i) => (
+                                    <div key={i} className="flex items-center justify-between border-b border-white/10 pb-3">
+                                        <span className="text-white text-sm">{s.n}</span>
+                                        <span className="text-white font-display text-2xl font-bold"><Counter end={s.v} suffix={s.s} /></span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -924,10 +992,10 @@ const LandingPage = () => {
 
                     <div className="grid gap-6 lg:grid-cols-2">
                         {[
-                            {title:'Budget-aware planning',text:'Set a practical range and see how menu choices, guest count, and package decisions affect the event total.',img:'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=900'},
-                            {title:'Menus shaped around the event',text:'Build a selection that reflects the occasion, service style, and guest needs without losing pricing clarity.',img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=900'},
-                        ].map((item,i)=>(
-                            <Rv key={item.title} d={`rv-d${i+1}`}>
+                            { title: 'Budget-aware planning', text: 'Set a practical range and see how menu choices, guest count, and package decisions affect the event total.', img: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=900' },
+                            { title: 'Menus shaped around the event', text: 'Build a selection that reflects the occasion, service style, and guest needs without losing pricing clarity.', img: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=900' },
+                        ].map((item, i) => (
+                            <Rv key={item.title} d={`rv-d${i + 1}`}>
                                 <article className="overflow-hidden rounded-3xl border border-gray-100 bg-[#faf7f2] shadow-sm">
                                     <SmartImage src={item.img} alt={item.title} aspectRatio="4 / 3" containerClassName="h-72" />
                                     <div className="p-7">
@@ -943,8 +1011,8 @@ const LandingPage = () => {
                         {[
                             ['Buffet and table setup', 'Serving stations, table arrangements, and presentation details are prepared around the venue and guest flow.'],
                             ['Crew and logistics', 'Staffing, access notes, high-rise details, and cleanup expectations are checked before the event day.'],
-                        ].map(([title,text],i)=>(
-                            <Rv key={title} d={`rv-d${i+3}`}>
+                        ].map(([title, text], i) => (
+                            <Rv key={title} d={`rv-d${i + 3}`}>
                                 <div className="rounded-2xl border border-[#720101]/10 bg-white p-6 shadow-sm">
                                     <p className="text-xs font-black uppercase tracking-[.2em] text-[#f0aa0b]">Service Detail</p>
                                     <h3 className="mt-3 font-display text-xl font-bold text-[#720101]">{title}</h3>
@@ -971,16 +1039,16 @@ const LandingPage = () => {
                     </div></Rv>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {[
-                            {t:'Weddings',img:'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=500',d:'Elegant packages for your dream day'},
-                            {t:'Corporate',img:'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=500',d:'Professional business catering'},
-                            {t:'Private Parties',img:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=500',d:'Celebrate personal moments in style'},
-                            {t:'Debut & Baptismal',img:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&q=80&w=500',d:'Handled with care & warmth'},
-                        ].map((s,i)=>(
-                            <Rv key={i} d={`rv-d${i+1}`}>
+                            { t: 'Weddings', img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=500', d: 'Elegant packages for your dream day' },
+                            { t: 'Corporate', img: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=500', d: 'Professional business catering' },
+                            { t: 'Private Parties', img: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=500', d: 'Celebrate personal moments in style' },
+                            { t: 'Debut & Baptismal', img: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&q=80&w=500', d: 'Handled with care & warmth' },
+                        ].map((s, i) => (
+                            <Rv key={i} d={`rv-d${i + 1}`}>
                                 <div className="group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-all duration-500 cursor-pointer">
                                     <div className="relative h-52 overflow-hidden">
                                         <SmartImage src={s.img} alt={s.t} aspectRatio="1 / 1" containerClassName="h-full" className="transition-transform duration-700 group-hover:scale-110" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#720101]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#720101]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                         <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
                                             <p className="text-white/80 text-sm">{s.d}</p>
                                         </div>
@@ -1001,7 +1069,7 @@ const LandingPage = () => {
                     <Rv>
                         <div className="flex flex-col md:flex-row items-center gap-12 bg-[#faf7f2] rounded-3xl p-8 md:p-12 border border-[#f0aa0b]/20 relative overflow-hidden shadow-sm">
                             <div className="absolute inset-x-0 top-0 h-1 bg-[#f0aa0b]"></div>
-                            
+
                             <div className="flex-1 z-10">
                                 <p className="text-[#720101] text-xs font-bold uppercase tracking-[.2em] mb-3">Try Before You Buy</p>
                                 <h2 className="font-display text-[#1a1a1a] text-3xl md:text-4xl mb-4">Schedule a Private Food Tasting</h2>
@@ -1010,11 +1078,11 @@ const LandingPage = () => {
                                 </p>
                                 <Link href="/food-tasting" className="bg-[#720101] hover:bg-[#5a0101] text-white font-bold py-3.5 px-8 rounded-full text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2">
                                     Schedule Tasting
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                                 </Link>
                             </div>
                             <div className="flex-1 w-full relative z-10">
-                                <img src="https://images.unsplash.com/photo-1528712306091-ed0763094c98?auto=format&fit=crop&q=80&w=760" alt="Tasting plates prepared for review" className="w-full h-72 md:h-80 object-cover rounded-2xl shadow-lg border-4 border-white"/>
+                                <img src="https://images.unsplash.com/photo-1528712306091-ed0763094c98?auto=format&fit=crop&q=80&w=760" alt="Tasting plates prepared for review" className="w-full h-72 md:h-80 object-cover rounded-2xl shadow-lg border-4 border-white" />
                                 <div className="absolute -bottom-5 -left-5 bg-white p-4 rounded-xl shadow-xl flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-[#f0aa0b]/20 flex items-center justify-center text-[#f0aa0b]">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
@@ -1032,7 +1100,7 @@ const LandingPage = () => {
 
             {/* PRICING RULES */}
             <section className="relative overflow-hidden bg-[#15110f] py-24 text-white">
-                <div className="absolute inset-x-0 top-0 h-1 bg-[#f0aa0b]"/>
+                <div className="absolute inset-x-0 top-0 h-1 bg-[#f0aa0b]" />
                 <div className="mx-auto max-w-6xl px-5 sm:px-8">
                     <Rv>
                         <div className="mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
@@ -1062,7 +1130,7 @@ const LandingPage = () => {
                                     <div className="mt-6 grid gap-3">
                                         {rule.points.map((point) => (
                                             <div key={point} className="flex gap-3 rounded-xl bg-black/20 p-3">
-                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#f0aa0b]"/>
+                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#f0aa0b]" />
                                                 <p className="text-sm font-medium leading-6 text-white/65">{point}</p>
                                             </div>
                                         ))}
@@ -1092,7 +1160,7 @@ const LandingPage = () => {
                                 Clients choose Eloquente for polished service, clear planning, and the confidence that event details are handled before the day begins.
                             </p>
                             <div className="mt-8 grid grid-cols-3 gap-1 overflow-hidden rounded-2xl border border-[#720101]/10 bg-[#720101]/10">
-                                {[['500+','events'],['420+','clients'],['15','years']].map(([value,label])=>(
+                                {[['500+', 'events'], ['420+', 'clients'], ['15', 'years']].map(([value, label]) => (
                                     <div key={label} className="bg-white p-5">
                                         <p className="font-display text-3xl font-bold text-[#720101]">{value}</p>
                                         <p className="mt-1 text-[11px] font-black uppercase tracking-widest text-gray-400">{label}</p>
@@ -1103,16 +1171,16 @@ const LandingPage = () => {
                     </Rv>
                     <div className="grid gap-5">
                         {[
-                            {name:'Maria Santos',role:'Bride - Dec 2025',text:'Eloquente made our wedding reception flawless. 350 guests served on time, every dish was incredible. Our families still talk about the lechon.'},
-                            {name:'James Reyes',role:'HR Director - Accenture PH',text:"We've used them for three annual company dinners. Consistent quality, transparent pricing, and the booking system is genuinely useful."},
-                            {name:'Angela Cruz',role:'Event Planner',text:"As a planner, I need reliable caterers. Eloquente's budget tool helped my client get premium food within a tight budget. Highly recommended."},
-                        ].map((t,i)=>(
-                            <Rv key={i} d={`rv-d${i+1}`}>
+                            { name: 'Maria Santos', role: 'Bride - Dec 2025', text: 'Eloquente made our wedding reception flawless. 350 guests served on time, every dish was incredible. Our families still talk about the lechon.' },
+                            { name: 'James Reyes', role: 'HR Director - Accenture PH', text: "We've used them for three annual company dinners. Consistent quality, transparent pricing, and the booking system is genuinely useful." },
+                            { name: 'Angela Cruz', role: 'Event Planner', text: "As a planner, I need reliable caterers. Eloquente's budget tool helped my client get premium food within a tight budget. Highly recommended." },
+                        ].map((t, i) => (
+                            <Rv key={i} d={`rv-d${i + 1}`}>
                                 <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#720101]/8 text-[#720101] font-bold">{t.name[0]}</div>
                                         <div>
-                                            <div className="flex gap-0.5 mb-3">{[1,2,3,4,5].map(j=><svg key={j} className="w-4 h-4 text-[#f0aa0b]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>)}</div>
+                                            <div className="flex gap-0.5 mb-3">{[1, 2, 3, 4, 5].map(j => <svg key={j} className="w-4 h-4 text-[#f0aa0b]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>)}</div>
                                             <p className="text-sm font-medium leading-7 text-gray-600">"{t.text}"</p>
                                             <div className="mt-4">
                                                 <p className="text-sm font-bold text-[#1a1a1a]">{t.name}</p>
@@ -1129,9 +1197,9 @@ const LandingPage = () => {
 
             {/* FINAL CTA */}
             <section className="relative overflow-hidden bg-[#15110f] py-20 text-center">
-                <img src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=85&w=1800" alt="Formal celebration table setup" className="absolute inset-0 h-full w-full object-cover opacity-28"/>
-                <div className="absolute inset-0 bg-[#15110f]/88"/>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#15110f]/95 via-[#15110f]/82 to-[#15110f]/95"/>
+                <img src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=85&w=1800" alt="Formal celebration table setup" className="absolute inset-0 h-full w-full object-cover opacity-28" />
+                <div className="absolute inset-0 bg-[#15110f]/88" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#15110f]/95 via-[#15110f]/82 to-[#15110f]/95" />
                 <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8">
                     <Rv>
                         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#f0aa0b]">Ready when you are</p>

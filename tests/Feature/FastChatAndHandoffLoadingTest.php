@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Conversation;
 use App\Models\EventPreparationTask;
 use App\Models\Message;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\EventPreparationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,10 +139,23 @@ class FastChatAndHandoffLoadingTest extends TestCase
             ->getJson('/api/operations/preparation-board?paginated=1&lightweight=1&per_page=1')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('meta.total', 2);
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonStructure([
+                'data',
+                'meta' => [
+                    'current_page',
+                    'last_page',
+                    'per_page',
+                    'total',
+                    'summary',
+                    'departments',
+                ],
+                'links' => ['first', 'last', 'prev', 'next'],
+            ]);
 
         $this->assertArrayNotHasKey('tasks', $list->json('data.0'));
         $this->assertContains('Marketing', $list->json('meta.departments'));
+        $this->assertArrayHasKey('needs_attention', $list->json('meta.summary'));
 
         $this->actingAs($admin)
             ->getJson("/api/operations/preparation-board/{$first->id}")
@@ -175,12 +189,58 @@ class FastChatAndHandoffLoadingTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/api/admin/bookings?paginated=1&include_history=1')
             ->assertOk()
+            ->assertJsonStructure([
+                'data',
+                'meta' => [
+                    'current_page',
+                    'last_page',
+                    'per_page',
+                    'total',
+                    'changed',
+                    'resource_version',
+                ],
+                'links' => ['first', 'last', 'prev', 'next'],
+            ])
             ->assertJsonPath('data.0.id', $booking->id)
             ->assertJsonPath('data.0.customer_account.name', 'Account Name')
             ->assertJsonPath('data.0.customer_account.username', 'account_name')
             ->assertJsonPath('data.0.booking_contact.name', 'Booking Contact')
             ->assertJsonPath('data.0.booking_contact.email', 'booking@example.test')
             ->assertJsonPath('data.0.has_different_booking_contact', true);
+    }
+
+    public function test_accounting_finance_tables_return_pagination_metadata(): void
+    {
+        $accounting = $this->user('Accounting');
+        $booking = $this->booking();
+        Payment::create([
+            'booking_id' => $booking->id,
+            'amount' => 1000,
+            'payment_method' => 'Cash',
+            'status' => 'Verified',
+            'payment_type' => 'Reservation',
+            'due_date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($accounting)
+            ->getJson('/api/accounting/bookings?paginated=1&per_page=1')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonStructure([
+                'data',
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+                'links' => ['first', 'last', 'prev', 'next'],
+            ]);
+
+        $this->actingAs($accounting)
+            ->getJson('/api/accounting/ledger?paginated=1&per_page=1')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonStructure([
+                'data',
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+                'links' => ['first', 'last', 'prev', 'next'],
+            ]);
     }
 
     public function test_chat_conversation_payload_leads_with_account_and_keeps_booking_contact(): void

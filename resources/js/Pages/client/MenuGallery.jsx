@@ -11,6 +11,7 @@ import SmartImage from '../../Components/common/SmartImage';
 import StaffPreviewBanner from '../../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
+import logoutWithCleanup from '../../utils/logout';
 
 const CATEGORY_LIMITS = { starter: 3, main: 4, side: 4, dessert: 4, drink: 3 };
 const STORAGE_KEY = 'ecs_booking_draft';
@@ -425,7 +426,7 @@ const MenuGallery = () => {
                                         My Profile
                                     </Link>
                                     <button
-                                        onClick={() => { router.post('/logout'); setIsMobileMenuOpen(false); }}
+                                        onClick={() => { logoutWithCleanup(); setIsMobileMenuOpen(false); }}
                                         className="w-full text-left text-white hover:bg-red-700 px-3 py-2 rounded-md text-base font-medium"
                                     >
                                         Logout

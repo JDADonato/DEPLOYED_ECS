@@ -129,6 +129,12 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     const [modal, setModal] = useState({ isOpen: false, type: 'error', title: '', message: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState(null);
+    const [upfrontPayment, setUpfrontPayment] = useState({
+        enabled: false,
+        amount: '',
+        method: 'Cash',
+        reference: '',
+    });
 
     useEffect(() => {
         if (!isOpen) return;
@@ -389,6 +395,11 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             is_high_rise: bookingData.isHighRise,
             transport_fee: costs.locationSurcharge,
             labor_surcharge: costs.laborSurcharge,
+            upfront_payment: upfrontPayment.enabled && Number(upfrontPayment.amount) > 0 ? {
+                amount: Number(upfrontPayment.amount),
+                method: upfrontPayment.method,
+                reference: upfrontPayment.reference,
+            } : null,
         };
 
         setIsSubmitting(true);
@@ -666,6 +677,62 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                             </ul>
                         ) : <p className="booking-review-muted">No dishes selected yet.</p>}
                     </div>
+
+                    <div className="booking-review-card">
+                        <div className="mb-4 flex items-center justify-between">
+                            <span className="font-bold text-[#720101]">Optional: Upfront Walk-in Payment</span>
+                            <label className="flex cursor-pointer items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={upfrontPayment.enabled}
+                                    onChange={(e) => setUpfrontPayment({ ...upfrontPayment, enabled: e.target.checked })}
+                                    className="h-5 w-5 rounded border-slate-300 text-[#720101] focus:ring-[#720101]"
+                                />
+                                <span className="text-sm font-medium text-slate-700">Record Payment</span>
+                            </label>
+                        </div>
+                        {upfrontPayment.enabled && (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">Amount</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        className="booking-input"
+                                        placeholder="0.00"
+                                        value={upfrontPayment.amount}
+                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, amount: e.target.value })}
+                                    />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Required 20% down payment is {money(reviewCosts.finalTotal * 0.20)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">Payment Method</label>
+                                    <select
+                                        className="booking-input"
+                                        value={upfrontPayment.method}
+                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, method: e.target.value })}
+                                    >
+                                        <option value="Cash">Cash</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Card Terminal">Card Terminal</option>
+                                    </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">Reference Number (Optional)</label>
+                                    <input
+                                        type="text"
+                                        className="booking-input"
+                                        placeholder="e.g. TR-12345"
+                                        value={upfrontPayment.reference}
+                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, reference: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </section>
             </div>
             <div className="booking-step-actions">
@@ -741,7 +808,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     };
 
     return (
-        <div className="fixed inset-0 z-[9998] overflow-hidden bg-[#fffaf3] font-sans text-slate-900">
+        <div className="booking-page fixed inset-0 z-[9998] overflow-hidden bg-[#fffaf3] font-sans text-slate-900">
             <Modal
                 isOpen={modal.isOpen}
                 onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}

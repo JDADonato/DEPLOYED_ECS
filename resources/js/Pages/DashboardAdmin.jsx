@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { router } from '@inertiajs/react';
 import logoImg from '../../images/ECS_LOGO.png';
 import { BarChart, Bar as RechartsBar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line as RechartsLine, LabelList, ReferenceLine } from '../Components/charts/LazyRecharts';
-import { CalendarDays, CheckCircle2, ChevronDown, ClipboardList, CreditCard, Filter, Loader2, Maximize2, Package, RefreshCw, Search, Users, X } from 'lucide-react';
+import { CalendarDays, CalendarPlus, CheckCircle2, ChevronDown, ClipboardList, CreditCard, Filter, Loader2, Maximize2, Package, RefreshCw, Search, Users, X } from 'lucide-react';
 import useCachedJson from '../hooks/useCachedJson';
 import useSmartRefresh from '../hooks/useSmartRefresh';
 import ConfirmModal from '../Components/common/ConfirmModal';
@@ -15,7 +15,7 @@ import StaffNavbarSearch from '../Components/staff/StaffNavbarSearch';
 import { AdminCommandStrip, AdminPageSurface, AdminResponsiveTable } from '../Components/admin/AdminSurface';
 import StaffEmptyState from '../Components/staff/StaffEmptyState';
 import StaffPagination from '../Components/staff/StaffPagination';
-import { StaffCommandBar, StaffInlineInsight, StaffMetricStrip, StaffPrimaryAction, StaffStatusChip, StaffWorkTable } from '../Components/staff/StaffV2';
+import { StaffCommandBar, StaffInlineInsight, StaffMetricStrip, StaffStatusChip, StaffWorkTable } from '../Components/staff/StaffV2';
 import EventHistoryPanel from '../Components/staff/EventHistoryPanel';
 import NextActionPanel from '../Components/staff/NextActionPanel';
 import RoleSettingsPanel from '../Components/staff/RoleSettingsPanel';
@@ -24,6 +24,7 @@ import PasswordStrengthField, { PasswordMatchHint } from '../Components/auth/Pas
 import PasswordUpgradeBanner from '../Components/auth/PasswordUpgradeBanner';
 import { getListData } from '../utils/apiResponses';
 import csrfFetch from '../utils/csrf';
+import logoutWithCleanup from '../utils/logout';
 import { fetchSmartResource, getUserScopedCacheKey, readSmartCache } from '../utils/smartResource';
 import { operationalChannelsForUser } from '../utils/liveChannels';
 import { evaluatePassword } from '../utils/passwordPolicy';
@@ -282,9 +283,9 @@ const DEFAULT_ANALYTICS_FILTERS = {
     breakdown_payment_status: '',
 };
 
-const ADMIN_EMPLOYEES_URL = '/api/admin/employees?paginated=1&per_page=25';
-const ADMIN_CUSTOMERS_URL = '/api/admin/customers?paginated=1&per_page=25';
-const ADMIN_BOOKINGS_URL = '/api/admin/bookings?paginated=1&per_page=25';
+const ADMIN_EMPLOYEES_URL = '/api/admin/employees';
+const ADMIN_CUSTOMERS_URL = '/api/admin/customers';
+const ADMIN_BOOKINGS_URL = '/api/admin/bookings';
 const CUSTOMER_SUPPORT_TABS = ['customer-lookup', 'customer-dashboard', 'customer-menu', 'customer-payments', 'customer-history', 'customer-messages', 'customer-feedback', 'customer-announcements', 'customer-account-status'];
 const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'public-content', 'availability', 'accounts', 'settings', 'system-audit', 'history', ...CUSTOMER_SUPPORT_TABS];
 const ADMIN_TAB_ALIASES = {
@@ -456,14 +457,14 @@ const handoffResponsibleArea = (department) => (
     ['Operations', 'Admin', 'Service prep', undefined, null, ''].includes(department) ? 'Service prep' : department
 );
 const adminEmployeesUrl = (filters = {}) => {
-    const params = new URLSearchParams({ paginated: '1', per_page: '100' });
+    const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') params.set(key, value);
     });
     return `/api/admin/employees?${params.toString()}`;
 };
 const adminCustomersUrl = (status = 'active', filters = {}) => {
-    const params = new URLSearchParams({ paginated: '1', per_page: '100', status });
+    const params = new URLSearchParams({ status });
     Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') params.set(key, value);
     });
@@ -665,7 +666,42 @@ const ChartGuide = ({ x, y, items = [] }) => (
         )}
     </div>
 );
-const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insight, fallbackInsight = null, guide = null, actions, children, loading = false, className = '', chartHeight = 'h-64', revealDelay = '', onExpand, filterPanel }) => (
+
+const ModelEvaluationCard = ({ tone = 'amber', method, interpretation, metrics = [] }) => {
+    const toneClasses = tone === 'emerald'
+        ? {
+            border: 'border-emerald-100',
+            badge: 'bg-emerald-50 text-emerald-800',
+            kicker: 'text-emerald-700',
+        }
+        : {
+            border: 'border-amber-100',
+            badge: 'bg-amber-50 text-amber-800',
+            kicker: 'text-amber-700',
+        };
+
+    return (
+        <div className={`mt-4 rounded-2xl border ${toneClasses.border} bg-white p-4 shadow-sm`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className={`text-[11px] font-black uppercase tracking-widest ${toneClasses.kicker}`}>Model Evaluation</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-gray-500">{interpretation}</p>
+                </div>
+                <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest ${toneClasses.badge}`}>{method}</span>
+            </div>
+            <div className={`mt-4 grid grid-cols-1 gap-3 ${metrics.length > 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                {metrics.map(({ label, value }) => (
+                    <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</p>
+                        <p className="mt-1 text-sm font-black text-gray-950">{value}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insight, fallbackInsight = null, guide = null, afterGuide = null, actions, children, loading = false, className = '', chartHeight = 'h-64', revealDelay = '', onExpand, filterPanel }) => (
     <RevealOnScroll as="section" delay={revealDelay} className={`admin-panel admin-analytics-panel ${className}`}>
         <div className="admin-analytics-panel-head">
             <div>
@@ -688,6 +724,7 @@ const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insi
             {loading && <LoadingFeedback label="Preparing analytics..." compact />}
             <div className={chartHeight}>{children}</div>
             {guide && <ChartGuide {...guide} />}
+            {afterGuide}
             <InsightLine insight={insight || fallbackInsight} compact={false} />
         </div>
     </RevealOnScroll>
@@ -993,11 +1030,13 @@ const DashboardAdmin = () => {
     const revenueForecast = analytics?.revenueRegression || analytics?.revenueForecast || {};
     const revenueForecastData = revenueForecast.rows || [];
     const revenueForecastSummary = revenueForecast.summary || {};
+    const revenueForecastEvaluation = revenueForecast.evaluation || {};
     const revenueRegressionHistoryMonths = Math.max(Number(analyticsFilters.revenue_forecast_months || 12), 6);
     const revenueRegressionHorizon = Number(revenueForecast.horizon || 3);
     const paxDemandProjection = analytics?.demandMovingAverage || analytics?.paxDemandProjection || {};
     const paxDemandData = paxDemandProjection.rows || [];
     const paxDemandSummary = paxDemandProjection.summary || {};
+    const paxDemandEvaluation = paxDemandProjection.evaluation || {};
     const revenueTrendAverage = revenueTrendData.length
         ? revenueTrendData.reduce((sum, row) => sum + Number(row.revenue || 0), 0) / revenueTrendData.length
         : 0;
@@ -1329,7 +1368,7 @@ const DashboardAdmin = () => {
     }, [employeeFilters]);
 
     const handleLogout = () => {
-        router.post('/logout');
+        logoutWithCleanup();
     };
 
     const updateProfileField = (field, value) => {
@@ -4139,7 +4178,7 @@ const DashboardAdmin = () => {
     const expandedPanelMeta = {
         'revenue-trend': ['Revenue trend', analyticsInsightItems.revenue],
         'payment-breakdown': ['Payment breakdown', analyticsInsightItems.payments],
-        'booking-pipeline': ['Booking pipeline', analyticsInsightItems.pipeline],
+        'booking-pipeline': ['Booking status overview', analyticsInsightItems.pipeline],
         'sales-frequency': ['Sales Frequency Distribution', analyticsInsightItems.salesFrequency || salesFrequencyDistribution.insight],
         'conversion-funnel': ['Conversion funnel', analyticsInsightItems.conversion],
         'package-performance': ['Package performance', analyticsInsightItems.menu],
@@ -4162,7 +4201,7 @@ const DashboardAdmin = () => {
             },
             {
                 key: 'pipeline',
-                title: 'Booking pipeline',
+                title: 'Booking status overview',
                 value: analyticsSummary.activeBookings || 0,
                 context: `${analyticsSummary.pendingBookings || 0} booking requests still need attention.`,
                 action: 'Open bookings',
@@ -4211,7 +4250,7 @@ const DashboardAdmin = () => {
         const supportingShortcuts = [
             { id: 'revenue-trend', label: 'Revenue trend', detail: `${revenueTrendData.length} periods`, view: 'supporting' },
             { id: 'payment-breakdown', label: 'Payment breakdown', detail: `${visiblePaymentStatusBreakdown.length} statuses`, view: 'supporting' },
-            { id: 'booking-pipeline', label: 'Booking pipeline', detail: `${bookingPipelineData.length} statuses`, view: 'supporting' },
+            { id: 'booking-pipeline', label: 'Booking status overview', detail: `${bookingPipelineData.length} statuses`, view: 'supporting' },
             { id: 'conversion-funnel', label: 'Completion funnel', detail: `${conversionFunnel.booking_completion_rate || 0}% completion`, view: 'supporting' },
             { id: 'package-performance', label: 'Package performance', detail: `${topPackages.length} top packages`, view: 'supporting' },
             { id: 'menu-performance', label: 'Menu performance', detail: `${topDishes.length} top dishes`, view: 'supporting' },
@@ -4471,6 +4510,68 @@ const DashboardAdmin = () => {
                 {(activeAnalyticsView === 'thesis' || activeAnalyticsView === 'supporting') && (
                 <div className="admin-analytics-grid">
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                        id="revenue-forecast"
+                        filterKey="revenueRegression"
+                        kicker="Forecast"
+                        title="Revenue Forecast Using Simple Linear Regression"
+                        description={`${revenueRegressionHistoryMonths}-month history with a ${revenueRegressionHorizon}-month projection.`}
+                        insight={revenueForecast.interpretation || analyticsInsightItems.forecast || normalizeInsight(revenueForecast.insight, 'Forecast gives planning context.')}
+                        fallbackInsight={chartInsight('Simple Linear Regression is ready.', 'The line compares cumulative actual revenue with the SLR trend and projected path.', 'Use the next projected period to plan buffers before committing purchases.')}
+                        guide={{ x: 'Period (history + projection)', y: 'Cumulative verified revenue', items: [{ label: 'Cumulative actual', color: '#720101' }, { label: 'SLR trend / projection', color: '#f0aa0b', dashed: true }] }}
+                        loading={isPanelLoading('revenueRegression')}
+                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
+                        chartHeight="h-72"
+                        actions={renderAnalyticsFilterButton('revenueRegression', `${revenueRegressionHistoryMonths} mo history + ${revenueRegressionHorizon} mo projection`)}
+                    >
+                        {revenueForecastData.length ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={revenueForecastData} margin={{ top: 12, right: 20, bottom: 4, left: 14 }}>
+                                    <ExecutiveGrid />
+                                    <ExecutiveXAxis dataKey="label" tick={{ ...ADMIN_CHART_AXIS_TICK, fontSize: 10 }} />
+                                    <ExecutiveYAxis width={76} tickFormatter={shortCurrency} />
+                                    <ExecutiveTooltip valueFormatter={(value) => formatCurrency(value)} />
+                                    {revenueForecastBoundaryLabel && <ReferenceLine x={revenueForecastBoundaryLabel} stroke={ADMIN_CHART_THEME.slate} strokeDasharray="4 4" label={{ value: 'Forecast', fill: ADMIN_CHART_THEME.slate, fontSize: 10, fontWeight: 900 }} />}
+                                    <Line type="monotone" dataKey="cumulativeRevenue" stroke={ADMIN_CHART_THEME.maroon} strokeWidth={3.5} dot={{ r: 3, fill: '#fff', stroke: ADMIN_CHART_THEME.maroon, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Cumulative actual" connectNulls={false} isAnimationActive={analyticsChartsAnimated} />
+                                    <Line type="monotone" dataKey="trendLine" stroke={ADMIN_CHART_THEME.gold} strokeWidth={3.5} strokeDasharray="7 5" dot={{ r: 3, fill: '#fff', stroke: ADMIN_CHART_THEME.gold, strokeWidth: 2 }} name="SLR trend" connectNulls isAnimationActive={analyticsChartsAnimated} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : <div className="admin-chart-empty">Insufficient historical revenue data.</div>}
+                    </AnalyticsPanel>
+
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                        id="pax-forecast"
+                        filterKey="paxForecast"
+                        kicker="Operations forecast"
+                        title="Pax Demand Projection Using Simple Moving Average"
+                        description="Projected pax for staffing, purchasing, and preparation planning."
+                        insight={paxDemandProjection.interpretation || analyticsInsightItems.forecast || normalizeInsight(paxDemandProjection.insight, 'Demand forecast gives planning context.')}
+                        fallbackInsight={chartInsight('Simple Moving Average projection is ready.', 'Bars compare actual guest volume with moving-average pax forecasts.', 'Use the forecast to plan staffing, purchasing, and prep capacity.')}
+                        guide={{ x: 'Period', y: 'Guest count', items: [{ label: 'Actual guests', color: '#720101' }, { label: 'SMA forecast', color: '#f0aa0b' }] }}
+                        loading={isPanelLoading('paxForecast')}
+                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
+                        chartHeight="h-72"
+                        actions={renderAnalyticsFilterButton('paxForecast', `${analyticsFilters.pax_projection_period} demand`)}
+                    >
+                        {paxDemandData.length ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={paxDemandData} margin={{ top: 12, right: 20, bottom: 4, left: 0 }}>
+                                    <ExecutiveGrid />
+                                    <ExecutiveXAxis dataKey="label" tick={{ ...ADMIN_CHART_AXIS_TICK, fontSize: 10 }} />
+                                    <ExecutiveYAxis />
+                                    <ExecutiveTooltip />
+                                    {paxForecastBoundaryLabel && <ReferenceLine x={paxForecastBoundaryLabel} stroke={ADMIN_CHART_THEME.slate} strokeDasharray="4 4" label={{ value: 'Forecast', fill: ADMIN_CHART_THEME.slate, fontSize: 10, fontWeight: 900 }} />}
+                                    <Bar dataKey="pax" fill={ADMIN_CHART_THEME.maroon} radius={[7, 7, 0, 0]} name="Actual guests" isAnimationActive={analyticsChartsAnimated}>
+                                        <LabelList dataKey="pax" position="top" fill={ADMIN_CHART_THEME.slate} fontSize={9} fontWeight={900} />
+                                    </Bar>
+                                    <Bar dataKey="forecast" fill={ADMIN_CHART_THEME.gold} radius={[7, 7, 0, 0]} name="SMA forecast" isAnimationActive={analyticsChartsAnimated}>
+                                        <LabelList dataKey="forecast" position="top" fill={ADMIN_CHART_THEME.amber} fontSize={9} fontWeight={900} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : <div className="admin-chart-empty">Insufficient historical pax demand data.</div>}
+                    </AnalyticsPanel>
+
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
                         id="revenue-trend"
                         filterKey="revenueTrend"
                         kicker="Revenue"
@@ -4532,10 +4633,10 @@ const DashboardAdmin = () => {
                         id="booking-pipeline"
                         filterKey="bookingPipeline"
                         kicker="Bookings"
-                        title="Booking pipeline"
+                        title="Booking status overview"
                         description="Counts requests and confirmed work by status."
                         insight={analyticsInsightItems.pipeline}
-                        fallbackInsight={chartInsight('Booking pipeline is ready.', 'Bars show how many bookings currently sit in each operational status.', 'Use high pending counts as a signal to review intake and approvals.')}
+                        fallbackInsight={chartInsight('Booking status overview is ready.', 'Bars show how many bookings currently sit in each operational status.', 'Use high pending counts as a signal to review intake and approvals.')}
                         guide={{ x: 'Booking status', y: 'Booking count' }}
                         loading={isPanelLoading('bookingPipeline')}
                         className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
@@ -4554,7 +4655,7 @@ const DashboardAdmin = () => {
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
-                        ) : <div className="admin-chart-empty">No booking pipeline data yet.</div>}
+                        ) : <div className="admin-chart-empty">No booking status data yet.</div>}
                     </AnalyticsPanel>
 
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
@@ -4681,67 +4782,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No menu selections for this filter.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
-                        id="revenue-forecast"
-                        filterKey="revenueRegression"
-                        kicker="Forecast"
-                        title="Revenue Forecast Using Simple Linear Regression"
-                        description={`${revenueRegressionHistoryMonths}-month history with a ${revenueRegressionHorizon}-month projection.`}
-                        insight={revenueForecast.interpretation || analyticsInsightItems.forecast || normalizeInsight(revenueForecast.insight, 'Forecast gives planning context.')}
-                        fallbackInsight={chartInsight('Simple Linear Regression is ready.', 'The line compares cumulative actual revenue with the SLR trend and projected path.', 'Use the next projected period to plan buffers before committing purchases.')}
-                        guide={{ x: 'Period (history + projection)', y: 'Cumulative verified revenue', items: [{ label: 'Cumulative actual', color: '#720101' }, { label: 'SLR trend / projection', color: '#f0aa0b', dashed: true }] }}
-                        loading={isPanelLoading('revenueRegression')}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
-                        chartHeight="h-72"
-                        actions={renderAnalyticsFilterButton('revenueRegression', `${revenueRegressionHistoryMonths} mo history + ${revenueRegressionHorizon} mo projection`)}
-                    >
-                        {revenueForecastData.length ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={revenueForecastData} margin={{ top: 12, right: 20, bottom: 4, left: 14 }}>
-                                    <ExecutiveGrid />
-                                    <ExecutiveXAxis dataKey="label" tick={{ ...ADMIN_CHART_AXIS_TICK, fontSize: 10 }} />
-                                    <ExecutiveYAxis width={76} tickFormatter={shortCurrency} />
-                                    <ExecutiveTooltip valueFormatter={(value) => formatCurrency(value)} />
-                                    {revenueForecastBoundaryLabel && <ReferenceLine x={revenueForecastBoundaryLabel} stroke={ADMIN_CHART_THEME.slate} strokeDasharray="4 4" label={{ value: 'Forecast', fill: ADMIN_CHART_THEME.slate, fontSize: 10, fontWeight: 900 }} />}
-                                    <Line type="monotone" dataKey="cumulativeRevenue" stroke={ADMIN_CHART_THEME.maroon} strokeWidth={3.5} dot={{ r: 3, fill: '#fff', stroke: ADMIN_CHART_THEME.maroon, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Cumulative actual" connectNulls={false} isAnimationActive={analyticsChartsAnimated} />
-                                    <Line type="monotone" dataKey="trendLine" stroke={ADMIN_CHART_THEME.gold} strokeWidth={3.5} strokeDasharray="7 5" dot={{ r: 3, fill: '#fff', stroke: ADMIN_CHART_THEME.gold, strokeWidth: 2 }} name="SLR trend" connectNulls isAnimationActive={analyticsChartsAnimated} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : <div className="admin-chart-empty">Insufficient historical revenue data.</div>}
-                    </AnalyticsPanel>
-
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
-                        id="pax-forecast"
-                        filterKey="paxForecast"
-                        kicker="Operations forecast"
-                        title="Pax Demand Projection Using Simple Moving Average"
-                        description="Projected pax for staffing, purchasing, and preparation planning."
-                        insight={paxDemandProjection.interpretation || analyticsInsightItems.forecast || normalizeInsight(paxDemandProjection.insight, 'Demand forecast gives planning context.')}
-                        fallbackInsight={chartInsight('Simple Moving Average projection is ready.', 'Bars compare actual guest volume with moving-average pax forecasts.', 'Use the forecast to plan staffing, purchasing, and prep capacity.')}
-                        guide={{ x: 'Period', y: 'Guest count', items: [{ label: 'Actual guests', color: '#720101' }, { label: 'SMA forecast', color: '#f0aa0b' }] }}
-                        loading={isPanelLoading('paxForecast')}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
-                        chartHeight="h-72"
-                        actions={renderAnalyticsFilterButton('paxForecast', `${analyticsFilters.pax_projection_period} demand`)}
-                    >
-                        {paxDemandData.length ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={paxDemandData} margin={{ top: 12, right: 20, bottom: 4, left: 0 }}>
-                                    <ExecutiveGrid />
-                                    <ExecutiveXAxis dataKey="label" tick={{ ...ADMIN_CHART_AXIS_TICK, fontSize: 10 }} />
-                                    <ExecutiveYAxis />
-                                    <ExecutiveTooltip />
-                                    {paxForecastBoundaryLabel && <ReferenceLine x={paxForecastBoundaryLabel} stroke={ADMIN_CHART_THEME.slate} strokeDasharray="4 4" label={{ value: 'Forecast', fill: ADMIN_CHART_THEME.slate, fontSize: 10, fontWeight: 900 }} />}
-                                    <Bar dataKey="pax" fill={ADMIN_CHART_THEME.maroon} radius={[7, 7, 0, 0]} name="Actual guests" isAnimationActive={analyticsChartsAnimated}>
-                                        <LabelList dataKey="pax" position="top" fill={ADMIN_CHART_THEME.slate} fontSize={9} fontWeight={900} />
-                                    </Bar>
-                                    <Bar dataKey="forecast" fill={ADMIN_CHART_THEME.gold} radius={[7, 7, 0, 0]} name="SMA forecast" isAnimationActive={analyticsChartsAnimated}>
-                                        <LabelList dataKey="forecast" position="top" fill={ADMIN_CHART_THEME.amber} fontSize={9} fontWeight={900} />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : <div className="admin-chart-empty">Insufficient historical pax demand data.</div>}
-                    </AnalyticsPanel>
+                    
 
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
                         id="peak-season-cross-tab"
@@ -4793,7 +4834,7 @@ const DashboardAdmin = () => {
                 <div className="hidden grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,.75fr)]">
                     <section className="admin-panel overflow-hidden">
                         <div className="border-b border-gray-100 bg-white p-5">
-                            <p className="admin-kicker">Revenue and pipeline</p>
+                            <p className="admin-kicker">Revenue and booking status</p>
                             <h3 className="mt-1 text-xl font-black text-gray-950">Collections and booking movement</h3>
                             <p className="mt-1 text-sm font-semibold text-gray-500">Use this section to see whether bookings are turning into collected revenue.</p>
                         </div>
@@ -4821,7 +4862,7 @@ const DashboardAdmin = () => {
                                 </div>
                             </div>
                             <div className="rounded-xl border border-gray-100 p-4">
-                                <h4 className="text-sm font-black text-gray-950">Booking pipeline</h4>
+                                <h4 className="text-sm font-black text-gray-950">Booking status overview</h4>
                                 <div className="mt-4 space-y-3">
                                     {bookingPipelineData.slice(0, 6).map((row, index) => (
                                         <div key={`${row.label || row.status}-${index}`} className="flex items-center justify-between rounded-lg bg-[#fbf8f2] px-3 py-2">
@@ -5054,7 +5095,6 @@ const DashboardAdmin = () => {
         closeConfirmDialog();
         setProcessingRefundId(bookingId);
         try {
-            const isRetry = action === 'retry_provider_refund';
             const isCaseAction = action === 'retry_provider_refund' || action === 'sync_provider_status';
             const res = await fetch(isCaseAction ? `/api/admin/refund/${bookingId}/${action}` : `/api/admin/refund/${bookingId}`, {
                 method: 'POST',
@@ -5696,9 +5736,6 @@ const DashboardAdmin = () => {
                                 <h3>{customerName}</h3>
                                 <p>Admin support view of this customer's active bookings, payments, and event progress.</p>
                             </div>
-                            <button type="button" onClick={() => setAssistedBookingOpen(true)} className="admin-button-primary px-4 py-2.5 text-sm font-black">
-                                Book Now on behalf of customer
-                            </button>
                         </div>
                         <div className="admin-flat-strip">
                             <div className="admin-flat-strip-item"><strong>{customerScopedBookings.length}</strong><span>Total bookings</span></div>
@@ -5919,6 +5956,20 @@ const DashboardAdmin = () => {
                 activeWorkspace,
                 onWorkspaceChange: (workspace) => navigateToWorkspaceTab(workspace.id, workspaceTabs[workspace.id] || DEFAULT_WORKSPACE_TABS[workspace.id]),
                 notificationVariant: 'light',
+                actionSlot: (
+                    <button
+                        type="button"
+                        className="staff-navbar-assisted-booking-action"
+                        onClick={() => setAssistedBookingOpen(true)}
+                        aria-label="Create assisted booking for a walk-in, call, or direct customer"
+                    >
+                        <CalendarPlus aria-hidden="true" />
+                        <span>Create booking</span>
+                        <span className="staff-navbar-action-tooltip" role="tooltip">
+                            Create an assisted booking for a walk-in, call, or direct customer.
+                        </span>
+                    </button>
+                ),
                 searchSlot: (
                     <StaffNavbarSearch
                         className="admin-header-search"
@@ -6038,9 +6089,6 @@ const DashboardAdmin = () => {
                                         </div>
                                         <div className="admin-command-actions">
                                             <div className="admin-primary-actions">
-                                                <button onClick={() => setAssistedBookingOpen(true)} className="admin-button-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-black">
-                                                    Create booking
-                                                </button>
                                                 <button onClick={() => setActiveTab('handoff')} className="admin-button-secondary inline-flex items-center justify-center px-3 py-2.5 text-sm font-black">
                                                     Handoff
                                                 </button>
@@ -6286,7 +6334,7 @@ const DashboardAdmin = () => {
                                         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                             <div>
                                                 <p className="admin-kicker">Workload</p>
-                                                <h3 className="mt-1 text-lg font-black text-gray-950">Booking Pipeline & Next Events</h3>
+                                                <h3 className="mt-1 text-lg font-black text-gray-950">Booking Status & Next Events</h3>
                                                 <p className="mt-1 text-sm font-semibold text-gray-500">Operational volume and near-term service load.</p>
                                             </div>
                                             {renderDashboardFilterControl(
@@ -6722,6 +6770,27 @@ const DashboardAdmin = () => {
                                             </ResponsiveContainer>
                                         ) : <div className="flex h-full items-center justify-center rounded-xl bg-gray-50 text-sm font-bold text-gray-400">No revenue data available.</div>}
                                     </div>
+                                    <div className="mt-4 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-amber-700">Model Evaluation</p>
+                                                <p className="mt-1 text-sm font-semibold leading-6 text-gray-500">{revenueForecastEvaluation.interpretation || 'Model evaluation needs more verified revenue history before confidence metrics can be shown.'}</p>
+                                            </div>
+                                            <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-amber-800">{revenueForecastEvaluation.method || 'Train/Test Split'}</span>
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                            {[
+                                                ['RMSE', revenueForecastEvaluation.rmse !== null && revenueForecastEvaluation.rmse !== undefined ? formatCurrency(revenueForecastEvaluation.rmse) : 'Needs more history'],
+                                                ['MAE', revenueForecastEvaluation.mae !== null && revenueForecastEvaluation.mae !== undefined ? formatCurrency(revenueForecastEvaluation.mae) : 'Needs more history'],
+                                                ['R2 score', revenueForecastEvaluation.r2 !== null && revenueForecastEvaluation.r2 !== undefined ? Number(revenueForecastEvaluation.r2).toFixed(4) : 'Needs more history'],
+                                            ].map(([label, value]) => (
+                                                <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</p>
+                                                    <p className="mt-1 text-sm font-black text-gray-950">{value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">{revenueForecast.insight}</p>
                                 </section>
 
@@ -6766,6 +6835,26 @@ const DashboardAdmin = () => {
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : <div className="flex h-full items-center justify-center rounded-xl bg-gray-50 text-sm font-bold text-gray-400">Insufficient historical pax demand data.</div>}
+                                    </div>
+                                    <div className="mt-4 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-emerald-700">Model Evaluation</p>
+                                                <p className="mt-1 text-sm font-semibold leading-6 text-gray-500">{paxDemandEvaluation.interpretation || 'Model evaluation needs more pax history before confidence metrics can be shown.'}</p>
+                                            </div>
+                                            <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-emerald-800">{paxDemandEvaluation.method || 'Historical Backtesting'}</span>
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            {[
+                                                ['RMSE', paxDemandEvaluation.rmse !== null && paxDemandEvaluation.rmse !== undefined ? `${Number(paxDemandEvaluation.rmse).toLocaleString()} guests` : 'Needs more history'],
+                                                ['MAE', paxDemandEvaluation.mae !== null && paxDemandEvaluation.mae !== undefined ? `${Number(paxDemandEvaluation.mae).toLocaleString()} guests` : 'Needs more history'],
+                                            ].map(([label, value]) => (
+                                                <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</p>
+                                                    <p className="mt-1 text-sm font-black text-gray-950">{value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                     <p className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-900">{paxDemandProjection.insight}</p>
                                 </section>
@@ -7886,8 +7975,8 @@ const DashboardAdmin = () => {
                     {
                         activeTab === 'accounts' && (
                             <AdminPageSurface className="admin-accounts-surface">
-                                <AdminCommandStrip className="admin-account-overview-strip">
-                                    <div className="admin-account-segment-tabs" aria-label="Account type">
+                                <AdminCommandStrip className="admin-account-overview-strip flex flex-row items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+                                    <div className="admin-account-segment-tabs shrink-0" aria-label="Account type">
                                         {[
                                             { value: 'staff', label: 'Staff', count: employees.length },
                                             { value: 'customers', label: 'Customers', count: customers.length },
@@ -7903,7 +7992,7 @@ const DashboardAdmin = () => {
                                             </button>
                                         ))}
                                     </div>
-                                    <div className="admin-stat-strip admin-account-stat-strip">
+                                    <div className="flex flex-row flex-1 justify-end items-center gap-4 px-8">
                                         {[
                                             { label: 'Active staff', value: employeeAccountStats.active },
                                             { label: 'Need password change', value: employeeAccountStats.password },
@@ -7916,7 +8005,7 @@ const DashboardAdmin = () => {
                                             </span>
                                         ))}
                                     </div>
-                                    <div className="admin-account-actions">
+                                    <div className="admin-account-actions shrink-0">
                                         {accountSegment === 'staff' && (
                                             <button onClick={() => openEmpModal('add')} className="admin-button-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-black">
                                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -7929,6 +8018,22 @@ const DashboardAdmin = () => {
                                 <div className="admin-account-workspace">
                                     {accountSegment === 'staff' && <>
                                         <AdminCommandStrip className="admin-account-filter-strip admin-account-filter-strip-staff">
+                                            <div className="admin-account-inline-tabs" aria-label="Staff account status filter">
+                                                {[
+                                                    { value: 'active', label: 'Active' },
+                                                    { value: 'deactivated', label: 'Deactivated' },
+                                                    { value: 'all', label: 'All' },
+                                                ].map(option => (
+                                                    <button
+                                                        key={option.value}
+                                                        type="button"
+                                                        onClick={() => setEmployeeFilters(prev => ({ ...prev, account_status: option.value }))}
+                                                        className={`admin-account-inline-tab ${employeeFilters.account_status === option.value ? 'is-active' : ''}`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                             <input
                                                 type="search"
                                                 value={employeeFilters.search}
@@ -7942,16 +8047,12 @@ const DashboardAdmin = () => {
                                                 <option value="Marketing">Marketing</option>
                                                 <option value="Accounting">Accounting</option>
                                             </select>
-                                            <select value={employeeFilters.account_status} onChange={(event) => setEmployeeFilters(prev => ({ ...prev, account_status: event.target.value }))} className="admin-input">
-                                                <option value="all">All statuses</option>
-                                                <option value="active">Active</option>
-                                                <option value="deactivated">Deactivated</option>
-                                            </select>
                                             <select value={employeeFilters.must_change_password} onChange={(event) => setEmployeeFilters(prev => ({ ...prev, must_change_password: event.target.value }))} className="admin-input">
                                                 <option value="all">All password states</option>
                                                 <option value="1">Password change needed</option>
                                                 <option value="0">Password current</option>
                                             </select>
+                                            <span className="admin-account-count-chip">{employees.length} shown</span>
                                         </AdminCommandStrip>
 
                                         <AdminResponsiveTable className="admin-account-table-wrap">
@@ -8183,11 +8284,6 @@ const DashboardAdmin = () => {
                                         { label: 'Active', value: bookingStats.active, tone: 'success' },
                                         { label: 'Expected', value: formatCurrency(bookingStats.value) },
                                     ]}
-                                    actions={(
-                                        <StaffPrimaryAction onClick={() => setAssistedBookingOpen(true)}>
-                                            Create booking
-                                        </StaffPrimaryAction>
-                                    )}
                                 />
 
                                 <StaffInlineInsight

@@ -423,7 +423,27 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
+
+    public function sessionStatus(Request $request)
+    {
+        $user = $request->user();
+
+        return response()
+            ->json([
+                'authenticated' => (bool) $user,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'role' => $user->role,
+                ] : null,
+            ])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**

@@ -79,6 +79,10 @@ class PaperAlignedAnalyticsTest extends TestCase
         $this->assertNotNull($revenue['alpha']);
         $this->assertNotNull($revenue['beta']);
         $this->assertCount(2, $revenue['projection']);
+        $this->assertSame('Rolling-Origin Cross-Validation', $revenue['evaluation']['method']);
+        $this->assertNull($revenue['evaluation']['rmse']);
+        $this->assertNull($revenue['evaluation']['mae']);
+        $this->assertNull($revenue['evaluation']['r2']);
 
         $demand = $payload['demandMovingAverage'];
         $this->assertSame('Simple Moving Average (SMA)', $demand['method']);
@@ -86,6 +90,53 @@ class PaperAlignedAnalyticsTest extends TestCase
         $this->assertFalse($demand['is_insufficient_data']);
         $this->assertSame(2, $demand['sampleSize']);
         $this->assertSame(100, $demand['summary']['nextForecast']);
+        $this->assertSame('Historical Backtesting', $demand['evaluation']['method']);
+        $this->assertNotNull($demand['evaluation']['rmse']);
+        $this->assertNotNull($demand['evaluation']['mae']);
+    }
+
+    public function test_forecasts_include_model_evaluation_metrics_when_history_is_available(): void
+    {
+        $admin = $this->user('Admin');
+        $client = $this->user('Client');
+        $package = $this->package('standard', 'Evaluation Feast');
+
+        for ($i = 0; $i < 12; $i++) {
+            $eventDate = Carbon::parse('2025-06-10')->addMonths($i);
+            $this->paidBooking(
+                $client,
+                $package,
+                'Corporate',
+                $eventDate->toDateString(),
+                40000 + ($i * 7500),
+                70 + ($i * 8),
+                $eventDate->copy()->addDays(3)->format('Y-m-d 10:00:00')
+            );
+        }
+
+        $payload = $this->actingAs($admin)
+            ->getJson('/api/admin/analytics/forecasts?trend_months=12&revenue_forecast_horizon=3&pax_sma_window=3&pax_projection_horizon=2')
+            ->assertOk()
+            ->json();
+
+        $revenueEvaluation = $payload['revenueRegression']['evaluation'];
+        $this->assertSame('Rolling-Origin Cross-Validation', $revenueEvaluation['method']);
+        $this->assertGreaterThanOrEqual(2, $revenueEvaluation['trainSize']);
+        $this->assertGreaterThanOrEqual(1, $revenueEvaluation['testSize']);
+        $this->assertNotNull($revenueEvaluation['rmse']);
+        $this->assertNotNull($revenueEvaluation['mae']);
+        $this->assertNotNull($revenueEvaluation['r2']);
+        $this->assertNotEmpty($revenueEvaluation['trainPeriodLabels']);
+        $this->assertNotEmpty($revenueEvaluation['testPeriodLabels']);
+        $this->assertStringContainsString('Mean Absolute Error', $revenueEvaluation['interpretation']);
+
+        $demandEvaluation = $payload['demandMovingAverage']['evaluation'];
+        $this->assertSame('Historical Backtesting', $demandEvaluation['method']);
+        $this->assertGreaterThanOrEqual(2, $demandEvaluation['window']); // auto-tuned from 2–5
+        $this->assertGreaterThanOrEqual(1, $demandEvaluation['backtestSize']);
+        $this->assertNotNull($demandEvaluation['rmse']);
+        $this->assertNotNull($demandEvaluation['mae']);
+        $this->assertStringContainsString('Mean Absolute Error', $demandEvaluation['interpretation']);
     }
 
     public function test_forecasts_return_insufficient_historical_data_instead_of_synthetic_values(): void
@@ -102,11 +153,18 @@ class PaperAlignedAnalyticsTest extends TestCase
         $this->assertNull($payload['revenueRegression']['alpha']);
         $this->assertSame([], $payload['revenueRegression']['projection']);
         $this->assertStringContainsString('Insufficient historical data', $payload['revenueRegression']['insight']);
+        $this->assertSame('Rolling-Origin Cross-Validation', $payload['revenueRegression']['evaluation']['method']);
+        $this->assertNull($payload['revenueRegression']['evaluation']['rmse']);
+        $this->assertNull($payload['revenueRegression']['evaluation']['mae']);
+        $this->assertNull($payload['revenueRegression']['evaluation']['r2']);
 
         $this->assertTrue($payload['demandMovingAverage']['is_insufficient_data']);
         $this->assertFalse($payload['demandMovingAverage']['is_fallback']);
-        $this->assertSame([], $payload['demandMovingAverage']['rows']);
+        $this->assertFalse(collect($payload['demandMovingAverage']['rows'])->contains(fn ($row) => (bool) ($row['isForecast'] ?? false)));
         $this->assertStringContainsString('Insufficient historical data', $payload['demandMovingAverage']['insight']);
+        $this->assertSame('Historical Backtesting', $payload['demandMovingAverage']['evaluation']['method']);
+        $this->assertNull($payload['demandMovingAverage']['evaluation']['rmse']);
+        $this->assertNull($payload['demandMovingAverage']['evaluation']['mae']);
     }
 
     public function test_peak_season_cross_tab_groups_event_type_by_calendar_month(): void
