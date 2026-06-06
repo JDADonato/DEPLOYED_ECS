@@ -29,11 +29,11 @@ class MenuController extends Controller
             }
 
             if ($bestSeller) {
-                $query->where('is_best_seller', true);
+                $query->whereRaw('is_best_seller is true');
             }
 
             return $query
-                ->where('is_active', $active)
+                ->whereRaw('is_active is '.($active ? 'true' : 'false'))
                 ->orderBy('category')
                 ->orderBy('name')
                 ->paginate($perPage)
@@ -60,7 +60,7 @@ class MenuController extends Controller
     {
         $categories = Cache::remember('menu_categories', now()->addHours(24), function () {
             return MenuItem::distinct()
-                ->where('is_active', true)
+                ->whereRaw('is_active is true')
                 ->pluck('category')
                 ->sort()
                 ->values();
@@ -75,8 +75,8 @@ class MenuController extends Controller
     public function bestsellers()
     {
         $items = Cache::remember('menu_bestsellers', now()->addHours(24), function () {
-            return MenuItem::where('is_best_seller', true)
-                ->where('is_active', true)
+            return MenuItem::whereRaw('is_best_seller is true')
+                ->whereRaw('is_active is true')
                 ->orderBy('name')
                 ->get();
         });

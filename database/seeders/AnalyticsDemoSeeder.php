@@ -208,7 +208,7 @@ class AnalyticsDemoSeeder extends Seeder
                 'user' => User::create([
                     'full_name' => $name,
                     'username' => 'ecs_demo_client_'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
-                    'password' => 'password123',
+                    'password' => 'Eloquente!26',
                     'role' => 'Client',
                     'email' => 'client'.str_pad((string) $i, 3, '0', STR_PAD_LEFT).'@'.self::DEMO_DOMAIN,
                     'phone' => '09'.str_pad((string) (170000000 + $i * 713), 9, '0', STR_PAD_LEFT),

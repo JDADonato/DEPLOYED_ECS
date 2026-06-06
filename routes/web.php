@@ -194,7 +194,7 @@ Route::get('/book', function () {
     $version = (int) cache()->get('catalog.version', 1);
     $eventTypes = cache()->remember("catalog.public.event_types.v{$version}.booking", now()->addMinutes(10), fn () => (
         \App\Models\EventType::query()
-            ->where('is_active', true)
+            ->whereRaw('is_active is true')
             ->orderBy('label')
             ->limit(50)
             ->get()
@@ -260,7 +260,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
         $version = (int) cache()->get('catalog.version', 1);
         $eventTypes = cache()->remember("catalog.public.event_types.v{$version}.booking", now()->addMinutes(10), fn () => (
             \App\Models\EventType::query()
-                ->where('is_active', true)
+                ->whereRaw('is_active is true')
                 ->orderBy('label')
                 ->limit(50)
                 ->get()

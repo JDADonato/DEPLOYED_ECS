@@ -59,9 +59,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($defaultUsers as $userData) {
             $user = User::firstOrNew(['username' => $userData['username']]);
-            if (! $user->exists) {
-                $user->password = 'Eloquente!26';
-            }
+            $user->password = 'Eloquente!26';
 
             $attributes = [
                 'role' => $userData['role'],

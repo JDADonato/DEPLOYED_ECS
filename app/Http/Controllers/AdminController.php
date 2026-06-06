@@ -995,7 +995,7 @@ class AdminController extends Controller
             $query = MenuItem::query();
 
             if (! $includeInactive) {
-                $query->where('is_active', true);
+                $query->whereRaw('is_active is true');
             }
 
             return $query->orderBy('category')->orderBy('name')->get();
