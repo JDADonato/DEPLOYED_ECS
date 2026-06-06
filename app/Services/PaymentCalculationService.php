@@ -239,8 +239,14 @@ class PaymentCalculationService
             'live_status' => $this->bookingLiveStatus($paidRatio),
         ];
 
+        if ($booking->status === 'Pending' && $booking->review_status === 'Pending Payment' && $paidRatio > 0) {
+            $updates['status'] = 'Confirmed';
+            $updates['review_status'] = 'Approved For Reservation';
+        }
+
         // Payment progress is tracked separately from the booking's operational status.
         // Marketing owns statuses like Confirmed, Completed, and Cancelled.
+        // However, if the booking was held in Pending strictly awaiting an upfront PayMongo payment, we confirm it here.
         $booking->update($updates);
     }
 

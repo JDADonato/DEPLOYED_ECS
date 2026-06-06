@@ -41,6 +41,8 @@ return new class extends Migration
         });
 
         if (! $isPostgres) {
+            // MySQL syntax
+            DB::statement('ALTER TABLE messages MODIFY receiver_id bigint unsigned NULL');
             return;
         }
 

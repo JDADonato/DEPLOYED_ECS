@@ -131,10 +131,39 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     const [result, setResult] = useState(null);
     const [upfrontPayment, setUpfrontPayment] = useState({
         enabled: false,
-        amount: '',
+        tranches: [],
         method: 'Cash',
         reference: '',
     });
+
+    const reviewCosts = useMemo(() => summarizeBookingCosts(bookingData), [bookingData]);
+
+    const availableTranches = useMemo(() => {
+        if (!bookingData.date) return [];
+        const days = Math.floor((new Date(bookingData.date) - new Date()) / (1000 * 60 * 60 * 24));
+        const total = reviewCosts?.finalTotal || 0;
+        
+        if (days <= 10) {
+            return [{ id: 'Final', label: '100% Full Payment', amount: total }];
+        }
+        if (days <= 30) {
+            return [
+                { id: 'DownPayment', label: '80% Down Payment', amount: total * 0.8 },
+                { id: 'Final', label: '20% Final Balance', amount: total * 0.2 }
+            ];
+        }
+        return [
+            { id: 'Reservation', label: '10% Reservation', amount: total * 0.1 },
+            { id: 'DownPayment', label: '70% Down Payment', amount: total * 0.7 },
+            { id: 'Final', label: '20% Final Balance', amount: total * 0.2 }
+        ];
+    }, [bookingData.date, reviewCosts?.finalTotal]);
+
+    const selectedTotal = useMemo(() => {
+        return availableTranches
+            .filter(t => upfrontPayment.tranches.includes(t.id))
+            .reduce((sum, t) => sum + t.amount, 0);
+    }, [availableTranches, upfrontPayment.tranches]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -236,7 +265,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         };
     }, [customerState]);
 
-    const reviewCosts = summarizeBookingCosts(bookingData);
+
     const menuRows = selectedMenuRows(bookingData);
     const activeStep = steps[currentStep] || steps[0];
     const progressPercent = Math.round((currentStep / (steps.length - 1)) * 100);
@@ -395,8 +424,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             is_high_rise: bookingData.isHighRise,
             transport_fee: costs.locationSurcharge,
             labor_surcharge: costs.laborSurcharge,
-            upfront_payment: upfrontPayment.enabled && Number(upfrontPayment.amount) > 0 ? {
-                amount: Number(upfrontPayment.amount),
+            upfront_payment: upfrontPayment.enabled && upfrontPayment.tranches.length > 0 ? {
+                tranches: upfrontPayment.tranches,
                 method: upfrontPayment.method,
                 reference: upfrontPayment.reference,
             } : null,
@@ -419,10 +448,19 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             }
 
             setResult(data);
+            
+            // Auto-open PayMongo checkout if present
+            if (data.paymongo_checkout_url) {
+                window.open(data.paymongo_checkout_url, '_blank');
+            }
+
             onCreated?.(data);
-            toast?.success(data.message || 'Assisted booking created.');
+            if (toast && typeof toast.success === 'function') toast.success(data.message || 'Assisted booking created.');
+            else if (typeof toast === 'function') toast(data.message || 'Assisted booking created.');
         } catch (error) {
-            toast?.error(error.message || 'Assisted booking could not be created.');
+            if (toast && typeof toast.error === 'function') toast.error(error.message || 'Assisted booking could not be created.');
+            else if (typeof toast === 'function') toast(error.message || 'Assisted booking could not be created.');
+            
             if (String(error.message || '').toLowerCase().includes('already exists')) {
                 setCurrentStep(0);
             }
@@ -692,43 +730,58 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                             </label>
                         </div>
                         {upfrontPayment.enabled && (
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4">
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Amount</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        className="booking-input"
-                                        placeholder="0.00"
-                                        value={upfrontPayment.amount}
-                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, amount: e.target.value })}
-                                    />
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Required 20% down payment is {money(reviewCosts.finalTotal * 0.20)}
-                                    </p>
+                                    <label className="mb-2 block text-sm font-bold text-slate-700">Select terms to pay now</label>
+                                    <div className="space-y-2">
+                                        {availableTranches.map(t => (
+                                            <label key={t.id} className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100">
+                                                <div className="flex items-center space-x-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={upfrontPayment.tranches.includes(t.id)}
+                                                        onChange={(e) => {
+                                                            const newTranches = e.target.checked 
+                                                                ? [...upfrontPayment.tranches, t.id]
+                                                                : upfrontPayment.tranches.filter(id => id !== t.id);
+                                                            setUpfrontPayment({ ...upfrontPayment, tranches: newTranches });
+                                                        }}
+                                                        className="h-4 w-4 rounded border-slate-300 text-[#720101] focus:ring-[#720101]"
+                                                    />
+                                                    <span className="text-sm font-semibold text-slate-800">{t.label}</span>
+                                                </div>
+                                                <span className="text-sm font-black text-slate-900">{money(t.amount)}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
+                                        <span className="text-sm font-black text-slate-600">Selected Total</span>
+                                        <span className="text-lg font-black text-[#720101]">{money(selectedTotal)}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Payment Method</label>
-                                    <select
-                                        className="booking-input"
-                                        value={upfrontPayment.method}
-                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, method: e.target.value })}
-                                    >
-                                        <option value="Cash">Cash</option>
-                                        <option value="Bank Transfer">Bank Transfer</option>
-                                        <option value="Card Terminal">Card Terminal</option>
-                                    </select>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Reference Number (Optional)</label>
-                                    <input
-                                        type="text"
-                                        className="booking-input"
-                                        placeholder="e.g. TR-12345"
-                                        value={upfrontPayment.reference}
-                                        onChange={(e) => setUpfrontPayment({ ...upfrontPayment, reference: e.target.value })}
-                                    />
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">Payment Method</label>
+                                        <select
+                                            className="booking-input"
+                                            value={upfrontPayment.method}
+                                            onChange={(e) => setUpfrontPayment({ ...upfrontPayment, method: e.target.value })}
+                                        >
+                                            <option value="Cash">Cash</option>
+                                            <option value="Card Terminal">Card Terminal</option>
+                                            <option value="PayMongo">PayMongo Checkout Link</option>
+                                        </select>
+                                    </div>
+                                    <div className={upfrontPayment.method !== 'Card Terminal' ? 'hidden' : ''}>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">Terminal Trace / Approval Code (Optional)</label>
+                                        <input
+                                            type="text"
+                                            className="booking-input"
+                                            placeholder="e.g. TR-12345 or APPV-123"
+                                            value={upfrontPayment.reference}
+                                            onChange={(e) => setUpfrontPayment({ ...upfrontPayment, reference: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -775,8 +828,21 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                 <p className="mt-1 text-sm font-semibold text-slate-500">Generated from the booking total.</p>
                             </div>
                         </div>
+                        {result.paymongo_checkout_url && (
+                            <div className="mx-8 rounded-2xl border border-blue-200 bg-blue-50 p-5 mt-4">
+                                <span className="text-xs font-black uppercase tracking-widest text-blue-600">PayMongo Checkout Ready</span>
+                                <p className="mt-2 text-sm font-bold text-blue-800">Please direct the customer to scan the QR code or click the link to pay {money(selectedTotal)}</p>
+                                <div className="mt-4 flex flex-col sm:flex-row items-center gap-4">
+                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(result.paymongo_checkout_url)}`} alt="PayMongo QR Code" className="h-32 w-32 rounded-xl bg-white p-2 shadow" />
+                                    <div className="w-full">
+                                        <input type="text" readOnly value={result.paymongo_checkout_url} className="w-full rounded-xl border border-blue-200 bg-white p-3 text-sm text-blue-900" />
+                                        <a href={result.paymongo_checkout_url} target="_blank" rel="noreferrer" className="mt-2 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Open Checkout</a>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {result.temporary_password && (
-                            <div className="mx-8 rounded-2xl border border-[#f0aa0b]/40 bg-[#fff7e8] p-5">
+                            <div className="mx-8 mt-4 rounded-2xl border border-[#f0aa0b]/40 bg-[#fff7e8] p-5">
                                 <span className="text-xs font-black uppercase tracking-widest text-[#9f6500]">Temporary password fallback</span>
                                 <strong className="mt-2 block text-2xl text-[#720101]">{result.temporary_password}</strong>
                                 <p className="mt-2 text-sm font-bold text-[#7c4a03]">Copy this only if the invite email is unavailable. It expires at the same time as the account invite.</p>
@@ -785,7 +851,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                         <div className="flex flex-col gap-3 p-8 sm:flex-row sm:justify-end">
                             <button type="button" onClick={startAnother} className="booking-secondary-btn">Start another</button>
                             <button type="button" onClick={onClose} className="booking-secondary-btn">Close</button>
-                            <button type="button" onClick={() => onOpenBooking?.(booking)} className="booking-primary-btn">Open booking</button>
+                            <button type="button" onClick={() => { onOpenBooking?.(booking); onClose?.(); }} className="booking-primary-btn">Open booking</button>
                         </div>
                     </div>
                 </div>

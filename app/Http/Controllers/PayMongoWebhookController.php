@@ -52,9 +52,16 @@ class PayMongoWebhookController extends Controller
 
         try {
             $result = DB::transaction(function () use ($event, $eventType, $eventId, $paymentCalculation) {
-                $payment = $this->resolvePayment($event, $eventType);
+                $payments = collect();
+                $singlePayment = $this->resolvePayment($event, $eventType);
+                
+                if ($singlePayment) {
+                    $payments->push($singlePayment);
+                } else {
+                    $payments = $this->resolvePaymentsFromMetadata($event);
+                }
 
-                if (! $payment) {
+                if ($payments->isEmpty()) {
                     Log::warning('PayMongo paid webhook could not be matched to a local payment.', [
                         'event_id' => $eventId,
                         'event_type' => $eventType,
@@ -79,24 +86,25 @@ class PayMongoWebhookController extends Controller
                     return ['status' => 'unmatched'];
                 }
 
-                $payment->loadMissing('booking.payments');
+                $payments->each(fn ($p) => $p->loadMissing('booking.payments'));
 
-                if (! $this->amountAndCurrencyMatch($event, $payment)) {
+                if (! $this->amountAndCurrencyMatchForMultiple($event, $payments)) {
                     Log::warning('PayMongo webhook amount/currency mismatch.', [
                         'event_id' => $eventId,
-                        'payment_id' => $payment->id,
-                        'expected_amount' => (float) $payment->amount,
+                        'payment_ids' => $payments->pluck('id')->all(),
+                        'expected_amount' => (float) $payments->sum('amount'),
                         'received_amount' => $this->resourceAmount($event),
                         'received_currency' => $this->resourceCurrency($event),
                     ]);
 
+                    // Record mismatch on the first payment
                     PaymentEventService::record(
                         'webhook_mismatch',
                         'paymongo',
-                        $payment,
+                        $payments->first(),
                         [
                             'event_type' => $eventType,
-                            'expected_amount' => (float) $payment->amount,
+                            'expected_amount' => (float) $payments->sum('amount'),
                             'received_amount' => $this->resourceAmount($event),
                             'received_currency' => $this->resourceCurrency($event),
                         ],
@@ -104,52 +112,57 @@ class PayMongoWebhookController extends Controller
                         $eventId ?: null
                     );
 
-                    return ['status' => 'mismatch', 'payment_id' => $payment->id];
+                    return ['status' => 'mismatch', 'payment_ids' => $payments->pluck('id')->all()];
                 }
 
-                $this->storeProviderReferences($payment, $event, $eventType, $eventId);
+                $processedIds = [];
+                foreach ($payments as $payment) {
+                    $this->storeProviderReferences($payment, $event, $eventType, $eventId);
 
-                if (! in_array($payment->status, ['Paid', 'Verified'], true)) {
-                    $payment->forceFill([
-                        'status' => 'Paid',
-                        'payment_method' => $this->resourcePaymentMethod($event) ?: 'PayMongo',
-                        'verified_by' => 'PayMongo Webhook',
-                        'verified_at' => now(),
-                    ])->save();
+                    if (! in_array($payment->status, ['Paid', 'Verified'], true)) {
+                        $payment->forceFill([
+                            'status' => 'Paid',
+                            'payment_method' => $this->resourcePaymentMethod($event) ?: 'PayMongo',
+                            'verified_by' => 'PayMongo Webhook',
+                            'verified_at' => now(),
+                        ])->save();
+                    }
+
+                    PaymentEventService::record(
+                        'webhook_paid',
+                        'paymongo',
+                        $payment,
+                        [
+                            'event_type' => $eventType,
+                            'payment_type' => $payment->payment_type,
+                            'amount' => (float) $payment->amount,
+                        ],
+                        $payment->paymongo_payment_id ?: $payment->paymongo_checkout_session_id,
+                        $eventId ?: null
+                    );
+
+                    $processedIds[] = $payment->id;
+                    
+                    try {
+                        broadcast(new PaymentProcessed($payment->fresh()))->toOthers();
+                    } catch (\Throwable $broadcastException) {
+                        Log::warning('Payment webhook realtime broadcast skipped.', [
+                            'payment_id' => $payment->id,
+                            'message' => $broadcastException->getMessage(),
+                        ]);
+                    }
                 }
 
-                PaymentEventService::record(
-                    'webhook_paid',
-                    'paymongo',
-                    $payment,
-                    [
-                        'event_type' => $eventType,
-                        'payment_type' => $payment->payment_type,
-                        'amount' => (float) $payment->amount,
-                    ],
-                    $payment->paymongo_payment_id ?: $payment->paymongo_checkout_session_id,
-                    $eventId ?: null
-                );
-
-                $booking = $payment->booking;
+                // Use the first payment's booking to update milestones, as they all share the same booking
+                $booking = $payments->first()->booking;
 
                 if ($booking) {
                     $paymentCalculation->updateBookingMilestone($booking);
+                    app(OperationalBroadcastService::class)
+                        ->financeChanged($booking, 'payment', $payments->first()->id, 'webhook_paid', 'Payment confirmed.');
                 }
 
-                try {
-                    broadcast(new PaymentProcessed($payment->fresh()))->toOthers();
-                } catch (\Throwable $broadcastException) {
-                    Log::warning('Payment webhook realtime broadcast skipped.', [
-                        'payment_id' => $payment->id,
-                        'message' => $broadcastException->getMessage(),
-                    ]);
-                }
-
-                app(OperationalBroadcastService::class)
-                    ->financeChanged($booking, 'payment', $payment->id, 'webhook_paid', 'Payment confirmed.');
-
-                return ['status' => 'processed', 'payment_id' => $payment->id];
+                return ['status' => 'processed', 'payment_ids' => $processedIds];
             });
         } catch (\Throwable $exception) {
             Log::error('PayMongo webhook processing failed.', [
@@ -208,6 +221,21 @@ class PayMongoWebhookController extends Controller
         return false;
     }
 
+    private function resolvePaymentsFromMetadata(array $event): \Illuminate\Support\Collection
+    {
+        $metadata = Arr::get($event, 'data.attributes.data.attributes.metadata') ?: [];
+        $paymentIds = Arr::get($metadata, 'payment_ids');
+
+        if ($paymentIds && is_string($paymentIds)) {
+            $ids = array_filter(explode(',', $paymentIds), 'ctype_digit');
+            if (!empty($ids)) {
+                return Payment::active()->whereIn('id', $ids)->lockForUpdate()->get();
+            }
+        }
+
+        return collect();
+    }
+
     private function resolvePayment(array $event, string $eventType): ?Payment
     {
         $metadata = Arr::get($event, 'data.attributes.data.attributes.metadata') ?: [];
@@ -255,6 +283,20 @@ class PayMongoWebhookController extends Controller
         }
 
         return null;
+    }
+
+    private function amountAndCurrencyMatchForMultiple(array $event, \Illuminate\Support\Collection $payments): bool
+    {
+        $amount = $this->resourceAmount($event);
+        $currency = strtoupper((string) $this->resourceCurrency($event));
+
+        if ($amount === null) {
+            return false;
+        }
+
+        $expectedCentavos = (int) round(((float) $payments->sum('amount')) * 100);
+
+        return $expectedCentavos === (int) $amount && $currency === 'PHP';
     }
 
     private function amountAndCurrencyMatch(array $event, Payment $payment): bool

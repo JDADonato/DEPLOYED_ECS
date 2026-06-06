@@ -764,6 +764,21 @@ const ClientDashboard = () => {
     }, []);
 
     useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchData({ silent: true, force: true });
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleVisibilityChange);
+        };
+    }, []);
+
+    useEffect(() => {
         const handleNavigationQueryChange = (event) => {
             if (event.detail?.path && event.detail.path !== window.location.pathname) return;
 

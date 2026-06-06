@@ -226,7 +226,8 @@ class MarketingController extends Controller
             'transport_fee' => ['nullable', 'numeric', 'min:0'],
             'labor_surcharge' => ['nullable', 'numeric', 'min:0'],
             'upfront_payment' => ['nullable', 'array'],
-            'upfront_payment.amount' => ['required_with:upfront_payment', 'numeric', 'min:0'],
+            'upfront_payment.tranches' => ['required_with:upfront_payment', 'array'],
+            'upfront_payment.tranches.*' => ['string', 'in:Reservation,DownPayment,Final'],
             'upfront_payment.method' => ['required_with:upfront_payment', 'string', 'max:50'],
             'upfront_payment.reference' => ['nullable', 'string', 'max:255'],
         ]);
@@ -288,24 +289,12 @@ class MarketingController extends Controller
                     'labor_surcharge' => $data['labor_surcharge'] ?? 0,
                     'total_cost' => $data['total_cost'] ?? $data['budget'] ?? 0,
                     'selected_menu' => $data['selected_menu'] ?? null,
-                    'status' => 'Confirmed',
-                    'review_status' => 'Approved For Reservation',
+                    'status' => (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches']) && ($data['upfront_payment']['method'] ?? '') === 'PayMongo') ? 'Pending' : 'Confirmed',
+                    'review_status' => (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches']) && ($data['upfront_payment']['method'] ?? '') === 'PayMongo') ? 'Pending Payment' : 'Approved For Reservation',
                     'reviewed_at' => now(),
                     'expires_at' => now()->addHours(24),
                 ]);
 
-                if (!empty($data['upfront_payment']) && $data['upfront_payment']['amount'] > 0) {
-                    $booking->payments()->create([
-                        'payment_type' => 'Walk-in Upfront',
-                        'amount' => $data['upfront_payment']['amount'],
-                        'payment_method' => $data['upfront_payment']['method'],
-                        'paymongo_reference_number' => $data['upfront_payment']['reference'] ?? null,
-                        'status' => 'Verified',
-                        'verified_by' => $actor->username ?? 'staff',
-                        'verified_at' => now(),
-                        'due_date' => now()->toDateString(),
-                    ]);
-                }
 
                 foreach ([
                     'Confirm date and capacity',
@@ -324,7 +313,7 @@ class MarketingController extends Controller
 
                 $cost = (float) ($booking->total_cost ?? 0);
                 if ($cost > 0) {
-                    $paymentService = new PaymentCalculationService;
+                    $paymentService = new \App\Services\PaymentCalculationService;
                     foreach ($paymentService->calculateTranches($booking) as $tranche) {
                         Payment::create([
                             'booking_id' => $booking->id,
@@ -332,8 +321,25 @@ class MarketingController extends Controller
                             'payment_method' => 'Pending',
                             'status' => 'Pending',
                             'payment_type' => $tranche['name'],
-                            'due_date' => Carbon::parse($tranche['due_date'])->toDateString(),
+                            'due_date' => \Carbon\Carbon::parse($tranche['due_date'])->toDateString(),
                         ]);
+                    }
+                }
+
+                if (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches'])) {
+                    $selectedTranches = $data['upfront_payment']['tranches'];
+                    $method = $data['upfront_payment']['method'] ?? 'Cash';
+                    
+                    if (in_array($method, ['Cash', 'Card Terminal'], true)) {
+                        $booking->payments()
+                            ->whereIn('payment_type', $selectedTranches)
+                            ->update([
+                                'payment_method' => $method,
+                                'status' => 'Verified',
+                                'verified_by' => $actor->username ?? 'staff',
+                                'verified_at' => now(),
+                                'paymongo_reference_number' => $data['upfront_payment']['reference'] ?? null,
+                            ]);
                     }
                 }
 
@@ -404,6 +410,44 @@ class MarketingController extends Controller
             // Notifications should not undo the booking that was already created.
         }
 
+        $checkoutUrl = null;
+        if (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches']) && ($data['upfront_payment']['method'] ?? '') === 'PayMongo') {
+            try {
+                $payMongo = app(\App\Services\PayMongoService::class);
+                $selectedTranches = $data['upfront_payment']['tranches'];
+                
+                $payments = $booking->payments()->whereIn('payment_type', $selectedTranches)->get();
+                if ($payments->isNotEmpty()) {
+                    $amount = $payments->sum('amount');
+                    $description = "Upfront Payment for " . ($booking->event_type ?: 'Event') . " Booking #{$booking->id}";
+                    
+                    $checkout = $payMongo->createCheckoutSession(
+                        amount: round((float)$amount, 2),
+                        description: $description,
+                        successUrl: route('checkout.success', ['booking_id' => $booking->id, 'payment_id' => $payments->first()->id]),
+                        cancelUrl: route('checkout.cancelled'),
+                        metadata: [
+                            'payment_ids' => $payments->pluck('id')->join(','),
+                        ],
+                        booking: $booking
+                    );
+                    
+                    $checkoutUrl = $checkout['checkout_url'] ?? null;
+                    
+                    if ($checkoutUrl) {
+                        foreach ($payments as $p) {
+                            $p->forceFill([
+                                'payment_method' => 'PayMongo Checkout',
+                                'paymongo_checkout_session_id' => $checkout['id'] ?? null,
+                            ])->save();
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to create PayMongo checkout for assisted booking: ' . $e->getMessage());
+            }
+        }
+
         return response()->json([
             'message' => 'Assisted booking created successfully.',
             'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'createdByStaff', 'reviewTasks', 'preparationTasks', 'payments'])),
@@ -419,6 +463,7 @@ class MarketingController extends Controller
             'temporary_password_expires_at' => $customer->temporary_password_expires_at,
             'invite_delivery' => $inviteDelivery,
             'invite_delivery_status' => $inviteDelivery,
+            'paymongo_checkout_url' => $checkoutUrl,
         ], 201);
     }
 
@@ -446,21 +491,25 @@ class MarketingController extends Controller
         $email = filled($customerData['email'] ?? null) ? strtolower(trim($customerData['email'])) : null;
         $phone = filled($customerData['phone'] ?? null) ? trim($customerData['phone']) : null;
 
-        if ($email || $phone) {
+        $duplicate = null;
+        if ($email) {
             $duplicate = User::where('role', 'Client')
                 ->activeAccounts()
-                ->where(fn ($query) => $query
-                    ->when($email, fn ($q) => $q->orWhere('email', $email))
-                    ->when($phone, fn ($q) => $q->orWhere('phone', $phone)))
+                ->where('email', $email)
                 ->first();
+        } elseif ($phone) {
+            $duplicate = User::where('role', 'Client')
+                ->activeAccounts()
+                ->where('phone', $phone)
+                ->first();
+        }
 
-            if ($duplicate) {
-                $duplicateName = $duplicate->full_name ?: $duplicate->username;
+        if ($duplicate) {
+            $duplicateName = $duplicate->full_name ?: $duplicate->username;
 
-                throw ValidationException::withMessages([
-                    'customer' => "A customer account already exists for {$duplicateName}. Select that customer instead.",
-                ]);
-            }
+            throw ValidationException::withMessages([
+                'customer' => "A customer account already exists for {$duplicateName}. Select that customer instead.",
+            ]);
         }
 
         $temporaryPassword = Str::password(12);

@@ -4507,7 +4507,7 @@ const DashboardAdmin = () => {
                 </RevealOnScroll>
                 )}
 
-                {(activeAnalyticsView === 'thesis' || activeAnalyticsView === 'supporting') && (
+                {activeAnalyticsView === 'thesis' && (
                 <div className="admin-analytics-grid">
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
                         id="revenue-forecast"
@@ -4519,7 +4519,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Simple Linear Regression is ready.', 'The line compares cumulative actual revenue with the SLR trend and projected path.', 'Use the next projected period to plan buffers before committing purchases.')}
                         guide={{ x: 'Period (history + projection)', y: 'Cumulative verified revenue', items: [{ label: 'Cumulative actual', color: '#720101' }, { label: 'SLR trend / projection', color: '#f0aa0b', dashed: true }] }}
                         loading={isPanelLoading('revenueRegression')}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
+                        className="admin-analytics-panel-wide admin-analytics-feature-panel"
                         chartHeight="h-72"
                         actions={renderAnalyticsFilterButton('revenueRegression', `${revenueRegressionHistoryMonths} mo history + ${revenueRegressionHorizon} mo projection`)}
                     >
@@ -4548,7 +4548,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Simple Moving Average projection is ready.', 'Bars compare actual guest volume with moving-average pax forecasts.', 'Use the forecast to plan staffing, purchasing, and prep capacity.')}
                         guide={{ x: 'Period', y: 'Guest count', items: [{ label: 'Actual guests', color: '#720101' }, { label: 'SMA forecast', color: '#f0aa0b' }] }}
                         loading={isPanelLoading('paxForecast')}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
+                        className="admin-analytics-panel-wide admin-analytics-feature-panel"
                         chartHeight="h-72"
                         actions={renderAnalyticsFilterButton('paxForecast', `${analyticsFilters.pax_projection_period} demand`)}
                     >
@@ -4572,6 +4572,84 @@ const DashboardAdmin = () => {
                     </AnalyticsPanel>
 
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                        id="sales-frequency"
+                        filterKey="salesFrequency"
+                        kicker="Descriptive sales"
+                        title="Sales Frequency Distribution"
+                        description="Frequency, percentage share, and revenue contribution by package category."
+                        insight={analyticsInsightItems.salesFrequency || salesFrequencyDistribution.insight}
+                        fallbackInsight={chartInsight('Sales Frequency Distribution is ready.', 'Bars show how verified bookings are distributed across real package categories.', 'Use the leading category to tune package defaults and campaign focus.')}
+                        guide={{ x: 'Package category', y: 'Frequency and percentage share' }}
+                        loading={isPanelLoading('salesFrequency')}
+                        className="admin-analytics-compact-panel"
+                        actions={renderAnalyticsFilterButton('salesFrequency', ANALYTICS_PACKAGE_CATEGORY_OPTIONS.find(option => option.value === (analyticsFilters.package_category || ''))?.label || 'Package category')}
+                    >
+                        {salesFrequencyData.length ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={salesFrequencyData} margin={{ top: 12, right: 16, bottom: 4, left: 0 }}>
+                                    <ExecutiveGrid />
+                                    <ExecutiveXAxis dataKey="label" tick={ADMIN_CHART_CATEGORY_TICK} />
+                                    <ExecutiveYAxis />
+                                    <ExecutiveTooltip valueFormatter={(value, name) => name === 'Share' ? `${value}%` : shortNumber(value)} />
+                                    <Bar dataKey="frequency" radius={[7, 7, 0, 0]} name="Bookings" isAnimationActive={analyticsChartsAnimated}>
+                                        <ExecutiveBarCells data={salesFrequencyData} colorFor={(_, index) => chartColorByIndex(index)} />
+                                        <LabelList dataKey="frequency" position="top" fill={ADMIN_CHART_THEME.slate} fontSize={9} fontWeight={900} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : <div className="admin-chart-empty">No verified sales frequency data yet.</div>}
+                    </AnalyticsPanel>
+
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                        id="peak-season-cross-tab"
+                        kicker="Decision support heatmap"
+                        title="Peak Season Cross-Tabulation Heatmap"
+                        description="Event type by month frequency matrix for seasonal staffing, purchasing, and campaign timing."
+                        insight={peakSeasonCrossTab.insight}
+                        fallbackInsight={chartInsight('Peak season cross-tabulation is ready.', 'Cells show event frequency by event type and calendar month.', 'Use high-intensity cells to plan staffing, purchasing, and campaign timing.')}
+                        guide={{ x: 'Calendar month', y: 'Event type/category' }}
+                        loading={peakSeasonLoading || (analyticsLoading && !!analytics)}
+                        className="admin-analytics-panel-wide admin-analytics-feature-panel"
+                        chartHeight="h-auto"
+                        actions={renderDashboardFilterControl(
+                            'analyticsPeakSeason',
+                            peakSeasonFilters.year === 'all' ? 'All years' : peakSeasonFilters.year,
+                            <>
+                                <label className={analyticsFilterLabelClass}>
+                                    Year
+                                    <select value={peakSeasonFilters.year} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, year: event.target.value }))} className={analyticsFilterInputClass}>
+                                        <option value="all">All years</option>
+                                        {HEATMAP_YEAR_OPTIONS.map(year => <option key={year} value={year}>{year}</option>)}
+                                    </select>
+                                </label>
+                                <label className={analyticsFilterLabelClass}>
+                                    Booking status
+                                    <select value={peakSeasonFilters.status} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, status: event.target.value }))} className={analyticsFilterInputClass}>
+                                        <option value="">Pending, confirmed, completed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Confirmed">Confirmed</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </label>
+                                <label className={analyticsFilterLabelClass}>
+                                    Event type
+                                    <select value={peakSeasonFilters.event_type} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, event_type: event.target.value }))} className={analyticsFilterInputClass}>
+                                        <option value="">All event types</option>
+                                        {peakSeasonEventTypeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                </label>
+                            </>,
+                            'sm:grid-cols-3'
+                        )}
+                    >
+                        <PeakSeasonCrossTab />
+                    </AnalyticsPanel>
+                </div>
+                )}
+
+                {activeAnalyticsView === 'supporting' && (
+                <div className="admin-analytics-grid">
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
                         id="revenue-trend"
                         filterKey="revenueTrend"
                         kicker="Revenue"
@@ -4581,7 +4659,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Revenue trend is ready.', 'Bars show verified collected revenue for each month in the active analytics window.', 'Use dips or spikes to plan payment follow-ups and purchasing timing.')}
                         guide={{ x: 'Month', y: 'Verified revenue' }}
                         loading={isPanelLoading('revenueTrend')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('revenueTrend', `Last ${analyticsFilters.trend_months} months`)}
                     >
                         {revenueTrendData.length ? (
@@ -4610,7 +4688,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Payment breakdown is ready.', 'Bars compare outstanding and collected payment value by status.', 'Use the largest unpaid status as the first collection follow-up queue.')}
                         guide={{ x: 'Payment status', y: 'Payment amount' }}
                         loading={isPanelLoading('dashboardPayment')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('dashboardPayment', paymentRiskFilters.status === 'all' ? 'Payment status' : paymentRiskFilters.status)}
                     >
                         {visiblePaymentStatusBreakdown.length ? (
@@ -4639,7 +4717,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Booking status overview is ready.', 'Bars show how many bookings currently sit in each operational status.', 'Use high pending counts as a signal to review intake and approvals.')}
                         guide={{ x: 'Booking status', y: 'Booking count' }}
                         loading={isPanelLoading('bookingPipeline')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('bookingPipeline', analyticsFilters.booking_status || 'Booking status')}
                     >
                         {bookingPipelineData.length ? (
@@ -4659,35 +4737,6 @@ const DashboardAdmin = () => {
                     </AnalyticsPanel>
 
                     <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
-                        id="sales-frequency"
-                        filterKey="salesFrequency"
-                        kicker="Descriptive sales"
-                        title="Sales Frequency Distribution"
-                        description="Frequency, percentage share, and revenue contribution by package category."
-                        insight={analyticsInsightItems.salesFrequency || salesFrequencyDistribution.insight}
-                        fallbackInsight={chartInsight('Sales Frequency Distribution is ready.', 'Bars show how verified bookings are distributed across real package categories.', 'Use the leading category to tune package defaults and campaign focus.')}
-                        guide={{ x: 'Package category', y: 'Frequency and percentage share' }}
-                        loading={isPanelLoading('salesFrequency')}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-compact-panel' : 'is-hidden'}
-                        actions={renderAnalyticsFilterButton('salesFrequency', ANALYTICS_PACKAGE_CATEGORY_OPTIONS.find(option => option.value === (analyticsFilters.package_category || ''))?.label || 'Package category')}
-                    >
-                        {salesFrequencyData.length ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={salesFrequencyData} margin={{ top: 12, right: 16, bottom: 4, left: 0 }}>
-                                    <ExecutiveGrid />
-                                    <ExecutiveXAxis dataKey="label" tick={ADMIN_CHART_CATEGORY_TICK} />
-                                    <ExecutiveYAxis />
-                                    <ExecutiveTooltip valueFormatter={(value, name) => name === 'Share' ? `${value}%` : shortNumber(value)} />
-                                    <Bar dataKey="frequency" radius={[7, 7, 0, 0]} name="Bookings" isAnimationActive={analyticsChartsAnimated}>
-                                        <ExecutiveBarCells data={salesFrequencyData} colorFor={(_, index) => chartColorByIndex(index)} />
-                                        <LabelList dataKey="frequency" position="top" fill={ADMIN_CHART_THEME.slate} fontSize={9} fontWeight={900} />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : <div className="admin-chart-empty">No verified sales frequency data yet.</div>}
-                    </AnalyticsPanel>
-
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
                         id="conversion-funnel"
                         filterKey="conversionFunnel"
                         kicker="Conversion"
@@ -4697,7 +4746,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Booking funnel is ready.', 'Bars show the main conversion steps from booking activity through feedback capture.', 'Watch for the first major drop-off before adjusting customer follow-up.')}
                         guide={{ x: 'Funnel step', y: 'Record count' }}
                         loading={isPanelLoading('conversionFunnel')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('conversionFunnel', businessSnapshot.label || 'Timeframe')}
                     >
                         <ResponsiveContainer width="100%" height="100%">
@@ -4734,7 +4783,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Package performance is ready.', 'Bars rank packages by verified booking value.', 'Use the leading packages to guide recommendations and sales scripts.')}
                         guide={{ x: 'Verified revenue', y: 'Package' }}
                         loading={isPanelLoading('packagePerformance')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('packagePerformance', `Top ${packageViewFilters.limit}`)}
                     >
                         {visiblePackagePerformanceData.length ? (
@@ -4763,7 +4812,7 @@ const DashboardAdmin = () => {
                         fallbackInsight={chartInsight('Menu performance is ready.', 'Bars rank dishes by the active menu filter.', 'Use high-demand dishes for purchasing and package menu defaults.')}
                         guide={{ x: menuViewFilters.sort === 'pax' ? 'Guests served' : 'Selections', y: 'Dish' }}
                         loading={isPanelLoading('menuPerformance')}
-                        className={activeAnalyticsView === 'supporting' ? 'admin-analytics-compact-panel' : 'is-hidden'}
+                        className="admin-analytics-compact-panel"
                         actions={renderAnalyticsFilterButton('menuPerformance', MENU_CATEGORY_OPTIONS.find(option => option.value === menuViewFilters.category)?.label || 'Dish type')}
                     >
                         {visibleMenuPerformanceData.length ? (
@@ -4780,53 +4829,6 @@ const DashboardAdmin = () => {
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : <div className="admin-chart-empty">No menu selections for this filter.</div>}
-                    </AnalyticsPanel>
-
-                    
-
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
-                        id="peak-season-cross-tab"
-                        kicker="Decision support heatmap"
-                        title="Peak Season Cross-Tabulation Heatmap"
-                        description="Event type by month frequency matrix for seasonal staffing, purchasing, and campaign timing."
-                        insight={peakSeasonCrossTab.insight}
-                        fallbackInsight={chartInsight('Peak season cross-tabulation is ready.', 'Cells show event frequency by event type and calendar month.', 'Use high-intensity cells to plan staffing, purchasing, and campaign timing.')}
-                        guide={{ x: 'Calendar month', y: 'Event type/category' }}
-                        loading={peakSeasonLoading || (analyticsLoading && !!analytics)}
-                        className={activeAnalyticsView === 'thesis' ? 'admin-analytics-panel-wide admin-analytics-feature-panel' : 'is-hidden'}
-                        chartHeight="min-h-[22rem]"
-                        actions={renderDashboardFilterControl(
-                            'analyticsPeakSeason',
-                            peakSeasonFilters.year === 'all' ? 'All years' : peakSeasonFilters.year,
-                            <>
-                                <label className={analyticsFilterLabelClass}>
-                                    Year
-                                    <select value={peakSeasonFilters.year} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, year: event.target.value }))} className={analyticsFilterInputClass}>
-                                        <option value="all">All years</option>
-                                        {HEATMAP_YEAR_OPTIONS.map(year => <option key={year} value={year}>{year}</option>)}
-                                    </select>
-                                </label>
-                                <label className={analyticsFilterLabelClass}>
-                                    Booking status
-                                    <select value={peakSeasonFilters.status} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, status: event.target.value }))} className={analyticsFilterInputClass}>
-                                        <option value="">Pending, confirmed, completed</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Confirmed">Confirmed</option>
-                                        <option value="Completed">Completed</option>
-                                    </select>
-                                </label>
-                                <label className={analyticsFilterLabelClass}>
-                                    Event type
-                                    <select value={peakSeasonFilters.event_type} onChange={(event) => setPeakSeasonFilters(current => ({ ...current, event_type: event.target.value }))} className={analyticsFilterInputClass}>
-                                        <option value="">All event types</option>
-                                        {peakSeasonEventTypeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                    </select>
-                                </label>
-                            </>,
-                            'sm:grid-cols-3'
-                        )}
-                    >
-                        <PeakSeasonCrossTab />
                     </AnalyticsPanel>
                 </div>
                 )}
@@ -4994,15 +4996,11 @@ const DashboardAdmin = () => {
         }
     };
 
-    const handleAssistedBookingCreated = (booking) => {
-        setAssistedBookingOpen(false);
+    const handleAssistedBookingCreated = () => {
         showToast('Admin-assisted booking created.');
         bustAdminCache(ADMIN_BOOKINGS_URL, '/api/admin/analytics/summary', '/api/admin/analytics');
         fetchBookings({ silent: true });
         fetchAnalyticsSummary({ silent: true });
-        if (booking) {
-            setEventDetailsModal({ open: true, data: booking });
-        }
     };
 
     const fetchRefundQueue = async ({ silent = false } = {}) => {

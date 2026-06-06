@@ -8,26 +8,26 @@ return new class extends Migration
     public function up(): void
     {
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement('CREATE INDEX IF NOT EXISTS bookings_status_event_date_idx ON bookings (status, event_date)');
-            DB::statement('CREATE INDEX IF NOT EXISTS bookings_status_package_id_idx ON bookings (status, package_id)');
-            DB::statement('CREATE INDEX IF NOT EXISTS bookings_event_type_id_idx ON bookings (event_type_id)');
-            DB::statement('CREATE INDEX IF NOT EXISTS booking_items_booking_menu_idx ON booking_items (booking_id, menu_item_id)');
-            DB::statement('CREATE INDEX IF NOT EXISTS booking_items_menu_booking_idx ON booking_items (menu_item_id, booking_id)');
-            DB::statement('CREATE INDEX IF NOT EXISTS menu_items_category_idx ON menu_items (category)');
-            DB::statement('CREATE INDEX IF NOT EXISTS payments_status_due_date_idx ON payments (status, due_date)');
-            DB::statement('CREATE INDEX IF NOT EXISTS users_role_created_at_idx ON users (role, created_at)');
+            DB::statement('CREATE INDEX bookings_status_event_date_idx ON bookings (status, event_date)');
+            DB::statement('CREATE INDEX bookings_status_package_id_idx ON bookings (status, package_id)');
+            DB::statement('CREATE INDEX bookings_event_type_id_idx ON bookings (event_type_id)');
+            DB::statement('CREATE INDEX booking_items_booking_menu_idx ON booking_items (booking_id, menu_item_id)');
+            DB::statement('CREATE INDEX booking_items_menu_booking_idx ON booking_items (menu_item_id, booking_id)');
+            DB::statement('CREATE INDEX menu_items_category_idx ON menu_items (category)');
+            DB::statement('CREATE INDEX payments_status_due_date_idx ON payments (status, due_date)');
+            DB::statement('CREATE INDEX users_role_created_at_idx ON users (role, created_at)');
 
             return;
         }
 
-        DB::statement('CREATE INDEX IF NOT EXISTS bookings_status_event_date_idx ON bookings (status, event_date)');
-        DB::statement('CREATE INDEX IF NOT EXISTS bookings_status_package_id_idx ON bookings (status, package_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS bookings_event_type_id_idx ON bookings (event_type_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS booking_items_booking_menu_idx ON booking_items (booking_id, menu_item_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS booking_items_menu_booking_idx ON booking_items (menu_item_id, booking_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS menu_items_category_idx ON menu_items (category)');
-        DB::statement('CREATE INDEX IF NOT EXISTS payments_status_due_date_idx ON payments (status, due_date)');
-        DB::statement('CREATE INDEX IF NOT EXISTS users_role_created_at_idx ON users (role, created_at)');
+        DB::statement('CREATE INDEX bookings_status_event_date_idx ON bookings (status, event_date)');
+        DB::statement('CREATE INDEX bookings_status_package_id_idx ON bookings (status, package_id)');
+        DB::statement('CREATE INDEX bookings_event_type_id_idx ON bookings (event_type_id)');
+        DB::statement('CREATE INDEX booking_items_booking_menu_idx ON booking_items (booking_id, menu_item_id)');
+        DB::statement('CREATE INDEX booking_items_menu_booking_idx ON booking_items (menu_item_id, booking_id)');
+        DB::statement('CREATE INDEX menu_items_category_idx ON menu_items (category)');
+        DB::statement('CREATE INDEX payments_status_due_date_idx ON payments (status, due_date)');
+        DB::statement('CREATE INDEX users_role_created_at_idx ON users (role, created_at)');
     }
 
     public function down(): void

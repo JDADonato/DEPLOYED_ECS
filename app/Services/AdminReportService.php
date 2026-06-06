@@ -94,10 +94,9 @@ class AdminReportService
 
     public function analytics(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('full', $filters, 60, function () use ($filters) {
-            $summary = $this->memo('revenueSummary', $filters, fn () => $this->revenueSummary($filters));
+            $snapshotFilters = $this->withSnapshotWindow($filters);
+            $summary = $this->memo('revenueSummary', $snapshotFilters, fn () => $this->revenueSummary($snapshotFilters));
             $trend = $this->memo('settledRevenueTrend', $filters, fn () => $this->settledRevenueTrend($filters));
             $paymentBreakdown = $this->memo('paymentBreakdown', $filters, fn () => $this->paymentBreakdown($filters));
             $paymentAging = $this->memo('paymentAging', $filters, fn () => $this->paymentAging($filters));
@@ -114,8 +113,8 @@ class AdminReportService
             $paxDemandProjection = $this->memo('paxDemandProjection', $filters, fn () => $this->paxDemandProjection($filters));
 
             return [
-                'summary' => $this->summary($filters, $summary),
-                'businessSnapshot' => $this->memo('businessSnapshot', $filters, fn () => $this->businessSnapshot($filters)),
+                'summary' => $this->summary($snapshotFilters, $summary),
+                'businessSnapshot' => $this->memo('businessSnapshot', $snapshotFilters, fn () => $this->businessSnapshot($snapshotFilters)),
                 'revenueTrends' => $trend,
                 'revenueHealth' => [
                     'settledRevenueOverTime' => $trend,
@@ -165,14 +164,13 @@ class AdminReportService
 
     public function analyticsSummary(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('summary', $filters, 60, function () use ($filters) {
-            $summary = $this->memo('revenueSummary', $filters, fn () => $this->revenueSummary($filters));
+            $snapshotFilters = $this->withSnapshotWindow($filters);
+            $summary = $this->memo('revenueSummary', $snapshotFilters, fn () => $this->revenueSummary($snapshotFilters));
 
             return [
-                'summary' => $this->summary($filters, $summary),
-                'businessSnapshot' => $this->memo('businessSnapshot', $filters, fn () => $this->businessSnapshot($filters)),
+                'summary' => $this->summary($snapshotFilters, $summary),
+                'businessSnapshot' => $this->memo('businessSnapshot', $snapshotFilters, fn () => $this->businessSnapshot($snapshotFilters)),
                 'conversionFunnel' => $this->memo('conversionFunnel', $filters, fn () => $this->conversionFunnel($filters)),
                 'salesFrequencyDistribution' => $this->memo('salesFrequencyDistribution', $filters, fn () => $this->salesFrequencyDistribution($filters)),
                 'revenueRegression' => $this->memo('revenueForecast', $filters, fn () => $this->revenueForecast($filters)),
@@ -192,22 +190,18 @@ class AdminReportService
 
     public function analyticsRevenue(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('revenue', $filters, 180, function () use ($filters) {
             return [
                 'settledRevenueOverTime' => $this->memo('settledRevenueTrend', $filters, fn () => $this->settledRevenueTrend($filters)),
                 'paymentStatusBreakdown' => $this->memo('paymentBreakdown', $filters, fn () => $this->paymentBreakdown($filters))['rows'],
                 'paymentAging' => $this->memo('paymentAging', $filters, fn () => $this->paymentAging($filters)),
-                'insight' => $this->insightForWidget('revenue_summary', $this->memo('revenueSummary', $filters, fn () => $this->revenueSummary($filters))),
+                'insight' => $this->insightForWidget('revenue_summary', $this->memo('revenueSummary', $this->withSnapshotWindow($filters), fn () => $this->revenueSummary($this->withSnapshotWindow($filters)))),
             ];
         });
     }
 
     public function analyticsPipeline(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('pipeline', $filters, 90, function () use ($filters) {
             return [
                 'bookingPipeline' => $this->memo('bookingPipeline', $filters, fn () => $this->bookingPipeline($filters))['rows'],
@@ -219,8 +213,6 @@ class AdminReportService
 
     public function analyticsMenuPerformance(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('menu', $filters, 300, function () use ($filters) {
             return [
                 'packagePerformance' => $this->memo('packagePerformance', $filters, fn () => $this->packagePerformance($filters))['rows'],
@@ -233,8 +225,6 @@ class AdminReportService
 
     public function analyticsCustomerExperience(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('customer', $filters, 300, function () use ($filters) {
             return [
                 'customerGrowth' => $this->memo('customerGrowth', $filters, fn () => $this->customerGrowth($filters))['rows'],
@@ -247,8 +237,6 @@ class AdminReportService
 
     public function analyticsOperations(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('operations', $filters, 60, function () use ($filters) {
             $peakSeasonCrossTab = $this->memo('peakSeasonCrossTab', $filters, fn () => $this->peakSeasonCrossTab($filters));
             $salesFrequency = $this->memo('salesFrequencyDistribution', $filters, fn () => $this->salesFrequencyDistribution($filters));
@@ -269,8 +257,6 @@ class AdminReportService
 
     public function analyticsForecasts(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('forecasts', $filters, 180, function () use ($filters) {
             $paxDemandProjection = $this->memo('paxDemandProjection', $filters, fn () => $this->paxDemandProjection($filters));
 
@@ -287,8 +273,6 @@ class AdminReportService
 
     public function analyticsAdvanced(array $filters = []): array
     {
-        $filters = $this->withSnapshotWindow($filters);
-
         return $this->cachedPart('advanced', $filters, 180, function () use ($filters) {
             $salesFrequency = $this->memo('salesFrequencyDistribution', $filters, fn () => $this->salesFrequencyDistribution($filters));
             $revenueRegression = $this->memo('revenueForecast', $filters, fn () => $this->revenueForecast($filters));

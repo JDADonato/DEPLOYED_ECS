@@ -163,12 +163,17 @@ class PaymentController extends Controller
             'payment_id' => ['required', 'integer', 'exists:payments,id'],
         ]);
 
-        $payment = Payment::with('booking.payments')
+        $query = Payment::with('booking.payments')
             ->active()
             ->whereKey($validated['payment_id'])
-            ->where('booking_id', $validated['booking_id'])
-            ->whereHas('booking', fn ($query) => $query->where('user_id', Auth::id()))
-            ->firstOrFail();
+            ->where('booking_id', $validated['booking_id']);
+
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['Admin', 'Marketing'], true)) {
+            $query->whereHas('booking', fn ($q) => $q->where('user_id', Auth::id()));
+        }
+
+        $payment = $query->firstOrFail();
 
         $syncStatus = $payment->status;
         $syncMessage = 'Payment is still pending PayMongo confirmation.';
@@ -179,67 +184,75 @@ class PaymentController extends Controller
             try {
                 $checkout = $payMongo->retrieveCheckoutSession($payment->paymongo_checkout_session_id);
 
-                if ($this->checkoutSessionIsPaid($checkout) && $this->checkoutAmountMatches($checkout, $payment)) {
-                    DB::transaction(function () use ($payment, $checkout, $paymentCalculation) {
-                        $payment->refresh();
-                        $payment->loadMissing('booking.payments');
+                if ($this->checkoutSessionIsPaid($checkout)) {
+                    $payments = Payment::where('paymongo_checkout_session_id', $payment->paymongo_checkout_session_id)->get();
+                    
+                    if ($this->checkoutAmountMatchesForMultiple($checkout, $payments)) {
+                        DB::transaction(function () use ($payments, $checkout, $paymentCalculation) {
+                            foreach ($payments as $p) {
+                                $p->refresh();
+                                $p->loadMissing('booking.payments');
 
-                        $payment->forceFill([
-                            'status' => 'Paid',
-                            'payment_method' => $this->checkoutPaymentMethod($checkout) ?: 'PayMongo',
-                            'verified_by' => 'PayMongo Checkout',
-                            'verified_at' => now(),
-                            'paymongo_payment_id' => $this->checkoutPaymentId($checkout) ?: $payment->paymongo_payment_id,
-                            'paymongo_payment_intent_id' => $this->checkoutPaymentIntentId($checkout) ?: $payment->paymongo_payment_intent_id,
-                        ])->save();
+                                $p->forceFill([
+                                    'status' => 'Paid',
+                                    'payment_method' => $this->checkoutPaymentMethod($checkout) ?: 'PayMongo',
+                                    'verified_by' => 'PayMongo Checkout',
+                                    'verified_at' => now(),
+                                    'paymongo_payment_id' => $this->checkoutPaymentId($checkout) ?: $p->paymongo_payment_id,
+                                    'paymongo_payment_intent_id' => $this->checkoutPaymentIntentId($checkout) ?: $p->paymongo_payment_intent_id,
+                                ])->save();
 
-                        PaymentEventService::record(
-                            'checkout_confirmed',
-                            'paymongo',
-                            $payment,
-                            [
-                                'checkout_session_id' => $payment->paymongo_checkout_session_id,
-                                'payment_type' => $payment->payment_type,
-                            ],
-                            $payment->paymongo_payment_id ?: $payment->paymongo_checkout_session_id
-                        );
+                                PaymentEventService::record(
+                                    'checkout_confirmed',
+                                    'paymongo',
+                                    $p,
+                                    [
+                                        'checkout_session_id' => $p->paymongo_checkout_session_id,
+                                        'payment_type' => $p->payment_type,
+                                    ],
+                                    $p->paymongo_payment_id ?: $p->paymongo_checkout_session_id
+                                );
+                            }
 
-                        if ($payment->booking) {
-                            $paymentCalculation->updateBookingMilestone($payment->booking);
+                            if ($payments->first()->booking) {
+                                $paymentCalculation->updateBookingMilestone($payments->first()->booking);
+                            }
+                        });
+
+                        foreach ($payments as $p) {
+                            try {
+                                broadcast(new PaymentProcessed($p->fresh()))->toOthers();
+                            } catch (\Throwable $broadcastException) {
+                                Log::warning('Payment checkout realtime broadcast skipped.', [
+                                    'payment_id' => $p->id,
+                                    'message' => $broadcastException->getMessage(),
+                                ]);
+                            }
                         }
-                    });
+                        
+                        app(OperationalBroadcastService::class)
+                            ->financeChanged($payment->booking, 'payment', $payment->id, 'confirmed', 'Payment confirmed.');
 
-                    try {
-                        broadcast(new PaymentProcessed($payment->fresh()))->toOthers();
-                    } catch (\Throwable $broadcastException) {
-                        Log::warning('Payment checkout realtime broadcast skipped.', [
-                            'payment_id' => $payment->id,
-                            'message' => $broadcastException->getMessage(),
+                        ConversionEventService::record('payment_confirmed', [
+                            'booking' => $payment->booking,
+                            'source' => 'paymongo_checkout',
+                            'metadata' => [
+                                'payment_ids' => $payments->pluck('id')->all(),
+                                'status' => 'Paid',
+                            ],
+                        ]);
+
+                        $syncStatus = 'Paid';
+                        $syncMessage = 'Payment confirmed through PayMongo.';
+                    } else {
+                        $syncMessage = 'PayMongo returned a different amount, so payment was not auto-confirmed.';
+                        Log::warning('PayMongo checkout success amount mismatch.', [
+                            'payment_ids' => $payments->pluck('id')->all(),
+                            'checkout_session_id' => $payment->paymongo_checkout_session_id,
+                            'expected_amount' => (float) $payments->sum('amount'),
+                            'received_amount' => $this->checkoutAmount($checkout),
                         ]);
                     }
-                    app(OperationalBroadcastService::class)
-                        ->financeChanged($payment->booking, 'payment', $payment->id, 'confirmed', 'Payment confirmed.');
-
-                    ConversionEventService::record('payment_confirmed', [
-                        'booking' => $payment->booking,
-                        'source' => 'paymongo_checkout',
-                        'metadata' => [
-                            'payment_id' => $payment->id,
-                            'payment_type' => $payment->payment_type,
-                            'status' => 'Paid',
-                        ],
-                    ]);
-
-                    $syncStatus = 'Paid';
-                    $syncMessage = 'Payment confirmed through PayMongo.';
-                } elseif (! $this->checkoutAmountMatches($checkout, $payment)) {
-                    $syncMessage = 'PayMongo returned a different amount, so payment was not auto-confirmed.';
-                    Log::warning('PayMongo checkout success amount mismatch.', [
-                        'payment_id' => $payment->id,
-                        'checkout_session_id' => $payment->paymongo_checkout_session_id,
-                        'expected_amount' => (float) $payment->amount,
-                        'received_amount' => $this->checkoutAmount($checkout),
-                    ]);
                 } else {
                     $syncMessage = 'PayMongo has not marked this checkout as paid yet.';
                 }
@@ -262,6 +275,14 @@ class PaymentController extends Controller
 
                 $syncMessage = 'Payment is still pending PayMongo confirmation.';
             }
+        }
+
+        if ($user && in_array($user->role, ['Admin', 'Marketing'], true)) {
+            return redirect()->route('dashboard.index', [
+                'workspace' => strtolower($user->role),
+                'tab' => 'bookings',
+                'booking_id' => $payment->booking_id,
+            ]);
         }
 
         return Inertia::render('client/PaymentSuccess', [
@@ -357,6 +378,17 @@ class PaymentController extends Controller
             ->filter()
             ->map(fn ($status) => strtolower((string) $status))
             ->contains(fn ($status) => in_array($status, ['paid', 'succeeded', 'success', 'completed'], true));
+    }
+
+    private function checkoutAmountMatchesForMultiple(array $checkout, \Illuminate\Support\Collection $payments): bool
+    {
+        $amount = $this->checkoutAmount($checkout);
+
+        if ($amount === null) {
+            return true;
+        }
+
+        return (int) $amount === (int) round(((float) $payments->sum('amount')) * 100);
     }
 
     private function checkoutAmountMatches(array $checkout, Payment $payment): bool

@@ -7,7 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('CREATE INDEX IF NOT EXISTS event_preparation_tasks_booking_department_status_idx ON event_preparation_tasks (booking_id, department, status)');
+        DB::statement('CREATE INDEX event_preparation_tasks_booking_department_status_idx ON event_preparation_tasks (booking_id, department, status)');
     }
 
     public function down(): void

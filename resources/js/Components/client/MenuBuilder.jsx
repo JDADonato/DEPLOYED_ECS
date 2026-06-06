@@ -411,29 +411,6 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
         .filter(pkg => !pkg.addOnOnly || Number(pax || 0) >= (pkg.minimumPax || 0));
     const packageCards = configuredPackageCards.length ? configuredPackageCards : fallbackPackageCards;
     const hasPackagePricing = Boolean(bookingData.package_pricing_type || bookingData.package_base_price || bookingData.package_flat_price);
-    const budgetMinimum = useMemo(() => {
-        if (!pax) return 0;
-        return CATEGORY_TABS.reduce((sum, tab) => {
-            const categoryDishes = mergedDishes[tab.key] || [];
-            if (categoryDishes.length === 0) return sum;
-            const cheapest = Math.min(...categoryDishes.map(dish => getDishCost(dish)));
-            return sum + (cheapest * pax);
-        }, 0);
-    }, [mergedDishes, pax, pricingOverrides]);
-    const budgetNumber = parseInt(budget || 0, 10);
-    const isBudgetReady = budgetMinimum > 0 && budgetNumber >= budgetMinimum;
-    const isMenuCatalogLoading = menuCatalogLoading || pricingLoading || !menuCatalogLoaded;
-    const isMenuCatalogReady = menuCatalogLoaded && !menuCatalogLoading && !pricingLoading;
-    const budgetMissingCategory = isMenuCatalogReady ? CATEGORY_TABS.find(tab => (mergedDishes[tab.key] || []).length === 0) : null;
-    const budgetStatusMessage = isMenuCatalogLoading
-        ? 'Menu prices are still loading.'
-        : menuCatalogError
-            ? 'Menu prices could not be loaded. Please try again later.'
-            : budgetMissingCategory
-                ? `No active ${budgetMissingCategory.label.toLowerCase()} dishes are available yet.`
-                : budgetMinimum > 0
-                    ? `For ${pax} guests, a complete menu starts at ${money(budgetMinimum)}. This includes at least one choice from each menu section.`
-                    : 'Checking the starting menu price for your guest count.';
     const packageTerms = [
         ...GLOBAL_PAYMENT_TERMS,
         packageCategory.pricingNote,
@@ -456,6 +433,44 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
         package_location_surcharge_rate: 0.20,
         package_floor_surcharge_rate: 0.03,
     };
+
+    const budgetMinimum = useMemo(() => {
+        if (!pax) return 0;
+        
+        // 1. Calculate raw minimum food cost
+        const rawFoodMinimum = CATEGORY_TABS.reduce((sum, tab) => {
+            const categoryDishes = mergedDishes[tab.key] || [];
+            if (categoryDishes.length === 0) return sum;
+            const cheapest = Math.min(...categoryDishes.map(dish => getDishCost(dish)));
+            return sum + (cheapest * pax);
+        }, 0);
+        
+        // 2. Add realistic fees (VAT, Service Charge, Contingency)
+        const vatRate = packageContextFields.package_vat_rate || 0;
+        const serviceChargeRate = packageContextFields.package_service_charge_rate || 0;
+        const securityRate = packageContextFields.package_security_rate || 0;
+        const cashBond = packageContextFields.package_cash_bond || 0;
+        
+        const feeMultiplier = 1 + vatRate + serviceChargeRate + securityRate;
+        const realisticMinimum = Math.ceil(rawFoodMinimum * feeMultiplier) + cashBond;
+        
+        return realisticMinimum;
+    }, [mergedDishes, pax, pricingOverrides, packageContextFields]);
+
+    const budgetNumber = parseInt(budget || 0, 10);
+    const isBudgetReady = budgetMinimum > 0 && budgetNumber >= budgetMinimum;
+    const isMenuCatalogLoading = menuCatalogLoading || pricingLoading || !menuCatalogLoaded;
+    const isMenuCatalogReady = menuCatalogLoaded && !menuCatalogLoading && !pricingLoading;
+    const budgetMissingCategory = isMenuCatalogReady ? CATEGORY_TABS.find(tab => (mergedDishes[tab.key] || []).length === 0) : null;
+    const budgetStatusMessage = isMenuCatalogLoading
+        ? 'Menu prices are still loading.'
+        : menuCatalogError
+            ? 'Menu prices could not be loaded. Please try again later.'
+            : budgetMissingCategory
+                ? `No active ${budgetMissingCategory.label.toLowerCase()} dishes are available yet.`
+                : budgetMinimum > 0
+                    ? `For ${pax} guests, a complete menu starts at ${money(budgetMinimum)}. This includes standard fees, VAT, and basic setup.`
+                    : 'Checking the starting menu price for your guest count.';
 
     // Restore existing selections if coming back
     useEffect(() => {
@@ -600,7 +615,18 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
     // Budget builder: secure one dish from every category first, then add extras if the budget allows.
     const applyBudgetMaximizer = () => {
         if (!isBudgetReady || budgetMissingCategory) return;
-        const totalBudget = parseInt(budget);
+        
+        const userTotalBudget = parseInt(budget);
+        
+        // Back-calculate the actual food budget from the user's total out-of-pocket budget
+        const vatRate = packageContextFields.package_vat_rate || 0;
+        const serviceChargeRate = packageContextFields.package_service_charge_rate || 0;
+        const securityRate = packageContextFields.package_security_rate || 0;
+        const cashBond = packageContextFields.package_cash_bond || 0;
+        const feeMultiplier = 1 + vatRate + serviceChargeRate + securityRate;
+        
+        const totalBudget = Math.floor((userTotalBudget - cashBond) / feeMultiplier);
+
         const newSelections = { starter: [], main: [], side: [], dessert: [], drink: [] };
         let runningTotal = 0;
 

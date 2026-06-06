@@ -4875,7 +4875,7 @@
 
   .admin-analytics-grid {
     display: grid;
-    align-items: stretch;
+    align-items: start;
     min-width: 0;
     max-width: 100%;
     gap: 1rem;
@@ -5463,7 +5463,7 @@
   }
 
   .admin-analytics-compact-panel .admin-analytics-panel-body .admin-insight-line:not(.is-compact) {
-    min-height: 5.25rem;
+    min-height: 3.5rem;
   }
 
   .admin-analytics-feature-panel {
@@ -5478,8 +5478,7 @@
 
   .admin-analytics-panel {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    height: 100%;
+    grid-template-rows: auto 1fr;
     min-width: 0;
     max-width: 100%;
     position: relative;
@@ -5532,9 +5531,10 @@
     position: absolute;
     top: calc(100% + .55rem);
     right: 0;
-    z-index: 55;
-    width: min(34rem, calc(100vw - 2rem));
-    min-width: min(20rem, calc(100vw - 2rem));
+    left: auto;
+    z-index: 100;
+    width: min(24rem, calc(100vw - 2rem));
+    min-width: 14rem;
     max-width: calc(100vw - 2rem);
     border: 1px solid rgba(114,1,1,.12);
     border-radius: .95rem;
@@ -5564,9 +5564,10 @@
     position: absolute;
     top: calc(100% + .55rem);
     right: 0;
-    z-index: 35;
-    width: min(42rem, calc(100vw - 2rem));
-    min-width: min(24rem, calc(100vw - 2rem));
+    left: auto;
+    z-index: 100;
+    width: min(28rem, calc(100vw - 2rem));
+    min-width: 14rem;
     max-width: calc(100vw - 2rem);
     border: 1px solid rgba(114,1,1,.12);
     border-radius: .95rem;
@@ -5583,12 +5584,11 @@
 
   .admin-analytics-panel-body {
     display: grid;
-    grid-template-rows: auto auto minmax(7rem, auto);
+    grid-template-rows: auto 1fr auto auto;
     align-content: start;
     min-width: 0;
     max-width: 100%;
-    gap: .85rem;
-    height: 100%;
+    gap: .65rem;
     padding: 1rem 1.05rem 1.1rem;
   }
 
@@ -5598,7 +5598,7 @@
   }
 
   .admin-analytics-panel-body .admin-insight-line:not(.is-compact) {
-    min-height: 7rem;
+    min-height: 4.5rem;
   }
 
   .admin-chart-guide {
@@ -5827,10 +5827,9 @@
 
     .admin-analytics-filter-popover {
       top: calc(100% + .55rem);
-      right: auto;
-      left: 0;
-      width: min(32rem, calc(100vw - 2rem));
-      min-width: 0;
+      right: 0;
+      left: auto;
+      width: min(24rem, calc(100vw - 2rem));
     }
 
     .admin-dashboard-filter-anchor {
@@ -5839,10 +5838,9 @@
 
     .admin-dashboard-filter-popover {
       top: calc(100% + .55rem);
-      right: auto;
-      left: 0;
-      width: min(32rem, calc(100vw - 2rem));
-      min-width: 0;
+      right: 0;
+      left: auto;
+      width: min(28rem, calc(100vw - 2rem));
     }
 
     .admin-cross-tab th,
