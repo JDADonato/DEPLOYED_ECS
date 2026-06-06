@@ -27,3 +27,5 @@ PsySH/
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/php/
+composer.phar

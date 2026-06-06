@@ -13,8 +13,6 @@ class StaffEventHistoryController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorizeStaff();
-
         $query = Booking::query()
             ->with([
                 'user:id,full_name,username,email,phone,role,account_status',
@@ -96,8 +94,6 @@ class StaffEventHistoryController extends Controller
 
     public function storeNote(Request $request, Booking $booking)
     {
-        $this->authorizeStaff();
-
         if ($booking->status !== 'Completed') {
             return response()->json(['error' => 'History notes can only be added to completed events.'], 422);
         }

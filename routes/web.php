@@ -84,9 +84,14 @@ Route::middleware('auth')->group(function () {
             ]);
         }
 
-        return response()
-            ->json(['token' => csrf_token()])
-            ->header('X-ECS-Debug-Request', 'csrf-refresh');
+        $response = response()
+            ->json(['token' => csrf_token()]);
+
+        if (app()->isLocal() || config('app.debug')) {
+            $response->header('X-ECS-Debug-Request', 'csrf-refresh');
+        }
+
+        return $response;
     })->name('session.csrf-token');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/password/change-required', [AuthController::class, 'showChangeRequired'])->name('password.change-required');
@@ -101,8 +106,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/avatar', [ProfileController::class, 'avatar'])->name('profile.avatar');
     Route::post('/profile/password-code', [ProfileController::class, 'sendPasswordCode'])->middleware('throttle:5,1')->name('profile.password-code');
     Route::get('/api/profile/activity', [ProfileController::class, 'activity'])->name('profile.activity');
-    Route::get('/api/staff/event-history', [StaffEventHistoryController::class, 'index']);
-    Route::post('/api/staff/event-history/{booking}/notes', [StaffEventHistoryController::class, 'storeNote']);
+    Route::get('/api/staff/event-history', [StaffEventHistoryController::class, 'index'])->middleware('role:Admin,Marketing,Accounting');
+    Route::post('/api/staff/event-history/{booking}/notes', [StaffEventHistoryController::class, 'storeNote'])->middleware('role:Admin,Marketing,Accounting');
     Route::get('/documents/payments/{payment}/receipt.pdf', [DocumentController::class, 'receipt'])->name('documents.receipt');
     Route::get('/documents/bookings/{booking}/preparation.pdf', [DocumentController::class, 'preparationList'])->name('documents.preparation');
     Route::get('/documents/calendar.pdf', [DocumentController::class, 'calendar'])->name('documents.calendar');
@@ -189,7 +194,7 @@ Route::get('/book', function () {
     $version = (int) cache()->get('catalog.version', 1);
     $eventTypes = cache()->remember("catalog.public.event_types.v{$version}.booking", now()->addMinutes(10), fn () => (
         \App\Models\EventType::query()
-            ->whereRaw('is_active is true')
+            ->where('is_active', true)
             ->orderBy('label')
             ->limit(50)
             ->get()
@@ -255,7 +260,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
         $version = (int) cache()->get('catalog.version', 1);
         $eventTypes = cache()->remember("catalog.public.event_types.v{$version}.booking", now()->addMinutes(10), fn () => (
             \App\Models\EventType::query()
-                ->whereRaw('is_active is true')
+                ->where('is_active', true)
                 ->orderBy('label')
                 ->limit(50)
                 ->get()

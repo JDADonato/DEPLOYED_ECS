@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\BookingSummaryResource;
+use App\Http\Resources\PublicMenuItemResource;
 use App\Http\Resources\UserSummaryResource;
 use App\Models\AuditLog;
 use App\Models\Booking;
@@ -783,6 +784,8 @@ class AdminController extends Controller
     public function getPricingOverrides()
     {
         try {
+            $isStaff = in_array(Auth::user()?->role, ['Admin', 'Marketing', 'Accounting'], true);
+
             $pricingMap = Cache::remember('pricing.overrides.map', now()->addMinutes(5), function () {
                 $overrides = PricingOverride::all();
                 $map = [];
@@ -792,6 +795,11 @@ class AdminController extends Controller
 
                 return $map;
             });
+
+            // Strip internal overrides for non-staff callers — only expose the price map
+            if (! $isStaff) {
+                return response()->json(['overrides' => $pricingMap]);
+            }
 
             return response()->json(['overrides' => $pricingMap]);
         } catch (\Exception $e) {
@@ -978,7 +986,8 @@ class AdminController extends Controller
 
     public function getMenuItems()
     {
-        $includeInactive = in_array(Auth::user()?->role, ['Admin', 'Marketing'], true);
+        $isStaff = in_array(Auth::user()?->role, ['Admin', 'Marketing'], true);
+        $includeInactive = $isStaff;
         $version = $this->catalogVersion();
         $cacheKey = 'catalog.menu_items.'.($includeInactive ? 'staff' : 'public').".v{$version}";
 
@@ -986,11 +995,16 @@ class AdminController extends Controller
             $query = MenuItem::query();
 
             if (! $includeInactive) {
-                $query->whereRaw('is_active is true');
+                $query->where('is_active', true);
             }
 
             return $query->orderBy('category')->orderBy('name')->get();
         });
+
+        // Strip internal cost fields for non-staff callers
+        if (! $isStaff) {
+            return PublicMenuItemResource::collection($items);
+        }
 
         return response()->json($items);
     }

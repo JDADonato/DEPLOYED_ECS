@@ -26,17 +26,17 @@ The app is built for four main roles:
 
 ## Prerequisites
 
-This repository includes a portable PHP runtime and `composer.phar`, so global PHP and Composer are not required for normal Windows development.
+Install these tools from official sources:
 
-`composer.phar` is in the repository root, not inside the `php` folder. Use `.\composer.bat install` or `.\php\php.exe composer.phar install`; do not use `.\php\composer.phar install`.
+| Tool | Version | Source |
+| --- | --- | --- |
+| PHP | 8.2 or newer | [php.net](https://www.php.net/downloads) |
+| Composer | 2.x | [getcomposer.org](https://getcomposer.org/download/) |
+| Node.js | 18 or newer | [nodejs.org](https://nodejs.org/) |
+| Git | Current stable | [git-scm.com](https://git-scm.com/) |
+| ngrok | Optional, needed for PayMongo webhook testing | [ngrok.com](https://ngrok.com/) |
 
-Install these separately:
-
-| Tool | Version |
-| --- | --- |
-| Node.js | 18 or newer |
-| Git | Current stable |
-| ngrok | Optional, needed for PayMongo webhook testing |
+The project includes convenience wrappers (`.\composer.bat`, `.\refresh.bat`) that work with a local portable PHP runtime when present. If you already have a `php/` directory from a previous setup, the wrappers will use it automatically. The `php/` directory and `composer.phar` are excluded from version control via `.gitignore`.
 
 ## First-Time Setup
 
@@ -319,14 +319,14 @@ See `docs/document-inventory.md` for ownership, audience, renderer, limits, and 
 
 ## Default Seed Accounts
 
-After seeding, typical local demo accounts are:
+After seeding, local demo accounts are created with the default password shown during `artisan migrate --seed`. Check the seeder output for the current password.
 
-| Role | Username | Password | Dashboard |
-| --- | --- | --- | --- |
-| Admin | `admin` | `password123` | `/dashboard/admin` |
-| Marketing | `marketing` | `password123` | `/dashboard/marketing` |
-| Accounting | `accounting` | `password123` | `/dashboard/accounting` |
-| Client | `client` | `password123` | `/dashboard/client` |
+| Role | Username | Dashboard |
+| --- | --- | --- |
+| Admin | `admin` | `/dashboard/admin` |
+| Marketing | `marketing` | `/dashboard/marketing` |
+| Accounting | `accounting` | `/dashboard/accounting` |
+| Client | `client` | `/dashboard/client` |
 
 New staff/admin accounts created through Admin use generated temporary passwords instead of a shared default password.
 

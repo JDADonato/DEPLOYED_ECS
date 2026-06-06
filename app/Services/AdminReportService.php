@@ -2211,6 +2211,18 @@ class AdminReportService
 
     private function periodExpression(string $column, string $period): string
     {
+        throw_unless(
+            in_array($column, ['created_at', 'payments.verified_at', 'event_date'], true),
+            \InvalidArgumentException::class,
+            "Invalid column for periodExpression: {$column}"
+        );
+
+        throw_unless(
+            in_array($period, ['month', 'monthly', 'quarter', 'quarterly', 'year', 'yearly'], true),
+            \InvalidArgumentException::class,
+            "Invalid period for periodExpression: {$period}"
+        );
+
         if ($period === 'quarterly') {
             return match (DB::getDriverName()) {
                 'pgsql' => "CONCAT(EXTRACT(YEAR FROM $column)::int, '-Q', EXTRACT(QUARTER FROM $column)::int)",
@@ -2224,6 +2236,12 @@ class AdminReportService
 
     private function quarterWhereExpression(string $column): string
     {
+        throw_unless(
+            in_array($column, ['created_at', 'payments.verified_at', 'event_date'], true),
+            \InvalidArgumentException::class,
+            "Invalid column for quarterWhereExpression: {$column}"
+        );
+
         return match (DB::getDriverName()) {
             'pgsql' => "EXTRACT(QUARTER FROM $column)::int",
             'mysql', 'mariadb' => "QUARTER($column)",
@@ -2233,6 +2251,12 @@ class AdminReportService
 
     private function monthExpression(string $column): string
     {
+        throw_unless(
+            in_array($column, ['created_at', 'payments.verified_at', 'event_date'], true),
+            \InvalidArgumentException::class,
+            "Invalid column for monthExpression: {$column}"
+        );
+
         return match (DB::getDriverName()) {
             'pgsql' => "TO_CHAR($column, 'YYYY-MM')",
             'mysql', 'mariadb' => "DATE_FORMAT($column, '%Y-%m')",
@@ -2242,6 +2266,12 @@ class AdminReportService
 
     private function calendarMonthExpression(string $column): string
     {
+        throw_unless(
+            in_array($column, ['created_at', 'payments.verified_at', 'event_date'], true),
+            \InvalidArgumentException::class,
+            "Invalid column for calendarMonthExpression: {$column}"
+        );
+
         return match (DB::getDriverName()) {
             'pgsql' => "TO_CHAR($column, 'MM')",
             'mysql', 'mariadb' => "DATE_FORMAT($column, '%m')",

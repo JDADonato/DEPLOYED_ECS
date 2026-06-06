@@ -318,23 +318,36 @@ class AuthController extends Controller
 
         if ($request->header('X-Inertia')) {
             $response = Inertia::location($dashboardRoute);
-            $response->headers->set('X-ECS-Debug-Request', 'password-change');
+            if (app()->isLocal() || config('app.debug')) {
+                $response->headers->set('X-ECS-Debug-Request', 'password-change');
+            }
 
             return $response;
         }
 
         if ($request->expectsJson()) {
-            return response()->json([
+            $response = response()->json([
                 'message' => 'Password updated. Welcome to your workspace.',
                 'redirect' => $dashboardRoute,
                 'role' => $user->role,
                 'must_change_password' => $user->requiresPasswordChange(),
-            ])->header('X-ECS-Debug-Request', 'password-change');
+            ]);
+
+            if (app()->isLocal() || config('app.debug')) {
+                $response->header('X-ECS-Debug-Request', 'password-change');
+            }
+
+            return $response;
         }
 
-        return redirect($dashboardRoute)
-            ->header('X-ECS-Debug-Request', 'password-change')
+        $response = redirect($dashboardRoute)
             ->with('message', 'Password updated. Welcome to your workspace.');
+
+        if (app()->isLocal() || config('app.debug')) {
+            $response->header('X-ECS-Debug-Request', 'password-change');
+        }
+
+        return $response;
     }
 
     public function showForgotPassword()

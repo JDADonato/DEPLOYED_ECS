@@ -92,6 +92,23 @@ class PreflightScan extends Command
         $checks[] = $this->check(config('session.secure') === true, 'env.secure_cookie', 'Secure session cookies are enabled', 'warning', 'Set SESSION_SECURE_COOKIE=true on production.');
         $checks[] = $this->check(! blank(config('services.paymongo.webhook_secret')), 'env.paymongo_webhook_secret', 'PayMongo webhook secret is configured', 'warning', 'Set PAYMONGO_WEBHOOK_SECRET on production.');
 
+        // APP_KEY guard: fail if empty or shorter than 32 characters outside local
+        $appKey = (string) config('app.key');
+        $appKeyValid = strlen($appKey) >= 32 || app()->environment('local');
+        $checks[] = $this->check($appKeyValid, 'env.app_key_strength', 'APP_KEY is present and at least 32 characters', 'fail', 'Run php artisan key:generate to set a strong APP_KEY before deployment.');
+
+        // Reverb credential guards: fail if any credential is still 'change_me' outside local
+        $reverbIds = [
+            'REVERB_APP_ID' => env('REVERB_APP_ID'),
+            'REVERB_APP_KEY' => env('REVERB_APP_KEY'),
+            'REVERB_APP_SECRET' => env('REVERB_APP_SECRET'),
+        ];
+        foreach ($reverbIds as $envKey => $envValue) {
+            $isPlaceholder = $envValue === 'change_me';
+            $passes = ! $isPlaceholder || app()->environment('local');
+            $checks[] = $this->check($passes, 'env.reverb_'.strtolower($envKey), "{$envKey} is not a placeholder value", 'fail', "Replace {$envKey}=change_me with a real credential. Generate with: php artisan reverb:key.");
+        }
+
         return $checks;
     }
 

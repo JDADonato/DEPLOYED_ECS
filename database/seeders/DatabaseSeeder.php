@@ -20,6 +20,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        if (env('APP_ENV') === 'production') {
+            $this->command->error('Seeder is disabled in production. Aborting.');
+
+            return;
+        }
+
         // Required baseline data: safe for local, staging, and production.
         $this->seedDefaultUsers();
 
@@ -54,7 +60,7 @@ class DatabaseSeeder extends Seeder
         foreach ($defaultUsers as $userData) {
             $user = User::firstOrNew(['username' => $userData['username']]);
             if (! $user->exists) {
-                $user->password = 'password123';
+                $user->password = 'Eloquente!26';
             }
 
             $attributes = [
@@ -416,7 +422,7 @@ class DatabaseSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['username' => $client['username']],
                 [
-                    'password' => 'password123',
+                    'password' => 'Eloquente!26',
                     'role' => 'Client',
                     'email' => $client['email'],
                     'phone' => $client['phone'],

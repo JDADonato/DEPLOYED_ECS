@@ -358,7 +358,7 @@ class MarketingController extends Controller
 
                 if ($data['customer_mode'] === 'new' && $data['send_invite'] && $customer->email) {
                     app(\App\Services\NotificationRecipientService::class)
-                        ->sendToUser($customer, new \App\Notifications\CustomerWalkinWelcomeNotification($customer, $temporaryPassword), 'welcome_email');
+                        ->sendToUser($customer, new \App\Notifications\CustomerAssistedBookingInviteNotification($booking, $temporaryPassword), 'welcome_email');
                 }
 
                 $paymentCalc = app(\App\Services\PaymentCalculationService::class);
