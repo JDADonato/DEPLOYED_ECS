@@ -1,5 +1,7 @@
 import { clearSensitiveAuthState } from './smartResource';
 
+const LOGGED_OUT_MARKER = 'ecs:auth:logged-out';
+
 const protectedPathPrefixes = [
     '/dashboard/admin',
     '/dashboard/marketing',
@@ -28,19 +30,50 @@ export const installAuthHistoryGuard = () => {
     if (typeof window === 'undefined' || window.__ecsAuthHistoryGuardInstalled) return;
 
     window.__ecsAuthHistoryGuardInstalled = true;
+    let verifying = false;
+
+    const redirectToLogin = () => {
+        clearSensitiveAuthState();
+        window.location.replace('/login');
+    };
 
     const verifyProtectedPage = async () => {
         if (!isProtectedPath(window.location.pathname)) return;
+        if (sessionStorage.getItem(LOGGED_OUT_MARKER) === '1') {
+            redirectToLogin();
+            return;
+        }
 
-        const status = await checkSession().catch(() => ({ authenticated: false }));
-        if (!status?.authenticated) {
-            clearSensitiveAuthState();
-            window.location.replace('/login');
+        if (verifying) return;
+        verifying = true;
+
+        try {
+            const status = await checkSession().catch(() => ({ authenticated: false }));
+            if (!status?.authenticated) {
+                sessionStorage.setItem(LOGGED_OUT_MARKER, '1');
+                redirectToLogin();
+            } else {
+                sessionStorage.removeItem(LOGGED_OUT_MARKER);
+            }
+        } finally {
+            verifying = false;
         }
     };
 
+    if (isProtectedPath(window.location.pathname) && sessionStorage.getItem(LOGGED_OUT_MARKER) === '1') {
+        redirectToLogin();
+        return;
+    }
+
     window.addEventListener('pageshow', (event) => {
         if (event.persisted || isProtectedPath(window.location.pathname)) {
+            verifyProtectedPage();
+        }
+    });
+    window.addEventListener('popstate', verifyProtectedPage);
+    window.addEventListener('focus', verifyProtectedPage);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
             verifyProtectedPage();
         }
     });

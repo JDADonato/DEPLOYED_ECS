@@ -1,12 +1,16 @@
 import { usePage, router } from '@inertiajs/react';
 import logoutWithCleanup from '../utils/logout';
 
+const LOGGED_OUT_MARKER = 'ecs:auth:logged-out';
+
 export const useAuth = () => {
     const { auth } = usePage().props;
     const user = auth?.user || null;
 
     const login = async (username, password, remember = false) => {
         return new Promise((resolve, reject) => {
+            sessionStorage.removeItem(LOGGED_OUT_MARKER);
+
             router.post('/login', { username, password, remember }, {
                 onSuccess: () => resolve({ success: true }),
                 onError: (errors) => {

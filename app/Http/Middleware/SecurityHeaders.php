@@ -24,7 +24,7 @@ class SecurityHeaders
         $headers->set('Permissions-Policy', config('security.headers.permissions_policy'));
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
-        if (auth()->check() || $request->is('logout', 'api/session/status')) {
+        if (auth()->check() || $request->is('logout', 'api/session/status') || $this->isProtectedExperience($request)) {
             $headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private');
             $headers->set('Pragma', 'no-cache');
             $headers->set('Expires', '0');
@@ -49,6 +49,27 @@ class SecurityHeaders
         return (app()->environment('production') || config('app.env') === 'production')
             && config('security.headers.hsts_enabled', true)
             && $request->isSecure();
+    }
+
+    private function isProtectedExperience(Request $request): bool
+    {
+        return $request->is(
+            'dashboard/admin',
+            'dashboard/admin/*',
+            'dashboard/marketing',
+            'dashboard/marketing/*',
+            'dashboard/accounting',
+            'dashboard/accounting/*',
+            'dashboard/client',
+            'dashboard/client/*',
+            'profile',
+            'profile/*',
+            'preview/menu',
+            'preview/packages',
+            'preview/book',
+            'preview/customer-booking/*',
+            'preview/announcements/*'
+        );
     }
 
     private function cspHeaderName(): string
