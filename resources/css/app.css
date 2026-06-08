@@ -251,6 +251,10 @@
     --ecs-cream: #fffaf3;
   }
 
+  .booking-summary-drawer-heading > strong {
+    display: none;
+  }
+
   .booking-page .bg-red-800,
   .booking-page .bg-red-900,
   .booking-page .bg-red-950,
@@ -2694,7 +2698,7 @@
   @media (max-width: 767px) {
     .booking-page {
       overflow-x: clip;
-      padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(4.35rem + env(safe-area-inset-bottom));
     }
 
     .booking-wizard-shell {
@@ -3101,64 +3105,84 @@
 
     .booking-summary-drawer-tab {
       position: fixed;
-      right: .85rem;
-      bottom: calc(.75rem + env(safe-area-inset-bottom));
-      left: .85rem;
+      right: 0;
+      bottom: 0;
+      left: 0;
       z-index: 70;
       display: grid;
-      min-height: 4.1rem;
-      grid-template-columns: minmax(0, 1fr) auto auto;
+      min-height: calc(3.65rem + env(safe-area-inset-bottom));
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      gap: .75rem;
+      gap: .85rem;
       border: 1px solid rgba(114,1,1,.18);
-      border-radius: 1.15rem;
+      border-bottom: 0;
+      border-radius: 1.1rem 1.1rem 0 0;
       background: #fff;
-      padding: .75rem .9rem;
+      padding: .65rem 1rem calc(.65rem + env(safe-area-inset-bottom));
       color: #720101;
-      box-shadow: 0 18px 38px rgba(35,10,0,.2);
+      box-shadow: 0 -10px 30px rgba(35,10,0,.18);
+      transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease;
+      will-change: transform;
     }
 
-    .booking-summary-drawer-tab span:first-child {
+    .booking-summary-drawer-tab:active {
+      transform: translateY(1px);
+    }
+
+    .booking-summary-drawer-heading {
       min-width: 0;
       text-align: left;
     }
 
+    .booking-summary-drawer-heading p,
     .booking-summary-drawer-tab em {
       display: block;
       color: #9f6500;
       font-size: .65rem;
+      line-height: 1;
       font-style: normal;
       font-weight: 950;
       letter-spacing: .16em;
       text-transform: uppercase;
     }
 
+    .booking-summary-drawer-heading > strong,
     .booking-summary-drawer-tab strong {
       display: block;
-      margin-top: .12rem;
+      margin-top: .2rem;
       overflow: hidden;
       color: #720101;
       font-family: var(--font-display, inherit);
-      font-size: 1.15rem;
+      font-size: 1.28rem;
+      line-height: 1;
       font-weight: 950;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .booking-summary-drawer-meta {
-      border-radius: 999px;
-      background: #fff7e8;
-      padding: .4rem .6rem;
-      color: #9f6500;
-      font-size: .72rem;
-      font-weight: 950;
-      white-space: nowrap;
+    .booking-summary-drawer-heading h3 {
+      display: none;
     }
 
-    .booking-summary-drawer-tab svg {
-      width: 1.15rem;
-      height: 1.15rem;
+    .booking-summary-drawer-icon {
+      display: inline-flex;
+      width: 2.65rem;
+      height: 2.65rem;
+      flex: 0 0 2.65rem;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(114,1,1,.14);
+      border-radius: 999px;
+      background: #fff;
       color: #720101;
+      box-shadow: 0 4px 14px rgba(35,10,0,.06);
+      transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .18s ease, color .18s ease;
+    }
+
+    .booking-summary-drawer-icon svg,
+    .booking-summary-drawer-tab svg {
+      width: 1.1rem;
+      height: 1.1rem;
     }
 
     .booking-summary-drawer {
@@ -3169,8 +3193,10 @@
       z-index: 75;
       max-height: min(74vh, calc(100dvh - 5.5rem));
       overflow: hidden;
-      border-radius: 1.35rem 1.35rem 0 0;
-      box-shadow: 0 -18px 45px rgba(35,10,0,.22);
+      border-radius: 1.1rem 1.1rem 0 0;
+      box-shadow: 0 -16px 40px rgba(35,10,0,.2);
+      animation: bookingDrawerRise .2s cubic-bezier(.2,.8,.2,1) both;
+      transform-origin: bottom center;
     }
 
     .booking-summary-drawer > .flex {
@@ -3186,11 +3212,8 @@
 
     .booking-summary-drawer .border-b {
       padding-inline: 1rem;
-      padding-block: .9rem;
-    }
-
-    .booking-summary-drawer h3 {
-      font-size: 1.2rem;
+      padding-block: .65rem;
+      background: #fff;
     }
 
     .booking-summary-drawer .border-t.bg-white {
@@ -3199,6 +3222,17 @@
 
     .booking-summary-drawer .border-t.bg-white p.font-display {
       font-size: 1.75rem;
+    }
+
+    @keyframes bookingDrawerRise {
+      from {
+        opacity: .98;
+        transform: translateY(.75rem);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   }
 

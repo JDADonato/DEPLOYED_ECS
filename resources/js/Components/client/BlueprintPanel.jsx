@@ -251,14 +251,15 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
                     aria-label="Open booking summary"
                     aria-expanded="false"
                 >
-                    <span>
+                    <span className="booking-summary-drawer-heading">
                         <em>Booking Summary</em>
                         <strong>{money(totalEstimate)}</strong>
                     </span>
-                    <span className="booking-summary-drawer-meta">{totalDishCount} selected</span>
-                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06-.02L10 8.83l-3.71 3.94a.75.75 0 1 1-1.08-1.04l4.25-4.5a.75.75 0 0 1 1.08 0l4.25 4.5a.75.75 0 0 1-.02 1.06Z" clipRule="evenodd" />
-                    </svg>
+                    <span className="booking-summary-drawer-icon" aria-hidden="true">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06-.02L10 8.83l-3.71 3.94a.75.75 0 1 1-1.08-1.04l4.25-4.5a.75.75 0 0 1 1.08 0l4.25 4.5a.75.75 0 0 1-.02 1.06Z" clipRule="evenodd" />
+                        </svg>
+                    </span>
                 </button>
                 <aside className="hidden border-l border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:flex lg:h-[calc(100vh-68px)] lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-between lg:px-3 lg:py-5">
                     <button
@@ -289,14 +290,15 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
             <div className="flex h-full flex-col">
                 <div className="border-b border-[#720101]/10 px-5 py-4">
                     <div className="flex items-start justify-between gap-4">
-                        <div>
+                        <div className="booking-summary-drawer-heading">
                             <p className="text-[10px] font-black uppercase tracking-widest text-[#9f6500]">Booking Summary</p>
                             <h3 className="mt-1 font-display text-xl font-bold text-[#720101]">Your Event Plan</h3>
+                            <strong>{money(totalEstimate)}</strong>
                         </div>
                         <button
                             type="button"
                             onClick={onToggle}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] transition hover:bg-[#720101] hover:text-white lg:hidden"
+                            className="booking-summary-drawer-icon inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] transition hover:bg-[#720101] hover:text-white lg:hidden"
                             aria-label="Collapse booking summary"
                             title="Collapse summary"
                         >
