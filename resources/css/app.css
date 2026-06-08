@@ -2737,12 +2737,12 @@
       letter-spacing: 0;
     }
 
-    .booking-stepper {
-      display: none;
+    .booking-page .booking-stepper {
+      display: none !important;
     }
 
-    .booking-desktop-progress {
-      display: none;
+    .booking-page .booking-desktop-progress {
+      display: none !important;
     }
 
     .booking-mobile-stepnav {
