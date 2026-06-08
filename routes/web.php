@@ -57,6 +57,7 @@ Route::get('/api/announcements', [AnnouncementController::class, 'publicIndex'])
 Route::post('/api/contact-inquiries', [ContactInquiryController::class, 'store'])->middleware('throttle:10,1');
 Route::post('/webhook/paymongo', PayMongoWebhookController::class)->name('webhook.paymongo');
 Route::post('/api/client-errors', [ClientErrorController::class, 'store'])->middleware('throttle:client-errors');
+Route::post('/api/conversion-events', [ConversionEventController::class, 'store'])->middleware('throttle:60,1');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => Inertia::render('Login'))->name('login');
@@ -118,7 +119,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/api/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->middleware('throttle:notification-mutation');
     Route::delete('/api/notifications/read', [NotificationController::class, 'destroyRead'])->middleware('throttle:notification-mutation');
     Route::delete('/api/notifications/{id}', [NotificationController::class, 'destroy'])->middleware('throttle:notification-mutation');
-    Route::post('/api/conversion-events', [ConversionEventController::class, 'store'])->middleware('throttle:60,1');
     // Legacy messaging routes (kept for backward compatibility)
     $legacyMessagesGone = fn () => response()->json([
         'error' => 'Legacy messaging endpoints are retired. Use /api/chat instead.',

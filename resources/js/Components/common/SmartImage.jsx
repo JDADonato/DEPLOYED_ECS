@@ -2,6 +2,15 @@ import React, { useEffect, useState } from 'react';
 
 const DEFAULT_FALLBACK = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
 
+const normalizeImageSrc = (value, fallback) => {
+    if (typeof value !== 'string') return fallback;
+
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return fallback;
+
+    return trimmed;
+};
+
 const SmartImage = ({
     src,
     alt = '',
@@ -16,12 +25,12 @@ const SmartImage = ({
     style = {},
     ...props
 }) => {
-    const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc);
+    const [currentSrc, setCurrentSrc] = useState(() => normalizeImageSrc(src, fallbackSrc));
     const [loaded, setLoaded] = useState(false);
     const [failed, setFailed] = useState(false);
 
     useEffect(() => {
-        setCurrentSrc(src || fallbackSrc);
+        setCurrentSrc(normalizeImageSrc(src, fallbackSrc));
         setLoaded(false);
         setFailed(false);
     }, [src, fallbackSrc]);

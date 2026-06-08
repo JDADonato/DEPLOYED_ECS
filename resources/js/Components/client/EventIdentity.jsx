@@ -23,6 +23,17 @@ const writeCachedEventTypes = (eventTypes) => {
     }
 };
 
+const fallbackEventImage = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=900';
+
+const safeEventImage = (value) => {
+    if (typeof value !== 'string') return fallbackEventImage;
+
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return fallbackEventImage;
+
+    return trimmed;
+};
+
 const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEventTypes = [] }) => {
     const hydratedEventTypes = Array.isArray(initialEventTypes) ? initialEventTypes : [];
     const cachedEventTypes = hydratedEventTypes.length ? [] : readCachedEventTypes();
@@ -153,7 +164,7 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
                                             className={`booking-event-option ${isSelected ? 'booking-event-option-active' : ''}`}
                                             aria-expanded={isSelected && setupItems.length > 0}
                                         >
-                                            <span className="booking-event-image" style={{ backgroundImage: `url(${eventType.image})` }} />
+                                            <span className="booking-event-image" style={{ backgroundImage: `url(${safeEventImage(eventType.image)})` }} />
                                             <span className="booking-event-content">
                                                 <strong>{eventType.label}</strong>
                                                 <small>{eventType.description}</small>
