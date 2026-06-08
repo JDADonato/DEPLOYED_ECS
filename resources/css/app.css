@@ -2741,6 +2741,10 @@
       display: none;
     }
 
+    .booking-desktop-progress {
+      display: none;
+    }
+
     .booking-mobile-stepnav {
       position: fixed;
       top: 68px;

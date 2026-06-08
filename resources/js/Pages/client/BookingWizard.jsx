@@ -571,7 +571,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
                                     </div>
                                 </div>
 
-                                <div className="w-full max-w-xl lg:w-[34rem]">
+                                <div className="booking-desktop-progress w-full max-w-xl lg:w-[34rem]">
                                     <div className="mb-2 flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
                                         <span>Step {currentStep} of {totalSteps}</span>
                                         <span className="text-[#720101]">{progressPercent}% complete</span>
