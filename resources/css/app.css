@@ -255,6 +255,12 @@
     display: none;
   }
 
+  .booking-mobile-stepnav,
+  .booking-mobile-steps-sheet,
+  .booking-event-setup-inline {
+    display: none;
+  }
+
   .booking-page .bg-red-800,
   .booking-page .bg-red-900,
   .booking-page .bg-red-950,
@@ -2721,6 +2727,10 @@
       padding-inline: 1rem;
     }
 
+    .booking-wizard-header .max-w-7xl {
+      padding-top: 5rem;
+    }
+
     .booking-wizard-main h1 {
       font-size: clamp(1.75rem, 8vw, 2.5rem);
       line-height: 1.12;
@@ -2728,16 +2738,205 @@
     }
 
     .booking-stepper {
-      margin-inline: -1rem;
-      padding-inline: 1rem;
-      scroll-padding-inline: 1rem;
+      display: none;
     }
 
-    .booking-stepper button {
-      min-width: max-content;
-      min-height: 2.75rem;
-      padding-inline: 1rem;
+    .booking-mobile-stepnav {
+      position: fixed;
+      top: 68px;
+      right: 0;
+      left: 0;
+      z-index: 65;
+      display: grid;
+      grid-template-columns: 2.35rem minmax(0, 1fr) auto 2.35rem;
+      align-items: center;
+      gap: .5rem;
+      border-bottom: 1px solid rgba(114,1,1,.1);
+      background: rgba(255,250,243,.96);
+      padding: .55rem .75rem;
+      box-shadow: 0 10px 26px rgba(35,10,0,.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .booking-mobile-stepnav > button {
+      display: inline-flex;
+      min-height: 2.35rem;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(114,1,1,.12);
+      border-radius: .8rem;
+      background: #fff;
+      color: #720101;
+      font-size: .78rem;
+      font-weight: 950;
+      padding-inline: .7rem;
+    }
+
+    .booking-mobile-stepnav > button:disabled {
+      color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .booking-mobile-stepnav-main {
+      min-width: 0;
+    }
+
+    .booking-mobile-stepnav-main div:first-child {
+      display: flex;
+      min-width: 0;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .6rem;
+    }
+
+    .booking-mobile-stepnav-main span {
+      overflow: hidden;
+      color: #720101;
+      font-size: .9rem;
+      font-weight: 950;
+      text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .booking-mobile-stepnav-main strong {
+      color: #94a3b8;
+      font-size: .68rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .booking-mobile-stepnav-progress {
+      height: .35rem;
+      margin-top: .35rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(114,1,1,.1);
+    }
+
+    .booking-mobile-stepnav-progress i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: #720101;
+      transition: width .22s ease;
+    }
+
+    .booking-mobile-steps-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: block;
+    }
+
+    .booking-mobile-steps-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,.34);
+      backdrop-filter: blur(3px);
+    }
+
+    .booking-mobile-steps-panel {
+      position: absolute;
+      right: .75rem;
+      left: .75rem;
+      top: 5.25rem;
+      overflow: hidden;
+      border: 1px solid rgba(114,1,1,.14);
+      border-radius: 1rem;
+      background: #fff;
+      box-shadow: 0 22px 52px rgba(35,10,0,.22);
+      animation: bookingStepsIn .18s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .booking-mobile-steps-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(114,1,1,.08);
+      padding: .9rem 1rem;
+    }
+
+    .booking-mobile-steps-header span {
+      display: block;
+      color: #9f6500;
+      font-size: .65rem;
+      font-weight: 950;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .booking-mobile-steps-header strong {
+      display: block;
+      margin-top: .15rem;
+      color: #111827;
+      font-size: 1rem;
+      font-weight: 950;
+    }
+
+    .booking-mobile-steps-header button {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: .75rem;
+      color: #720101;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .booking-mobile-steps-list {
+      display: grid;
+      gap: .5rem;
+      padding: .75rem;
+    }
+
+    .booking-mobile-steps-list button {
+      display: grid;
+      grid-template-columns: 2rem minmax(0, 1fr);
+      align-items: center;
+      gap: .7rem;
+      border: 1px solid rgba(15,23,42,.08);
+      border-radius: .85rem;
+      background: #fff;
+      padding: .7rem;
+      text-align: left;
+    }
+
+    .booking-mobile-steps-list button span {
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      place-items: center;
+      border-radius: 999px;
+      background: #f8fafc;
+      color: #94a3b8;
+      font-size: .8rem;
+      font-weight: 950;
+    }
+
+    .booking-mobile-steps-list button strong {
+      color: #475569;
+      font-size: .92rem;
+      font-weight: 950;
+    }
+
+    .booking-mobile-steps-list button.complete {
+      background: #fffaf3;
+    }
+
+    .booking-mobile-steps-list button.complete span,
+    .booking-mobile-steps-list button.active span {
+      background: #720101;
+      color: #fff;
+    }
+
+    .booking-mobile-steps-list button.active {
+      border-color: rgba(114,1,1,.28);
+      background: #fff7e8;
+    }
+
+    .booking-mobile-steps-list button.active strong {
+      color: #720101;
     }
 
     .booking-step {
@@ -2753,6 +2952,10 @@
       min-width: 0;
     }
 
+    .booking-identity-step .booking-step-grid {
+      gap: 0;
+    }
+
     .booking-step-panel,
     .booking-choice-area,
     .booking-single-panel {
@@ -2761,6 +2964,28 @@
       border-radius: 1rem;
       padding: 1rem;
       box-shadow: 0 8px 22px rgba(74,20,0,.04);
+    }
+
+    .booking-identity-step .booking-step-panel,
+    .booking-identity-step .booking-choice-area {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .booking-event-name-panel .booking-step-copy {
+      display: none;
+    }
+
+    .booking-event-name-panel .booking-field-label {
+      margin-top: 0;
+      padding-inline: .1rem;
+    }
+
+    .booking-event-choice-panel {
+      margin-top: .9rem;
     }
 
     .booking-step-panel h2,
@@ -2796,9 +3021,24 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    .booking-event-option-wrap {
+      overflow: hidden;
+      border: 1px solid rgba(15,23,42,.1);
+      border-radius: .9rem;
+      background: #fff;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .booking-event-option-wrap.active {
+      border-color: rgba(114,1,1,.42);
+      box-shadow: 0 10px 24px rgba(74,20,0,.08);
+    }
+
     .booking-event-option {
       min-height: 7.25rem;
-      border-radius: .9rem;
+      width: 100%;
+      border: 0;
+      border-radius: 0;
     }
 
     .booking-event-content {
@@ -2822,12 +3062,59 @@
     }
 
     .booking-event-inclusions {
-      padding: .9rem;
+      display: none;
     }
 
-    .booking-event-inclusions ul {
+    .booking-event-setup-inline {
+      display: grid;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      background: #fffaf3;
+      transition: max-height .24s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
+    }
+
+    .booking-event-setup-inline.open {
+      max-height: 18rem;
+      opacity: 1;
+    }
+
+    .booking-event-setup-inline > div {
+      border-top: 1px solid rgba(114,1,1,.1);
+      padding: .85rem .95rem .95rem;
+    }
+
+    .booking-event-setup-inline h3 {
+      margin-top: .25rem;
+      color: #111827;
+      font-size: .95rem;
+      font-weight: 950;
+    }
+
+    .booking-event-setup-inline ul {
+      display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: .55rem;
+      margin-top: .7rem;
+    }
+
+    .booking-event-setup-inline li {
+      display: grid;
+      grid-template-columns: .5rem minmax(0, 1fr);
+      gap: .55rem;
+      color: #475569;
+      font-size: .82rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .booking-event-setup-inline li::before {
+      content: "";
+      width: .42rem;
+      height: .42rem;
+      margin-top: .45rem;
+      border-radius: 999px;
+      background: #f0aa0b;
     }
 
     .booking-calendar {
@@ -3232,6 +3519,17 @@
       to {
         opacity: 1;
         transform: translateY(0);
+      }
+    }
+
+    @keyframes bookingStepsIn {
+      from {
+        opacity: 0;
+        transform: translateY(-.4rem) scale(.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
     }
   }

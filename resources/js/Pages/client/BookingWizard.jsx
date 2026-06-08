@@ -162,6 +162,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
         onConfirm: null,
         confirmText: null,
     });
+    const [showMobileSteps, setShowMobileSteps] = useState(false);
     const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const [reviewData, setReviewData] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -289,17 +290,20 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
     const handleStepperClick = (targetStep) => {
         if (targetStep < currentStep) {
             setCurrentStep(targetStep);
+            setShowMobileSteps(false);
             return;
         }
 
         for (let step = currentStep; step < targetStep; step += 1) {
             if (!validateStep(step)) {
                 setCurrentStep(step);
+                setShowMobileSteps(false);
                 return;
             }
         }
 
         setCurrentStep(targetStep);
+        setShowMobileSteps(false);
     };
 
     const openReviewModal = (extraData = {}) => {
@@ -408,6 +412,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
 
     const progressPercent = Math.round(((currentStep - 1) / (totalSteps - 1)) * 100);
     const message = stepMessages[currentStep] || stepMessages[1];
+    const currentStepLabel = stepLabels.find(item => item.step === currentStep)?.label || `Step ${currentStep}`;
 
     const renderStep = () => {
         if (currentStep === 1) {
@@ -599,8 +604,75 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
                                     );
                                 })}
                             </div>
+
+                            <div className="booking-mobile-stepnav">
+                                <button
+                                    type="button"
+                                    onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)}
+                                    disabled={currentStep === 1}
+                                    aria-label="Previous booking step"
+                                >
+                                    &larr;
+                                </button>
+                                <div className="booking-mobile-stepnav-main">
+                                    <div>
+                                        <span>{currentStepLabel}</span>
+                                        <strong>Step {currentStep} of {totalSteps}</strong>
+                                    </div>
+                                    <div className="booking-mobile-stepnav-progress" aria-hidden="true">
+                                        <i style={{ width: `${progressPercent}%` }} />
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMobileSteps(true)}
+                                    aria-label="Show booking steps"
+                                >
+                                    Steps
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => currentStep < totalSteps && nextStep()}
+                                    disabled={currentStep === totalSteps}
+                                    aria-label="Next booking step"
+                                >
+                                    &rarr;
+                                </button>
+                            </div>
                         </div>
                     </RevealOnScroll>
+
+                    {showMobileSteps && (
+                        <div className="booking-mobile-steps-sheet" role="dialog" aria-modal="true" aria-label="Booking steps">
+                            <button type="button" className="booking-mobile-steps-backdrop" onClick={() => setShowMobileSteps(false)} aria-label="Close booking steps" />
+                            <div className="booking-mobile-steps-panel">
+                                <div className="booking-mobile-steps-header">
+                                    <div>
+                                        <span>Booking steps</span>
+                                        <strong>{currentStepLabel}</strong>
+                                    </div>
+                                    <button type="button" onClick={() => setShowMobileSteps(false)} aria-label="Close booking steps">&times;</button>
+                                </div>
+                                <div className="booking-mobile-steps-list">
+                                    {stepLabels.map(item => {
+                                        const isActive = currentStep === item.step;
+                                        const isComplete = currentStep > item.step;
+                                        return (
+                                            <button
+                                                key={item.step}
+                                                type="button"
+                                                onClick={() => handleStepperClick(item.step)}
+                                                className={`${isActive ? 'active' : ''} ${isComplete ? 'complete' : ''}`}
+                                            >
+                                                <span>{item.step}</span>
+                                                <strong>{item.label}</strong>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <RevealOnScroll as="section" delay="rv-d1" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
                         <div key={currentStep} className="animate-fadeIn">

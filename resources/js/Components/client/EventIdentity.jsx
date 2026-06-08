@@ -94,9 +94,9 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
     const showTypeError = attemptedNext && !selected;
 
     return (
-        <div className="booking-step">
+        <div className="booking-step booking-identity-step">
             <div className="booking-step-grid">
-                <section className="booking-step-panel">
+                <section className="booking-step-panel booking-event-name-panel">
                     <div className="booking-step-copy">
                         <p className="booking-step-kicker">Occasion</p>
                         <h2>Start with the celebration.</h2>
@@ -126,7 +126,7 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
                     )}
                 </section>
 
-                <section className="booking-choice-area">
+                <section className="booking-choice-area booking-event-choice-panel">
                     {showTypeError && (
                         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
                             Please choose the event type closest to your celebration.
@@ -144,20 +144,34 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
                         <div className="booking-event-grid">
                             {eventTypes.map((eventType) => {
                                 const isSelected = selected === eventType.label;
+                                const setupItems = eventType.applicable_setups || [];
                                 return (
-                                    <button
-                                        key={eventType.id}
-                                        type="button"
-                                        onClick={() => handleSelect(eventType)}
-                                        className={`booking-event-option ${isSelected ? 'booking-event-option-active' : ''}`}
-                                    >
-                                        <span className="booking-event-image" style={{ backgroundImage: `url(${eventType.image})` }} />
-                                        <span className="booking-event-content">
-                                            <strong>{eventType.label}</strong>
-                                            <small>{eventType.description}</small>
-                                        </span>
-                                        {isSelected && <span className="booking-selected-dot">Selected</span>}
-                                    </button>
+                                    <div key={eventType.id} className={`booking-event-option-wrap ${isSelected ? 'active' : ''}`}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelect(eventType)}
+                                            className={`booking-event-option ${isSelected ? 'booking-event-option-active' : ''}`}
+                                            aria-expanded={isSelected && setupItems.length > 0}
+                                        >
+                                            <span className="booking-event-image" style={{ backgroundImage: `url(${eventType.image})` }} />
+                                            <span className="booking-event-content">
+                                                <strong>{eventType.label}</strong>
+                                                <small>{eventType.description}</small>
+                                            </span>
+                                            {isSelected && <span className="booking-selected-dot">Selected</span>}
+                                        </button>
+                                        <div className={`booking-event-setup-inline ${isSelected && setupItems.length > 0 ? 'open' : ''}`}>
+                                            <div>
+                                                <p className="booking-step-kicker">Included setup</p>
+                                                <h3>{eventType.label} includes</h3>
+                                                <ul>
+                                                    {setupItems.map((item) => (
+                                                        <li key={item}>{item}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
                                 );
                             })}
                         </div>
