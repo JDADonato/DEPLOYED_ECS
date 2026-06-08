@@ -298,7 +298,7 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
                         <button
                             type="button"
                             onClick={onToggle}
-                            className="booking-summary-drawer-icon inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] transition hover:bg-[#720101] hover:text-white lg:hidden"
+                            className="booking-summary-drawer-icon lg:hidden"
                             aria-label="Collapse booking summary"
                             title="Collapse summary"
                         >

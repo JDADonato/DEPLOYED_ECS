@@ -3166,16 +3166,16 @@
 
     .booking-summary-drawer-icon {
       display: inline-flex;
-      width: 2.65rem;
-      height: 2.65rem;
-      flex: 0 0 2.65rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      flex: 0 0 2.25rem;
       align-items: center;
       justify-content: center;
-      border: 1px solid rgba(114,1,1,.14);
-      border-radius: 999px;
-      background: #fff;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       color: #720101;
-      box-shadow: 0 4px 14px rgba(35,10,0,.06);
+      box-shadow: none;
       transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .18s ease, color .18s ease;
     }
 
@@ -3217,7 +3217,7 @@
     }
 
     .booking-summary-drawer .border-t.bg-white {
-      padding: .9rem 1rem calc(1rem + env(safe-area-inset-bottom));
+      display: none;
     }
 
     .booking-summary-drawer .border-t.bg-white p.font-display {
