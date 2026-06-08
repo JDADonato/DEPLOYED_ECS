@@ -2990,7 +2990,7 @@ const DashboardAdmin = () => {
         closeConfirmDialog();
         setPackageSaving(true);
         try {
-            const res = await fetch(`/api/admin/event-types/${eventType.id}/archive`, { method: 'PATCH' });
+            const res = await csrfFetch(`/api/admin/event-types/${eventType.id}/archive`, { method: 'PATCH' });
             if (res.ok) {
                 showToast('Event type archived');
                 bustAdminCache('/api/admin/event-types', '/api/event-types?per_page=100', '/api/packages?per_page=100');
@@ -3054,7 +3054,7 @@ const DashboardAdmin = () => {
         }
 
         try {
-            const res = await fetch(isEditing ? `/api/admin/menu-items/${menuItemId}` : '/api/admin/menu-items', {
+            const res = await csrfFetch(isEditing ? `/api/admin/menu-items/${menuItemId}` : '/api/admin/menu-items', {
                 method: isEditing ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3096,7 +3096,7 @@ const DashboardAdmin = () => {
     const confirmArchiveMenuItem = async (id) => {
         closeConfirmDialog();
         try {
-            const res = await fetch(`/api/admin/menu-items/${id}/archive`, { method: 'PATCH' });
+            const res = await csrfFetch(`/api/admin/menu-items/${id}/archive`, { method: 'PATCH' });
             if (res.ok) {
                 showToast('Menu item archived');
                 bustAdminCache('/api/admin/menu-items', '/api/menu-items', '/api/admin/analytics');
@@ -3448,7 +3448,7 @@ const DashboardAdmin = () => {
     const confirmArchiveSavedReport = async () => {
         closeConfirmDialog();
         try {
-            const res = await fetch(`/api/admin/report-templates/${reportTemplateId}/archive`, { method: 'PATCH' });
+            const res = await csrfFetch(`/api/admin/report-templates/${reportTemplateId}/archive`, { method: 'PATCH' });
             if (!res.ok) throw new Error('Archive failed');
             setReportTemplateId('');
             await fetchReportBuilder({ silent: true });
@@ -3463,7 +3463,7 @@ const DashboardAdmin = () => {
         const template = await saveReportTemplate();
         if (!template?.id) return;
         try {
-            const res = await fetch(`/api/admin/report-templates/${template.id}/run`, {
+            const res = await csrfFetch(`/api/admin/report-templates/${template.id}/run`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filters: reportBuilder.filters }),

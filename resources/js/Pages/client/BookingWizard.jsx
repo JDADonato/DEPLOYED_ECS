@@ -11,7 +11,6 @@ import ClientNavbar from '../../Components/common/ClientNavbar';
 import StaffPreviewBanner from '../../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { getCustomerSafeValidationMessage } from '../../utils/dashboardUtils';
-import csrfFetch from '../../utils/csrf';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
 
 const totalSteps = 7;
@@ -58,15 +57,10 @@ const trackPublicFunnel = (event, payload = {}) => {
 };
 
 const logConversionEvent = (eventName, payload = {}) => {
-    csrfFetch('/api/conversion-events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            event_name: eventName,
-            source: 'customer_booking_wizard',
-            ...payload,
-        }),
-    }).catch(() => {});
+    trackPublicFunnel(eventName, {
+        source: 'customer_booking_wizard',
+        ...payload,
+    });
 };
 
 const summarizeBookingCosts = (data = {}) => {

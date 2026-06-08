@@ -106,15 +106,14 @@ const selectedMenuPayload = (data = {}) => ({
 });
 
 const logAssistedConversionEvent = (eventName, payload = {}) => {
-    csrfFetch('/api/conversion-events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            event_name: eventName,
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('ecs:funnel', {
+        detail: {
+            event: eventName,
             source: 'assisted_booking_wizard',
             ...payload,
-        }),
-    }).catch(() => {});
+        },
+    }));
 };
 
 const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toast }) => {
