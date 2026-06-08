@@ -138,7 +138,10 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
     const { user } = useAuth();
     const toast = useToast();
     const dashboardHref = dashboardHrefForUser(user, '/');
-    const [summaryCollapsed, setSummaryCollapsed] = useState(false);
+    const [summaryCollapsed, setSummaryCollapsed] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 767px)').matches;
+    });
     const {
         bookingData,
         clearDraft,
@@ -168,6 +171,22 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
             step: 'Vision',
             metadata: { resume_available: Boolean(resumeStep) },
         });
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return undefined;
+
+        const mediaQuery = window.matchMedia('(max-width: 767px)');
+        const syncSummaryMode = (event) => {
+            setSummaryCollapsed(event.matches);
+        };
+
+        syncSummaryMode(mediaQuery);
+        mediaQuery.addEventListener?.('change', syncSummaryMode);
+
+        return () => {
+            mediaQuery.removeEventListener?.('change', syncSummaryMode);
+        };
     }, []);
 
     useEffect(() => {
@@ -530,9 +549,9 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
                 confirmText={modal.confirmText}
             />
 
-            <div className={`flex min-h-[calc(100vh-68px)] ${isStaffUser(user) ? 'pt-[104px]' : 'pt-[68px]'}`}>
-                <main className="min-w-0 flex-1">
-                    <RevealOnScroll className="border-b border-[#720101]/10 bg-white">
+            <div className={`booking-wizard-shell flex min-h-[calc(100vh-68px)] ${isStaffUser(user) ? 'pt-[104px]' : 'pt-[68px]'}`}>
+                <main className="booking-wizard-main min-w-0 flex-1">
+                    <RevealOnScroll className="booking-wizard-header border-b border-[#720101]/10 bg-white">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                 <div className="min-w-0">
@@ -558,7 +577,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
                                 </div>
                             </div>
 
-                            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                            <div className="booking-stepper mt-4 flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
                                 {stepLabels.map(item => {
                                     const isActive = currentStep === item.step;
                                     const isComplete = currentStep > item.step;

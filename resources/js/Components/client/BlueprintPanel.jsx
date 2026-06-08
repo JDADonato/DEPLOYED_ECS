@@ -243,31 +243,49 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
 
     if (collapsed) {
         return (
-            <aside className="hidden border-l border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:flex lg:h-[calc(100vh-68px)] lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-between lg:px-3 lg:py-5">
+            <>
                 <button
                     type="button"
                     onClick={onToggle}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] shadow-sm transition hover:bg-[#720101] hover:text-white"
-                    aria-label="Show booking summary"
-                    title="Show summary"
+                    className="booking-summary-drawer-tab lg:hidden"
+                    aria-label="Open booking summary"
+                    aria-expanded="false"
                 >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    <span>
+                        <em>Booking Summary</em>
+                        <strong>{money(totalEstimate)}</strong>
+                    </span>
+                    <span className="booking-summary-drawer-meta">{totalDishCount} selected</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06-.02L10 8.83l-3.71 3.94a.75.75 0 1 1-1.08-1.04l4.25-4.5a.75.75 0 0 1 1.08 0l4.25 4.5a.75.75 0 0 1-.02 1.06Z" clipRule="evenodd" />
                     </svg>
                 </button>
-                <div className="flex min-h-0 flex-1 items-center justify-center py-4">
-                    <div className="flex rotate-180 items-center gap-2 [writing-mode:vertical-rl]">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#9f6500]">Summary</span>
-                        <strong className="font-display text-lg text-[#720101]">{money(totalEstimate)}</strong>
+                <aside className="hidden border-l border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:flex lg:h-[calc(100vh-68px)] lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-between lg:px-3 lg:py-5">
+                    <button
+                        type="button"
+                        onClick={onToggle}
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] shadow-sm transition hover:bg-[#720101] hover:text-white"
+                        aria-label="Show booking summary"
+                        title="Show summary"
+                    >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div className="flex min-h-0 flex-1 items-center justify-center py-4">
+                        <div className="flex rotate-180 items-center gap-2 [writing-mode:vertical-rl]">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#9f6500]">Summary</span>
+                            <strong className="font-display text-lg text-[#720101]">{money(totalEstimate)}</strong>
+                        </div>
                     </div>
-                </div>
-                <div className="h-10 w-10" aria-hidden="true" />
-            </aside>
+                    <div className="h-10 w-10" aria-hidden="true" />
+                </aside>
+            </>
         );
     }
 
     return (
-        <aside className="border-t border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:h-[calc(100vh-68px)] lg:w-[22rem] lg:flex-shrink-0 lg:border-l lg:border-t-0">
+        <aside className="booking-summary-drawer border-t border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:h-[calc(100vh-68px)] lg:w-[22rem] lg:flex-shrink-0 lg:border-l lg:border-t-0">
             <div className="flex h-full flex-col">
                 <div className="border-b border-[#720101]/10 px-5 py-4">
                     <div className="flex items-start justify-between gap-4">
@@ -275,6 +293,17 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
                             <p className="text-[10px] font-black uppercase tracking-widest text-[#9f6500]">Booking Summary</p>
                             <h3 className="mt-1 font-display text-xl font-bold text-[#720101]">Your Event Plan</h3>
                         </div>
+                        <button
+                            type="button"
+                            onClick={onToggle}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#720101]/15 bg-white text-[#720101] transition hover:bg-[#720101] hover:text-white lg:hidden"
+                            aria-label="Collapse booking summary"
+                            title="Collapse summary"
+                        >
+                            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clipRule="evenodd" />
+                            </svg>
+                        </button>
                         <button
                             type="button"
                             onClick={onToggle}
