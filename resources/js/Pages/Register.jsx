@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, router } from '@inertiajs/react';
-import { Loader2, LockKeyhole, Mail, Phone, UserRound } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import AuthShell from '../Components/auth/AuthShell';
 import PasswordStrengthField, { PasswordMatchHint } from '../Components/auth/PasswordStrengthField';
 import { evaluatePassword } from '../utils/passwordPolicy';
@@ -24,6 +24,13 @@ const Register = () => {
         () => evaluatePassword(formData.password, { username: formData.username, email: formData.email }),
         [formData.password, formData.username, formData.email],
     );
+    const confirmPasswordHasValue = Boolean(formData.confirmPassword);
+    const confirmPasswordMatches = confirmPasswordHasValue && formData.confirmPassword === formData.password;
+    const confirmPasswordFieldState = confirmPasswordHasValue
+        ? confirmPasswordMatches
+            ? 'auth-field-valid'
+            : 'auth-field-warning'
+        : '';
 
     useEffect(() => {
         if (showTerms && termsRef.current) {
@@ -99,7 +106,7 @@ const Register = () => {
                 footer={(
                     <p className="text-sm text-slate-500">
                         Already have an account?{' '}
-                        <Link href="/login" prefetch="mount" className="font-bold text-red-900 transition hover:text-amber-700">Sign in</Link>
+                        <Link href="/login" prefetch="mount" className="font-bold text-red-900 transition hover:text-amber-700 hover:underline underline-offset-4">Sign in</Link>
                     </p>
                 )}
             >
@@ -107,7 +114,6 @@ const Register = () => {
                     <div>
                         <label htmlFor="username" className="auth-label">Username</label>
                         <div className="auth-field auth-field-compact">
-                            <UserRound className="h-4 w-4 text-slate-400" />
                             <input
                                 id="username" name="username" type="text" required
                                 className="auth-input"
@@ -120,7 +126,6 @@ const Register = () => {
                         <div>
                             <label htmlFor="email" className="auth-label">Email</label>
                             <div className="auth-field auth-field-compact">
-                                <Mail className="h-4 w-4 text-slate-400" />
                                 <input
                                     id="email" name="email" type="email" required
                                     className="auth-input"
@@ -131,7 +136,6 @@ const Register = () => {
                         <div>
                             <label htmlFor="phone" className="auth-label">Mobile Number</label>
                             <div className="auth-field auth-field-compact">
-                                <Phone className="h-4 w-4 text-slate-400" />
                                 <input
                                     id="phone" name="phone" type="tel" required
                                     className="auth-input"
@@ -152,11 +156,11 @@ const Register = () => {
                             required
                             placeholder="Create password"
                             onChange={(value) => setFormData((current) => ({ ...current, password: value }))}
+                            showLeadingIcon={false}
                         />
                         <div>
                             <label htmlFor="confirmPassword" className="auth-label">Confirm</label>
-                            <div className="auth-field auth-field-compact">
-                                <LockKeyhole className="h-4 w-4 text-slate-400" />
+                            <div className={`auth-field auth-field-compact ${confirmPasswordFieldState}`.trim()}>
                                 <input
                                     id="confirmPassword" name="confirmPassword" type="password" required
                                     className="auth-input"
@@ -183,7 +187,7 @@ const Register = () => {
                         />
                         <span className="text-xs text-slate-600">
                             I agree to the{' '}
-                            <button type="button" onClick={() => setShowTerms(true)} className="font-bold text-red-900 underline decoration-red-900/30 underline-offset-4 transition hover:text-amber-700">
+                            <button type="button" onClick={() => setShowTerms(true)} className="font-bold text-red-900 transition hover:text-amber-700 hover:underline underline-offset-4">
                                 Terms and Conditions
                             </button>
                         </span>

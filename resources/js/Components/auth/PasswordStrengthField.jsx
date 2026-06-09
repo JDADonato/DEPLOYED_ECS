@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { CheckCircle2, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { evaluatePassword } from '../../utils/passwordPolicy';
 
 export const PasswordMatchHint = ({ password, confirmation, touched = false }) => {
@@ -34,6 +34,7 @@ const PasswordStrengthField = ({
     inputClassName = 'auth-input',
     helperClassName = '',
     showToggle = true,
+    showLeadingIcon = true,
     visible,
 }) => {
     const [localVisible, setLocalVisible] = useState(false);
@@ -47,12 +48,15 @@ const PasswordStrengthField = ({
             : 'auth-field-warning'
         : '';
     const resolvedFieldClassName = fieldClassName || `auth-field ${compact ? 'auth-field-compact' : ''}`;
+    const nextRequirement = evaluation.unmet[0]?.label;
 
     return (
         <div>
             {label && <label htmlFor={id} className={labelClassName}>{label}</label>}
             <div className={`${resolvedFieldClassName} ${fieldStateClass}`.trim()}>
-                <LockKeyhole className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} shrink-0 text-slate-400`} />
+                {showLeadingIcon && (
+                    <LockKeyhole className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} shrink-0 text-slate-400`} />
+                )}
                 <input
                     id={id}
                     name={name}
@@ -77,26 +81,9 @@ const PasswordStrengthField = ({
             </div>
             {error && <p className="mt-2 text-xs font-bold text-red-700">{Array.isArray(error) ? error[0] : error}</p>}
             {shouldShowFeedback && (
-                <div className={`password-rule-panel ${evaluation.valid ? 'is-valid' : 'is-warning'} ${helperClassName}`.trim()}>
-                    {evaluation.valid ? (
-                        <p className="flex items-center gap-2 text-xs font-black text-emerald-700">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Password looks good.
-                        </p>
-                    ) : (
-                        <>
-                            <p className="text-xs font-black uppercase tracking-widest text-amber-800">Still needed</p>
-                            <ul className="mt-2 space-y-1">
-                                {evaluation.unmet.map((check) => (
-                                    <li key={check.key} className="flex gap-2 text-xs font-semibold leading-5 text-slate-600">
-                                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                                        {check.label}
-                                    </li>
-                                ))}
-                            </ul>
-                        </>
-                    )}
-                </div>
+                <p className={`mt-1 text-xs font-bold ${evaluation.valid ? 'text-emerald-700' : 'text-red-700'} ${helperClassName}`.trim()}>
+                    {evaluation.valid ? 'Password looks good.' : `Needs: ${nextRequirement || 'a stronger password'}.`}
+                </p>
             )}
         </div>
     );

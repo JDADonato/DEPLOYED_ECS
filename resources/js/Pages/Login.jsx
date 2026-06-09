@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { Eye, EyeOff, Loader2, LockKeyhole, UserRound } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import AuthShell from '../Components/auth/AuthShell';
 import { useAuth } from '../context/AuthContext';
 
@@ -45,7 +45,7 @@ const Login = () => {
             footer={(
                 <p className="text-sm text-slate-500">
                     Do not have an account?{' '}
-                    <Link href="/register" prefetch="mount" className="font-bold text-red-900 transition hover:text-amber-700">
+                    <Link href="/register" prefetch="mount" className="font-bold text-red-900 transition hover:text-amber-700 hover:underline underline-offset-4">
                         Create one
                     </Link>
                 </p>
@@ -55,7 +55,6 @@ const Login = () => {
                 <div>
                     <label htmlFor="username" className="auth-label">Username</label>
                     <div className="auth-field auth-field-compact">
-                        <UserRound className="h-4 w-4 text-slate-400" />
                         <input
                             id="username"
                             type="text"
@@ -71,7 +70,6 @@ const Login = () => {
                 <div>
                     <label htmlFor="password" className="auth-label">Password</label>
                     <div className="auth-field auth-field-compact">
-                        <LockKeyhole className="h-4 w-4 text-slate-400" />
                         <input
                             id="password"
                             type={showPassword ? 'text' : 'password'}
@@ -102,7 +100,7 @@ const Login = () => {
                         />
                         <span className="text-xs font-medium text-slate-600">Remember me</span>
                     </label>
-                    <Link href="/forgot-password" className="text-xs font-bold text-red-900 transition hover:text-amber-700">
+                    <Link href="/forgot-password" className="text-xs font-bold text-red-900 transition hover:text-amber-700 hover:underline underline-offset-4">
                         Forgot password?
                     </Link>
                 </div>
