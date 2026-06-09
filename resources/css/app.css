@@ -10956,8 +10956,12 @@
     }
 
     .auth-page-register .auth-card {
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       min-height: 0;
+    }
+
+    .auth-page-register .auth-form-panel {
+      flex: 0 1 auto;
     }
 
     .auth-page-simple .auth-card > div:first-child {
@@ -11050,7 +11054,7 @@
     }
 
     .auth-register-form {
-      height: 100%;
+      height: auto;
       gap: .42rem;
     }
 
