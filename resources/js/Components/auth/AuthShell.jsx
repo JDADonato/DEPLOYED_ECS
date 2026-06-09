@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, CalendarDays, CheckCircle2, CreditCard, ShieldCheck, Sparkles, Utensils } from 'lucide-react';
 import logoImg from '../../../images/ECS_LOGO_AUTH.png';
 
@@ -15,10 +15,14 @@ const authModeCopy = {
     login: {
         title: 'Sign in',
         subtitle: 'Use your account details to continue.',
+        brandTitle: 'Welcome back.',
+        brandCopy: 'Continue managing your event details, messages, and payments.',
     },
     register: {
         title: 'Create account',
         subtitle: 'Enter your details to continue.',
+        brandTitle: 'Create your client account.',
+        brandCopy: 'Save your booking draft and keep every event update in one place.',
     },
 };
 
@@ -98,17 +102,37 @@ const AuthShell = ({
 }) => {
     const isLogin = mode === 'login';
     const [transitionTarget, setTransitionTarget] = useState(null);
+    const [isAuthSwitchArrival, setIsAuthSwitchArrival] = useState(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return window.sessionStorage.getItem('ecs-auth-switch-target') === mode;
+    });
     const visualMode = transitionTarget || mode;
     const visualIsLogin = visualMode === 'login';
     const isTransitioning = Boolean(transitionTarget);
     const transitionDirection = transitionTarget === 'register' ? 'grow' : transitionTarget === 'login' ? 'shrink' : '';
     const headingTitle = transitionTarget ? authModeCopy[transitionTarget]?.title || title : title;
     const headingSubtitle = transitionTarget ? authModeCopy[transitionTarget]?.subtitle || subtitle : subtitle;
+    const visualBrandTitle = transitionTarget ? authModeCopy[transitionTarget]?.brandTitle || brandTitle : brandTitle;
+    const visualBrandCopy = transitionTarget ? authModeCopy[transitionTarget]?.brandCopy || brandCopy : brandCopy;
     const mainPadding = compact ? 'px-4 py-4 sm:px-6 lg:px-10' : 'px-4 py-8 sm:px-6 lg:px-12';
     const headerPadding = compact ? 'px-6 pb-4 pt-5 sm:px-7' : 'px-6 pb-5 pt-6 sm:px-8';
     const headingMargin = compact ? 'mt-4' : 'mt-7';
     const formPadding = compact ? 'px-6 py-4 sm:px-7' : 'px-6 py-6 sm:px-8';
     const footerPadding = compact ? 'px-6 py-4 sm:px-7' : 'px-6 py-5 sm:px-8';
+
+    useEffect(() => {
+        if (!isAuthSwitchArrival || typeof window === 'undefined') {
+            return;
+        }
+
+        window.sessionStorage.removeItem('ecs-auth-switch-target');
+        const clearArrival = window.setTimeout(() => setIsAuthSwitchArrival(false), 120);
+
+        return () => window.clearTimeout(clearArrival);
+    }, [isAuthSwitchArrival]);
 
     const handleAuthSwitch = (targetMode) => {
         if (targetMode === mode || transitionTarget) {
@@ -116,12 +140,15 @@ const AuthShell = ({
         }
 
         setTransitionTarget(targetMode);
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem('ecs-auth-switch-target', targetMode);
+        }
         window.setTimeout(() => {
             router.visit(targetMode === 'login' ? '/login' : '/register', {
                 preserveScroll: false,
                 preserveState: false,
             });
-        }, 460);
+        }, 320);
     };
 
     const backControl = (className) => {
@@ -203,7 +230,7 @@ const AuthShell = ({
 
     if (simple) {
         return (
-            <div className={`auth-page auth-page-${mode} auth-page-simple h-screen overflow-hidden font-sans text-slate-950`}>
+            <div className={`auth-page auth-page-${mode} auth-page-simple ${isAuthSwitchArrival ? 'auth-page-switch-arrival' : ''} h-screen overflow-hidden font-sans text-slate-950`}>
                 <img
                     src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=85&w=1800"
                     alt=""
@@ -219,10 +246,10 @@ const AuthShell = ({
 
                 <main className="relative z-20 flex h-screen items-center justify-center overflow-hidden px-4 pb-6 pt-20 sm:px-6 sm:pb-7 sm:pt-20 lg:px-10">
                     <div className="w-full max-w-[460px]">
-                        <div className="auth-simple-intro auth-heading mb-3 text-center">
+                        <div className={`auth-simple-intro auth-heading ${isTransitioning || isAuthSwitchArrival ? 'auth-simple-intro-fast' : ''} mb-3 text-center`}>
                             <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Eloquente Catering</p>
-                            <h1 className="mt-1.5 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">{brandTitle}</h1>
-                            <p className="mx-auto mt-1.5 max-w-sm text-xs font-semibold leading-5 text-slate-600 sm:text-sm">{brandCopy}</p>
+                            <h1 className="mt-1.5 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">{visualBrandTitle}</h1>
+                            <p className="mx-auto mt-1.5 max-w-sm text-xs font-semibold leading-5 text-slate-600 sm:text-sm">{visualBrandCopy}</p>
                         </div>
                         {authCard}
                     </div>
