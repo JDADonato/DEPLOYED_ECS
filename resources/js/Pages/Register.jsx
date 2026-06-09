@@ -110,8 +110,8 @@ const Register = () => {
                     </p>
                 )}
             >
-                <form className="space-y-3" onSubmit={handleSubmit}>
-                    <div>
+                <form className="auth-register-form space-y-3" onSubmit={handleSubmit}>
+                    <div className="auth-register-field auth-register-username">
                         <label htmlFor="username" className="auth-label">Username</label>
                         <div className="auth-field auth-field-compact">
                             <input
@@ -122,8 +122,8 @@ const Register = () => {
                         </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
+                    <div className="auth-register-grid auth-register-contact-grid grid gap-3 sm:grid-cols-2">
+                        <div className="auth-register-field">
                             <label htmlFor="email" className="auth-label">Email</label>
                             <div className="auth-field auth-field-compact">
                                 <input
@@ -133,7 +133,7 @@ const Register = () => {
                                 />
                             </div>
                         </div>
-                        <div>
+                        <div className="auth-register-field">
                             <label htmlFor="phone" className="auth-label">Mobile Number</label>
                             <div className="auth-field auth-field-compact">
                                 <input
@@ -145,7 +145,7 @@ const Register = () => {
                         </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="auth-register-grid auth-register-password-grid grid gap-3 sm:grid-cols-2">
                         <PasswordStrengthField
                             id="password"
                             name="password"
@@ -158,7 +158,7 @@ const Register = () => {
                             onChange={(value) => setFormData((current) => ({ ...current, password: value }))}
                             showLeadingIcon={false}
                         />
-                        <div>
+                        <div className="auth-register-field auth-register-confirm">
                             <label htmlFor="confirmPassword" className="auth-label">Confirm</label>
                             <div className={`auth-field auth-field-compact ${confirmPasswordFieldState}`.trim()}>
                                 <input
@@ -175,7 +175,7 @@ const Register = () => {
                         </div>
                     </div>
 
-                    <label className="flex cursor-pointer items-center gap-3">
+                    <label className="auth-register-terms flex cursor-pointer items-center gap-3">
                         <input
                             id="terms" name="terms" type="checkbox"
                             checked={agreedToTerms}

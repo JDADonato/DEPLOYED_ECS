@@ -235,8 +235,8 @@ const AuthShell = ({
                     <img src={logoImg} alt="Eloquente Catering Services" className="h-11 w-auto drop-shadow-sm" />
                 </header>
 
-                <main className="relative z-20 flex h-screen items-center justify-center overflow-hidden px-4 pb-6 pt-20 sm:px-6 sm:pb-7 sm:pt-20 lg:px-10">
-                    <div className="w-full max-w-[460px]">
+                <main className="auth-simple-main relative z-20 flex h-screen items-center justify-center overflow-hidden px-4 pb-6 pt-20 sm:px-6 sm:pb-7 sm:pt-20 lg:px-10">
+                    <div className="auth-simple-stack w-full max-w-[460px]">
                         <div className={`auth-simple-intro auth-heading ${isTransitioning || isAuthSwitchArrival ? 'auth-simple-intro-fast' : ''} mb-2 text-center`}>
                             <p className="auth-simple-brand">Eloquente Catering Services</p>
                             <p className="auth-simple-slogan">&quot;Where great food speaks for itself&quot;</p>

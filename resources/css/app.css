@@ -10881,147 +10881,261 @@
   }
 
   @media (max-width: 640px) {
-    .auth-page-simple main {
-      align-items: flex-start;
-      overflow-y: auto;
-      padding-inline: 1rem;
-      padding-top: 9.6rem;
-      padding-bottom: 1.6rem;
+    .auth-page-simple {
+      height: 100svh;
+      min-height: 100svh;
+      overflow: hidden;
     }
 
-    .auth-page-simple main > div {
-      max-width: 26.5rem;
+    .auth-page-simple main {
+      height: 100svh;
+      align-items: stretch;
+      overflow: hidden;
+      padding: 4.85rem .75rem .55rem;
+    }
+
+    .auth-page-simple .auth-simple-stack {
+      display: flex;
+      width: 100%;
+      max-width: 28.5rem;
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      margin-inline: auto;
     }
 
     .auth-page-simple header {
-      padding-inline: 1.35rem;
+      padding: .7rem 1rem;
     }
 
     .auth-page-simple header img {
-      height: 3rem;
+      height: 2.45rem;
     }
 
     .auth-page-simple header a,
     .auth-page-simple header button {
-      min-height: 2.85rem;
-      padding-inline: 1.1rem;
+      min-height: 2.35rem;
+      padding: .45rem .85rem;
+      font-size: .9rem;
     }
 
     .auth-page-simple .auth-simple-intro {
-      margin-bottom: .9rem;
+      flex: 0 0 auto;
+      margin-bottom: .5rem;
+    }
+
+    .auth-page-simple .auth-simple-intro p:last-child {
+      display: block;
     }
 
     .auth-simple-brand {
-      font-size: clamp(1.08rem, 4.6vw, 1.42rem);
-      letter-spacing: .1em;
+      font-size: clamp(1rem, 4.2vw, 1.32rem);
+      letter-spacing: .09em;
       line-height: 1.08;
     }
 
     .auth-simple-slogan {
-      margin-top: .35rem;
-      font-size: clamp(.95rem, 3.45vw, 1.12rem);
+      margin-top: .22rem;
+      font-size: clamp(.82rem, 3.2vw, 1rem);
       line-height: 1.18;
     }
 
     .auth-page-simple .auth-card {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
       border-color: rgba(255,255,255,.86);
-      border-radius: 1.45rem;
+      border-radius: 1.2rem;
       background: rgba(255,255,255,.94);
       box-shadow: 0 18px 52px rgba(15,23,42,.18);
     }
 
-    .auth-card-login {
-      min-height: 24rem;
+    .auth-page-login .auth-card {
+      flex: 0 1 auto;
     }
 
-    .auth-card-register {
-      min-height: 38.5rem;
+    .auth-page-register .auth-card {
+      flex: 1 1 auto;
+      min-height: 0;
     }
 
     .auth-page-simple .auth-card > div:first-child {
-      padding: 1.15rem 1.35rem 1.05rem;
+      flex: 0 0 auto;
+      padding: .72rem .9rem .6rem;
     }
 
     .auth-page-simple .auth-form-panel {
-      padding: 1.15rem 1.35rem 1.35rem;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: .72rem .9rem .78rem;
     }
 
     .auth-page-simple .auth-card > div:last-child {
-      padding: .95rem 1.25rem;
+      flex: 0 0 auto;
+      padding: .48rem .85rem .55rem;
     }
 
     .auth-page-simple .auth-switch {
-      padding: .28rem;
+      padding: .2rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.76);
     }
 
+    .auth-page-simple .auth-switch-indicator {
+      inset-block: .2rem;
+      left: .2rem;
+      width: calc(50% - .2rem);
+    }
+
     .auth-page-simple .auth-switch button {
-      min-height: 2.65rem;
-      padding-inline: .75rem;
-      font-size: .95rem;
+      min-height: 2.25rem;
+      padding: .35rem .65rem;
+      font-size: .9rem;
+    }
+
+    .auth-page-simple .auth-card .auth-heading {
+      margin-top: .62rem;
     }
 
     .auth-page-simple .auth-card .auth-heading h2 {
-      font-size: 1.85rem;
+      font-size: 1.48rem;
       line-height: 1.05;
     }
 
     .auth-page-simple .auth-card .auth-heading p {
-      font-size: 1rem;
-      line-height: 1.35;
+      margin-top: .2rem;
+      font-size: .86rem;
+      line-height: 1.25;
     }
 
     .auth-label {
-      margin-bottom: .45rem;
-      font-size: .75rem;
+      margin-bottom: .18rem;
+      font-size: .64rem;
+      line-height: 1.05;
     }
 
     .auth-field {
-      border-radius: 1rem;
+      border-radius: .78rem;
       background: rgba(255,255,255,.92);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.84), 0 8px 22px rgba(15,23,42,.04);
     }
 
     .auth-field-compact {
-      padding-inline: .95rem;
+      padding-inline: .65rem;
     }
 
     .auth-field-compact .auth-input {
-      padding-block: .92rem;
-      font-size: 1rem;
+      padding-block: .54rem;
+      font-size: .88rem;
+      line-height: 1.18;
     }
 
     .auth-submit-compact {
-      border-radius: 1.05rem;
-      padding-block: 1rem;
-      font-size: 1rem;
+      border-radius: .88rem;
+      padding-block: .72rem;
+      font-size: .94rem;
       box-shadow: 0 16px 34px rgba(127,29,29,.28);
     }
 
-    .auth-page-simple form {
-      gap: .9rem;
+    .auth-login-form,
+    .auth-register-form {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
-    .auth-page-simple form.space-y-3 > :not([hidden]) ~ :not([hidden]),
-    .auth-page-simple form.space-y-3\.5 > :not([hidden]) ~ :not([hidden]) {
-      margin-top: .95rem;
+    .auth-login-form {
+      gap: .68rem;
     }
 
-    .auth-page-simple form .grid {
-      gap: .95rem;
+    .auth-register-form {
+      height: 100%;
+      gap: .42rem;
+    }
+
+    .auth-login-form > :not([hidden]) ~ :not([hidden]),
+    .auth-register-form > :not([hidden]) ~ :not([hidden]) {
+      margin-top: 0 !important;
+    }
+
+    .auth-register-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .46rem;
+    }
+
+    .auth-register-password-grid {
+      align-items: start;
+    }
+
+    .auth-register-form .auth-field-compact .auth-input {
+      font-size: .84rem;
+    }
+
+    .auth-register-form .auth-input::placeholder {
+      font-size: .84rem;
+    }
+
+    .auth-register-form .pr-11 {
+      padding-right: 2rem;
+    }
+
+    .auth-register-form .auth-field button,
+    .auth-login-form .auth-field button {
+      right: .34rem;
+      padding: .35rem;
+    }
+
+    .auth-register-form .auth-field button svg,
+    .auth-login-form .auth-field button svg {
+      height: .95rem;
+      width: .95rem;
+    }
+
+    .auth-register-terms {
+      gap: .48rem;
+      min-height: 1.2rem;
+      align-items: center;
+    }
+
+    .auth-register-terms input,
+    .auth-login-options input {
+      height: .85rem;
+      width: .85rem;
+      flex: 0 0 auto;
+    }
+
+    .auth-register-terms span,
+    .auth-login-options span,
+    .auth-login-options a {
+      font-size: .72rem;
+      line-height: 1.2;
+    }
+
+    .auth-register-form p.mt-1 {
+      margin-top: .14rem;
+      font-size: .61rem;
+      line-height: 1.05;
+    }
+
+    .auth-error {
+      padding: .42rem .55rem;
+      font-size: .7rem;
+      line-height: 1.15;
     }
 
     .auth-page-simple footer,
     .auth-page-simple .auth-card > div:last-child p {
-      font-size: .98rem;
+      font-size: .78rem;
+      line-height: 1.2;
     }
 
     .auth-skeleton-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .auth-form-skeleton-register {
-      min-height: 26.25rem;
+      min-height: 15rem;
     }
 
     .auth-skeleton-inline-row {
@@ -11031,6 +11145,144 @@
     .auth-skeleton-link {
       justify-self: start;
       grid-column: 2;
+    }
+  }
+
+  @media (max-width: 640px) and (max-height: 740px) {
+    .auth-page-simple main {
+      padding: 4.15rem .58rem .42rem;
+    }
+
+    .auth-page-simple header {
+      padding: .48rem .78rem;
+    }
+
+    .auth-page-simple header img {
+      height: 2.05rem;
+    }
+
+    .auth-page-simple header a,
+    .auth-page-simple header button {
+      min-height: 2.05rem;
+      padding: .34rem .7rem;
+      font-size: .82rem;
+    }
+
+    .auth-page-simple .auth-simple-intro {
+      margin-bottom: .36rem;
+    }
+
+    .auth-simple-brand {
+      font-size: clamp(.88rem, 3.7vw, 1.05rem);
+      letter-spacing: .08em;
+    }
+
+    .auth-simple-slogan {
+      margin-top: .12rem;
+      font-size: clamp(.72rem, 2.8vw, .84rem);
+    }
+
+    .auth-page-simple .auth-card {
+      border-radius: 1rem;
+    }
+
+    .auth-page-simple .auth-card > div:first-child {
+      padding: .54rem .72rem .44rem;
+    }
+
+    .auth-page-simple .auth-form-panel {
+      padding: .52rem .72rem .58rem;
+    }
+
+    .auth-page-simple .auth-card > div:last-child {
+      padding: .38rem .7rem .42rem;
+    }
+
+    .auth-page-simple .auth-switch button {
+      min-height: 1.95rem;
+      font-size: .82rem;
+    }
+
+    .auth-page-simple .auth-card .auth-heading {
+      margin-top: .42rem;
+    }
+
+    .auth-page-simple .auth-card .auth-heading h2 {
+      font-size: 1.2rem;
+    }
+
+    .auth-page-simple .auth-card .auth-heading p {
+      font-size: .74rem;
+      line-height: 1.12;
+    }
+
+    .auth-label {
+      font-size: .56rem;
+    }
+
+    .auth-field-compact .auth-input {
+      padding-block: .38rem;
+      font-size: .78rem;
+    }
+
+    .auth-register-form {
+      gap: .3rem;
+    }
+
+    .auth-register-grid {
+      gap: .34rem;
+    }
+
+    .auth-register-form .auth-input::placeholder {
+      font-size: .76rem;
+    }
+
+    .auth-register-form p.mt-1 {
+      font-size: .56rem;
+    }
+
+    .auth-register-terms span,
+    .auth-login-options span,
+    .auth-login-options a,
+    .auth-page-simple .auth-card > div:last-child p {
+      font-size: .66rem;
+    }
+
+    .auth-submit-compact {
+      padding-block: .52rem;
+      font-size: .84rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .auth-page-simple main {
+      padding-inline: .45rem;
+    }
+
+    .auth-simple-brand {
+      font-size: 1rem;
+      letter-spacing: .06em;
+    }
+
+    .auth-simple-slogan {
+      font-size: .78rem;
+    }
+
+    .auth-page-simple .auth-card > div:first-child,
+    .auth-page-simple .auth-form-panel {
+      padding-inline: .62rem;
+    }
+
+    .auth-register-grid {
+      gap: .3rem;
+    }
+
+    .auth-register-form .auth-field-compact {
+      padding-inline: .48rem;
+    }
+
+    .auth-register-form .auth-field-compact .auth-input {
+      font-size: .76rem;
     }
   }
 

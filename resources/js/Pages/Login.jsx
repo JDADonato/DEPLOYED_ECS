@@ -51,7 +51,7 @@ const Login = () => {
                 </p>
             )}
         >
-            <form className="space-y-3.5" onSubmit={handleSubmit}>
+            <form className="auth-login-form space-y-3.5" onSubmit={handleSubmit}>
                 <div>
                     <label htmlFor="username" className="auth-label">Username</label>
                     <div className="auth-field auth-field-compact">
@@ -90,7 +90,7 @@ const Login = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="auth-login-options flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <label className="flex cursor-pointer items-center gap-3">
                         <input
                             type="checkbox"
