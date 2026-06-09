@@ -74,10 +74,10 @@ export const StaffWorkspaceSkeleton = ({
                 ))}
             </nav>
 
-            {!hasTopNav && <div className="staff-sidebar-user">
+            {!hasTopNav && <div className="staff-sidebar-user staff-sidebar-user-skeleton">
                 <div>
                     <p>{roleLabel}</p>
-                    <strong>Loading</strong>
+                    <strong aria-hidden="true" />
                 </div>
                 <div className="staff-sidebar-user-actions">
                     <span />
@@ -160,6 +160,7 @@ const StaffSkeleton = ({ rows = 5, variant = 'table', className = '', label = 'P
         <div className={`staff-skeleton ${className}`} aria-label={label}>
             {Array.from({ length: rows }).map((_, index) => (
                 <div key={index} className="staff-skeleton-row">
+                    <span />
                     <span />
                     <span />
                     <span />

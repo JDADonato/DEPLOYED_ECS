@@ -20,7 +20,7 @@ class StaffOperationalNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -35,5 +35,18 @@ class StaffOperationalNotification extends Notification implements ShouldQueue
         }
 
         return $message->line('This notification follows your Eloquente staff notification settings.');
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'type' => 'staff_operational',
+            'title' => $this->headline,
+            'message' => $this->body,
+            'category' => 'update',
+            'priority' => 'info',
+            'target_type' => 'staff_update',
+            'action_url' => $this->url,
+        ];
     }
 }
