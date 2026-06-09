@@ -238,8 +238,8 @@ const AuthShell = ({
                 <main className="relative z-20 flex h-screen items-center justify-center overflow-hidden px-4 pb-6 pt-20 sm:px-6 sm:pb-7 sm:pt-20 lg:px-10">
                     <div className="w-full max-w-[460px]">
                         <div className={`auth-simple-intro auth-heading ${isTransitioning || isAuthSwitchArrival ? 'auth-simple-intro-fast' : ''} mb-2 text-center`}>
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 sm:text-xs sm:tracking-[0.2em]">Eloquente Catering Services</p>
-                            <p className="mt-0.5 text-[11px] font-bold italic text-slate-600 sm:text-xs">&quot;Where great food speaks for itself&quot;</p>
+                            <p className="auth-simple-brand">Eloquente Catering Services</p>
+                            <p className="auth-simple-slogan">&quot;Where great food speaks for itself&quot;</p>
                         </div>
                         {authCard}
                     </div>
