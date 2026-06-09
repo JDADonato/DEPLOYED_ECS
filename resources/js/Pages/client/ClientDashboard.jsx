@@ -99,6 +99,13 @@ const writeStoredDashboardJson = (key, value) => {
     }
 };
 
+const normalizeDashboardData = (payload = {}) => ({
+    bookings: Array.isArray(payload.bookings) ? payload.bookings : [],
+    historyBookings: Array.isArray(payload.historyBookings) ? payload.historyBookings : [],
+    tastings: Array.isArray(payload.tastings) ? payload.tastings : [],
+    payments: Array.isArray(payload.payments) ? payload.payments : [],
+});
+
 const quickTimes = [
     { label: '8:00 AM', value: '08:00' },
     { label: '10:00 AM', value: '10:00' },
@@ -642,9 +649,11 @@ const ClientDashboard = () => {
     const activeSectionStorageKey = `${dashboardStoragePrefix}_active_section`;
     const dashboardDataStorageKey = `${dashboardStoragePrefix}_data`;
     const dashboardSmartCacheKey = getUserScopedCacheKey(user, 'client:dashboard');
-    const cachedDashboardData = readStoredDashboardJson(dashboardDataStorageKey);
-    const [data, setData] = useState(cachedDashboardData || { bookings: [], historyBookings: [], tastings: [], payments: [] });
-    const [loading, setLoading] = useState(!cachedDashboardData);
+    const rawCachedDashboardData = readStoredDashboardJson(dashboardDataStorageKey);
+    const hasCachedDashboardData = Boolean(rawCachedDashboardData);
+    const cachedDashboardData = normalizeDashboardData(rawCachedDashboardData || {});
+    const [data, setData] = useState(cachedDashboardData);
+    const [loading, setLoading] = useState(!hasCachedDashboardData);
     const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
     const [dashboardError, setDashboardError] = useState(null);
     const [activeBookingId, setActiveBookingId] = useState(() => {
@@ -760,7 +769,7 @@ const ClientDashboard = () => {
 
     useEffect(() => {
         applyDashboardQueryParams(new URLSearchParams(window.location.search));
-        fetchData({ silent: Boolean(cachedDashboardData) });
+        fetchData({ silent: hasCachedDashboardData });
     }, []);
 
     useEffect(() => {
@@ -917,12 +926,7 @@ const ClientDashboard = () => {
             });
             const result = smartResult.raw || smartResult.data || {};
             if (result) {
-                const nextData = {
-                    bookings: result.bookings || [],
-                    historyBookings: result.historyBookings || [],
-                    tastings: result.tastings || [],
-                    payments: result.payments || [],
-                };
+                const nextData = normalizeDashboardData(result);
                 setData(nextData);
                 writeStoredDashboardJson(dashboardDataStorageKey, nextData);
                 writeSmartCache(dashboardSmartCacheKey, result, result.meta || smartResult.meta || {});
@@ -1062,7 +1066,9 @@ const ClientDashboard = () => {
         return map;
     }, [data.payments]);
 
-    const activeBooking = React.useMemo(() => data.bookings.find(b => b.id === activeBookingId), [data.bookings, activeBookingId]);
+    const activeBooking = React.useMemo(() => (
+        data.bookings.find(b => b.id === activeBookingId) || data.bookings[0] || null
+    ), [data.bookings, activeBookingId]);
     const activePayments = activeBooking ? (paymentsByBookingId.get(activeBooking.id) || []) : [];
     const activePaid = React.useMemo(() => activePayments.filter(isSettledPayment).reduce((sum, payment) => sum + Number(payment.amount || 0), 0), [activePayments]);
     const activeTotal = Number(activeBooking?.total_cost || 0);
