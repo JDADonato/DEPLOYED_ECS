@@ -160,11 +160,6 @@ class AnalyticsDemoSeeder extends Seeder
         ];
 
         $images = [
-            'starter' => 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&q=80&w=400',
-            'main' => 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=400',
-            'side' => 'https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?auto=format&fit=crop&q=80&w=400',
-            'dessert' => 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=400',
-            'drink' => 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&q=80&w=400',
         ];
 
         foreach ($targets as $category => $target) {
@@ -182,7 +177,7 @@ class AnalyticsDemoSeeder extends Seeder
                     'category' => $category,
                     'cost_per_head' => $this->menuPrice($category, $i),
                     'price_adj' => in_array($category, ['main', 'dessert'], true) && $i % 5 === 0 ? 20 : 0,
-                    'image' => $images[$category],
+                    'image' => $images[$baseName] ?? 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&q=80&w=400',
                     'description' => $this->menuDescription($category),
                     'is_best_seller' => $i % 7 === 0 ? DB::raw('true') : DB::raw('false'),
                     'is_active' => DB::raw('true'),

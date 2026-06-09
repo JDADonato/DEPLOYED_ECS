@@ -144,8 +144,8 @@ class DatabaseSeeder extends Seeder
     {
         $items = [
             // Starters
-            ['dish_id' => 'sup1', 'name' => 'Bacon and Mushroom Soup',   'category' => 'starter', 'cost_per_head' => 50,  'price_adj' => 0,  'is_best_seller' => true,  'image' => 'https://images.unsplash.com/photo-1629853346988-cb949bc5392d?auto=format&fit=crop&q=80&w=400', 'description' => 'Creamy mushroom soup topped with crispy bacon bits.'],
-            ['dish_id' => 'sup2', 'name' => 'Corn Chowder Soup',         'category' => 'starter', 'cost_per_head' => 45,  'price_adj' => 0,  'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1629853346988-cb949bc5392d?auto=format&fit=crop&q=80&w=400', 'description' => 'Hearty corn soup with vegetables.'],
+            ['dish_id' => 'sup1', 'name' => 'Bacon and Mushroom Soup',   'category' => 'starter', 'cost_per_head' => 50,  'price_adj' => 0,  'is_best_seller' => true,  'image' => 'https://images.unsplash.com/photo-1548943487-a2e4f43ec8b5?auto=format&fit=crop&q=80&w=400', 'description' => 'Creamy mushroom soup topped with crispy bacon bits.'],
+            ['dish_id' => 'sup2', 'name' => 'Corn Chowder Soup',         'category' => 'starter', 'cost_per_head' => 45,  'price_adj' => 0,  'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1604152002364-e1239c4d291f?auto=format&fit=crop&q=80&w=400', 'description' => 'Hearty corn soup with vegetables.'],
             ['dish_id' => 'app1', 'name' => 'Assorted Canapés',          'category' => 'starter', 'cost_per_head' => 55,  'price_adj' => 0,  'is_best_seller' => true,  'image' => 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&q=80&w=400', 'description' => 'French bread with Crab Sticks, Tuna, and Egg spread.'],
             ['dish_id' => 'app2', 'name' => 'Honey Beef Pita',           'category' => 'starter', 'cost_per_head' => 70,  'price_adj' => 20, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&q=80&w=400', 'description' => 'Savory sweet beef served on mini pita bread.'],
             ['dish_id' => 'sal1', 'name' => 'Garden Fresh Salad',        'category' => 'starter', 'cost_per_head' => 40,  'price_adj' => 0,  'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=400', 'description' => 'Fresh lettuce, tomato, carrots, cucumber, pineapple.'],
@@ -190,7 +190,7 @@ class DatabaseSeeder extends Seeder
             ['dish_id' => 'side5', 'name' => 'Mandarin Vegetables w/ Shitake',       'category' => 'side', 'cost_per_head' => 35,  'price_adj' => 0, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?auto=format&fit=crop&q=80&w=400', 'description' => 'Vegetable stir-fry with shitake mushrooms.'],
             ['dish_id' => 'side6', 'name' => 'Corn & Carrots in Pepper Sauce',       'category' => 'side', 'cost_per_head' => 30,  'price_adj' => 0, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1551529563-9dd60914f3ff?auto=format&fit=crop&q=80&w=400', 'description' => 'Sweet corn and carrots in pepper oyster sauce.'],
             ['dish_id' => 'side7', 'name' => 'Cheesy Buttered Potato Marble',        'category' => 'side', 'cost_per_head' => 35,  'price_adj' => 0, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1600551711229-2e70e309540b?auto=format&fit=crop&q=80&w=400', 'description' => 'Potatoes coated in cheese and butter.'],
-            ['dish_id' => 'side8', 'name' => 'Cheesy Buttered Corn & Potato',        'category' => 'side', 'cost_per_head' => 35,  'price_adj' => 0, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1600551711229-2e70e309540b?auto=format&fit=crop&q=80&w=400', 'description' => 'Corn and marble potatoes in cheese butter.'],
+            ['dish_id' => 'side8', 'name' => 'Cheesy Buttered Corn & Potato',        'category' => 'side', 'cost_per_head' => 35,  'price_adj' => 0, 'is_best_seller' => false, 'image' => 'https://images.unsplash.com/photo-1623341214825-9f4f963727da?auto=format&fit=crop&q=80&w=400', 'description' => 'Corn and marble potatoes in cheese butter.'],
 
             // Desserts
             ['dish_id' => 'des1', 'name' => 'Coffee Jello',                         'category' => 'dessert', 'cost_per_head' => 30, 'price_adj' => 0, 'is_best_seller' => true,  'image' => 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&q=80&w=400', 'description' => 'Coffee flavored jelly dessert.'],
@@ -205,7 +205,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            MenuItem::firstOrCreate(['name' => $item['name']], $item);
+            MenuItem::updateOrCreate(['name' => $item['name']], $item);
         }
 
         $this->command->info('Seeded 45+ menu items');
