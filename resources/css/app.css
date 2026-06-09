@@ -10903,6 +10903,7 @@
       flex-direction: column;
       justify-content: center;
       margin-inline: auto;
+      transform: translateY(clamp(-4.4rem, -8svh, -2.8rem));
     }
 
     .auth-page-simple header {
@@ -10978,7 +10979,7 @@
       flex: 1 1 auto;
       min-height: 0;
       overflow: hidden;
-      padding: .72rem .9rem .78rem;
+      padding: .82rem .98rem .9rem;
     }
 
     .auth-page-simple .auth-card > div:last-child {
@@ -11019,7 +11020,7 @@
     }
 
     .auth-label {
-      margin-bottom: .18rem;
+      margin-bottom: .24rem;
       font-size: .64rem;
       line-height: 1.05;
     }
@@ -11035,7 +11036,7 @@
     }
 
     .auth-field-compact .auth-input {
-      padding-block: .54rem;
+      padding-block: .62rem;
       font-size: .88rem;
       line-height: 1.18;
     }
@@ -11060,7 +11061,7 @@
 
     .auth-register-form {
       height: auto;
-      gap: .42rem;
+      gap: .58rem;
     }
 
     .auth-login-form > :not([hidden]) ~ :not([hidden]),
@@ -11070,7 +11071,7 @@
 
     .auth-register-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: .46rem;
+      gap: .58rem;
     }
 
     .auth-register-password-grid {
@@ -11102,8 +11103,8 @@
     }
 
     .auth-register-terms {
-      gap: .48rem;
-      min-height: 1.2rem;
+      gap: .55rem;
+      min-height: 1.35rem;
       align-items: center;
     }
 
@@ -11191,6 +11192,10 @@
   @media (max-width: 640px) and (max-height: 740px) {
     .auth-page-simple main {
       padding: 4.15rem .58rem .42rem;
+    }
+
+    .auth-page-simple .auth-simple-stack {
+      transform: translateY(clamp(-2.4rem, -4svh, -1rem));
     }
 
     .auth-page-simple header {
