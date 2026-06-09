@@ -10951,6 +10951,11 @@
       box-shadow: 0 18px 52px rgba(15,23,42,.18);
     }
 
+    .auth-page-simple .auth-card-login,
+    .auth-page-simple .auth-card-register {
+      min-height: 0;
+    }
+
     .auth-page-login .auth-card {
       flex: 0 1 auto;
     }
@@ -11136,10 +11141,41 @@
 
     .auth-skeleton-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .46rem;
     }
 
+    .auth-page-simple .auth-form-skeleton {
+      gap: .42rem;
+    }
+
+    .auth-page-simple .auth-skeleton-field-group {
+      gap: .18rem;
+    }
+
+    .auth-page-simple .auth-skeleton-label {
+      height: .5rem;
+      width: 3.8rem;
+    }
+
+    .auth-page-simple .auth-skeleton-input {
+      height: 2.25rem;
+      border-radius: .78rem;
+    }
+
+    .auth-page-simple .auth-skeleton-submit {
+      height: 2.55rem;
+      border-radius: .88rem;
+    }
+
+    .auth-page-simple .auth-skeleton-inline-row {
+      gap: .48rem;
+      min-height: 1.2rem;
+      padding-block: 0;
+    }
+
+    .auth-form-skeleton-login,
     .auth-form-skeleton-register {
-      min-height: 15rem;
+      min-height: 0;
     }
 
     .auth-skeleton-inline-row {
@@ -11235,6 +11271,22 @@
 
     .auth-register-grid {
       gap: .34rem;
+    }
+
+    .auth-page-simple .auth-form-skeleton {
+      gap: .3rem;
+    }
+
+    .auth-page-simple .auth-skeleton-grid {
+      gap: .34rem;
+    }
+
+    .auth-page-simple .auth-skeleton-input {
+      height: 1.85rem;
+    }
+
+    .auth-page-simple .auth-skeleton-submit {
+      height: 2.1rem;
     }
 
     .auth-register-form .auth-input::placeholder {
