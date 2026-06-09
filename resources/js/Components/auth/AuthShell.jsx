@@ -102,7 +102,7 @@ const AuthShell = ({
 }) => {
     const isLogin = mode === 'login';
     const [transitionTarget, setTransitionTarget] = useState(null);
-    const [isAuthSwitchArrival, setIsAuthSwitchArrival] = useState(() => {
+    const [isAuthSwitchArrival] = useState(() => {
         if (typeof window === 'undefined') {
             return false;
         }
@@ -129,9 +129,6 @@ const AuthShell = ({
         }
 
         window.sessionStorage.removeItem('ecs-auth-switch-target');
-        const clearArrival = window.setTimeout(() => setIsAuthSwitchArrival(false), 120);
-
-        return () => window.clearTimeout(clearArrival);
     }, [isAuthSwitchArrival]);
 
     const handleAuthSwitch = (targetMode) => {

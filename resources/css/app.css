@@ -10421,6 +10421,7 @@
 
   .auth-page-switch-arrival .auth-hero-image {
     animation: none;
+    transform: scale(1.035);
   }
 
   .auth-hero-image-login {
