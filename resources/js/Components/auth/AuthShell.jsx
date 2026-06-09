@@ -11,6 +11,74 @@ const featureIcons = {
     check: CheckCircle2,
 };
 
+const authModeCopy = {
+    login: {
+        title: 'Sign in',
+        subtitle: 'Use your account details to continue.',
+    },
+    register: {
+        title: 'Create account',
+        subtitle: 'Enter your details to continue.',
+    },
+};
+
+const SkeletonBlock = ({ className = '' }) => (
+    <span className={`auth-skeleton-block ${className}`} aria-hidden="true" />
+);
+
+const AuthFormSkeleton = ({ mode }) => {
+    const isLoginSkeleton = mode === 'login';
+
+    if (isLoginSkeleton) {
+        return (
+            <div className="auth-form-skeleton auth-form-skeleton-login" aria-hidden="true">
+                {[0, 1].map((item) => (
+                    <div key={item} className="auth-skeleton-field-group">
+                        <SkeletonBlock className="auth-skeleton-label" />
+                        <SkeletonBlock className="auth-skeleton-input" />
+                    </div>
+                ))}
+                <div className="auth-skeleton-inline-row">
+                    <SkeletonBlock className="auth-skeleton-check" />
+                    <SkeletonBlock className="auth-skeleton-remember" />
+                    <SkeletonBlock className="auth-skeleton-link" />
+                </div>
+                <SkeletonBlock className="auth-skeleton-submit" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="auth-form-skeleton auth-form-skeleton-register" aria-hidden="true">
+            <div className="auth-skeleton-field-group">
+                <SkeletonBlock className="auth-skeleton-label" />
+                <SkeletonBlock className="auth-skeleton-input" />
+            </div>
+            <div className="auth-skeleton-grid">
+                {[0, 1].map((item) => (
+                    <div key={item} className="auth-skeleton-field-group">
+                        <SkeletonBlock className="auth-skeleton-label" />
+                        <SkeletonBlock className="auth-skeleton-input" />
+                    </div>
+                ))}
+            </div>
+            <div className="auth-skeleton-grid">
+                {[0, 1].map((item) => (
+                    <div key={item} className="auth-skeleton-field-group">
+                        <SkeletonBlock className="auth-skeleton-label" />
+                        <SkeletonBlock className="auth-skeleton-input" />
+                    </div>
+                ))}
+            </div>
+            <div className="auth-skeleton-inline-row auth-skeleton-inline-row-start">
+                <SkeletonBlock className="auth-skeleton-check" />
+                <SkeletonBlock className="auth-skeleton-terms" />
+            </div>
+            <SkeletonBlock className="auth-skeleton-submit" />
+        </div>
+    );
+};
+
 const AuthShell = ({
     mode,
     brandTitle,
@@ -32,6 +100,10 @@ const AuthShell = ({
     const [transitionTarget, setTransitionTarget] = useState(null);
     const visualMode = transitionTarget || mode;
     const visualIsLogin = visualMode === 'login';
+    const isTransitioning = Boolean(transitionTarget);
+    const transitionDirection = transitionTarget === 'register' ? 'grow' : transitionTarget === 'login' ? 'shrink' : '';
+    const headingTitle = transitionTarget ? authModeCopy[transitionTarget]?.title || title : title;
+    const headingSubtitle = transitionTarget ? authModeCopy[transitionTarget]?.subtitle || subtitle : subtitle;
     const mainPadding = compact ? 'px-4 py-4 sm:px-6 lg:px-10' : 'px-4 py-8 sm:px-6 lg:px-12';
     const headerPadding = compact ? 'px-6 pb-4 pt-5 sm:px-7' : 'px-6 pb-5 pt-6 sm:px-8';
     const headingMargin = compact ? 'mt-4' : 'mt-7';
@@ -49,7 +121,7 @@ const AuthShell = ({
                 preserveScroll: false,
                 preserveState: false,
             });
-        }, 360);
+        }, 460);
     };
 
     const backControl = (className) => {
@@ -78,7 +150,7 @@ const AuthShell = ({
     };
 
     const authCard = (
-        <section className={`auth-card auth-card-${mode} ${transitionTarget ? `auth-card-exit auth-card-exit-to-${transitionTarget}` : ''} overflow-hidden rounded-[28px] border border-white/70 bg-white/[.88] shadow-[0_24px_80px_rgba(15,23,42,.16)] backdrop-blur-xl`}>
+        <section className={`auth-card auth-card-${visualMode} ${isTransitioning ? `auth-card-transitioning auth-card-${transitionDirection}` : ''} overflow-hidden rounded-[28px] border border-white/70 bg-white/[.88] shadow-[0_24px_80px_rgba(15,23,42,.16)] backdrop-blur-xl`}>
             <div className={`border-b border-slate-200/70 ${headerPadding}`}>
                 {!hideAuthSwitch && (
                     <div className="auth-switch relative grid grid-cols-2 rounded-full bg-slate-100 p-1">
@@ -102,24 +174,28 @@ const AuthShell = ({
                     </div>
                 )}
 
-                <div key={`${mode}-heading`} className={`auth-heading ${simple ? 'mt-5' : headingMargin}`}>
+                <div key={`${visualMode}-heading`} className={`auth-heading ${isTransitioning ? 'auth-heading-transitioning' : ''} ${simple ? 'mt-5' : headingMargin}`}>
                     {!simple && (
                         <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-600">
-                            {isLogin ? 'Welcome back' : 'Start planning'}
+                            {visualIsLogin ? 'Welcome back' : 'Start planning'}
                         </p>
                     )}
-                    <h2 className={`${simple ? 'mt-0' : 'mt-2'} text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl`}>{title}</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+                    <h2 className={`${simple ? 'mt-0' : 'mt-2'} text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl`}>{headingTitle}</h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">{headingSubtitle}</p>
                 </div>
             </div>
 
-            <div key={mode} className={`auth-form-panel auth-form-panel-${mode} ${formPadding}`}>
-                {children}
+            <div key={visualMode} className={`auth-form-panel auth-form-panel-${visualMode} ${isTransitioning ? 'auth-form-panel-loading' : ''} ${formPadding}`}>
+                {isTransitioning ? <AuthFormSkeleton mode={visualMode} /> : children}
             </div>
 
             {footer && (
                 <div className={`border-t border-slate-200/70 bg-slate-50/80 text-center ${footerPadding}`}>
-                    {footer}
+                    {isTransitioning ? (
+                        <div className="auth-skeleton-footer" aria-hidden="true">
+                            <SkeletonBlock className="auth-skeleton-footer-line" />
+                        </div>
+                    ) : footer}
                 </div>
             )}
         </section>
