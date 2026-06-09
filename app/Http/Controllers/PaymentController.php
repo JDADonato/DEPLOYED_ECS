@@ -36,6 +36,7 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'booking_id' => ['required', 'integer', 'exists:bookings,id'],
             'payment_id' => ['required', 'integer', 'exists:payments,id'],
+            'pay_in_full' => ['nullable', 'boolean'],
         ]);
 
         $booking = Booking::with(['user', 'payments' => fn ($query) => $query->active()])
@@ -53,19 +54,54 @@ class PaymentController extends Controller
             return back()->with('error', 'Payment milestone not found for this booking.');
         }
 
-        $validationError = $this->validatePayableMilestone($booking, $payment);
+        $isPayInFull = $request->boolean('pay_in_full');
+        $paymentsToProcess = collect([$payment]);
 
-        if ($validationError) {
-            return back()->with('error', $validationError);
+        if ($isPayInFull) {
+            $paymentsToProcess = $booking->payments
+                ->whereIn('status', ['Pending', 'Failed', 'Rejected'])
+                ->whereNull('voided_at')
+                ->sortBy(fn ($p) => $this->milestoneOrder($p->payment_type))
+                ->values();
+
+            if ($paymentsToProcess->isEmpty()) {
+                return back()->with('error', 'No pending payments found for this booking.');
+            }
+        } else {
+            $validationError = $this->validatePayableMilestone($booking, $payment);
+            if ($validationError) {
+                return back()->with('error', $validationError);
+            }
         }
 
-        $amount = round((float) $payment->amount, 2);
-        $description = $this->checkoutDescription($booking, $payment);
+        $amount = round((float) $paymentsToProcess->sum('amount'), 2);
+
+        if ($amount <= 0) {
+            return back()->with('error', 'Payment amount must be greater than zero before checkout can be created.');
+        }
+
+        $description = $isPayInFull 
+            ? sprintf('Full Payment for %s Booking #%d', $booking->event_type ?: 'Event', $booking->id)
+            : $this->checkoutDescription($booking, $payment);
         $successUrl = route('checkout.success', [
             'booking_id' => $booking->id,
             'payment_id' => $payment->id,
         ]);
         $cancelUrl = route('checkout.cancelled');
+
+        $metadata = [
+            'booking_id' => $booking->id,
+            'reference_number' => $isPayInFull ? sprintf('ECS-%d-FULL', $booking->id) : $this->referenceNumber($booking, $payment),
+        ];
+
+        if ($isPayInFull) {
+            $metadata['payment_ids'] = $paymentsToProcess->pluck('id')->join(',');
+            $metadata['payment_type'] = 'Full Payment';
+        } else {
+            $metadata['payment_id'] = $payment->id;
+            $metadata['payment_type'] = $payment->payment_type;
+            $metadata['milestone_percentage'] = $this->milestonePercentage($booking, $payment);
+        }
 
         try {
             $checkout = $payMongo->createCheckoutSession(
@@ -73,13 +109,7 @@ class PaymentController extends Controller
                 description: $description,
                 successUrl: $successUrl,
                 cancelUrl: $cancelUrl,
-                metadata: [
-                    'booking_id' => $booking->id,
-                    'payment_id' => $payment->id,
-                    'payment_type' => $payment->payment_type,
-                    'milestone_percentage' => $this->milestonePercentage($booking, $payment),
-                    'reference_number' => $this->referenceNumber($booking, $payment),
-                ],
+                metadata: $metadata,
                 booking: $booking
             );
         } catch (ExternalServiceException $exception) {
@@ -106,37 +136,38 @@ class PaymentController extends Controller
             return back()->with('error', 'Unable to create PayMongo checkout. Please try again in a moment.');
         }
 
-        $payment->forceFill([
-            'amount' => $amount,
-            'payment_method' => 'PayMongo Checkout',
-            'paymongo_checkout_session_id' => $checkout['id'],
-            'paymongo_reference_number' => $this->referenceNumber($booking, $payment),
-        ])->save();
+        foreach ($paymentsToProcess as $p) {
+            $p->forceFill([
+                'payment_method' => 'PayMongo Checkout',
+                'paymongo_checkout_session_id' => $checkout['id'],
+                'paymongo_reference_number' => $metadata['reference_number'],
+            ])->save();
 
-        PaymentEventService::record(
-            'checkout_created',
-            'customer',
-            $payment,
-            [
-                'amount' => $amount,
-                'payment_type' => $payment->payment_type,
-            ],
-            $checkout['id'] ?? null
-        );
+            PaymentEventService::record(
+                'checkout_created',
+                'customer',
+                $p,
+                [
+                    'amount' => (float) $p->amount,
+                    'payment_type' => $p->payment_type,
+                ],
+                $checkout['id'] ?? null
+            );
+        }
 
         ConversionEventService::record('payment_checkout_started', [
             'booking' => $booking,
             'source' => 'customer_dashboard',
             'metadata' => [
-                'payment_id' => $payment->id,
-                'payment_type' => $payment->payment_type,
+                'payment_ids' => $paymentsToProcess->pluck('id')->all(),
+                'is_pay_in_full' => $isPayInFull,
                 'amount' => $amount,
             ],
         ]);
 
         Log::info('PayMongo checkout session created', [
             'booking_id' => $booking->id,
-            'payment_id' => $payment->id,
+            'payment_ids' => $paymentsToProcess->pluck('id')->all(),
             'paymongo_checkout_session_id' => $checkout['id'],
             'amount' => $amount,
         ]);

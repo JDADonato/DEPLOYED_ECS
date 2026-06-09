@@ -15,15 +15,26 @@ const protectedPathPrefixes = [
 const isProtectedPath = (path) => protectedPathPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 
 const checkSession = async () => {
-    const response = await fetch('/api/session/status', {
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
-        credentials: 'same-origin',
-    });
+    try {
+        const response = await fetch('/api/session/status', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store',
+            credentials: 'same-origin',
+        });
 
-    if (!response.ok) return { authenticated: false };
+        if (response.status === 401 || response.status === 403) {
+            return { authenticated: false, confirmed: true };
+        }
 
-    return response.json().catch(() => ({ authenticated: false }));
+        if (!response.ok) {
+            return { authenticated: true, error: true }; // Assume authenticated on random 500s/network errors to avoid kicking users out
+        }
+
+        return await response.json().catch(() => ({ authenticated: true, error: true }));
+    } catch (e) {
+        // Network error (e.g., server restarting, offline)
+        return { authenticated: true, error: true }; 
+    }
 };
 
 export const installAuthHistoryGuard = () => {
@@ -39,20 +50,16 @@ export const installAuthHistoryGuard = () => {
 
     const verifyProtectedPage = async () => {
         if (!isProtectedPath(window.location.pathname)) return;
-        if (sessionStorage.getItem(LOGGED_OUT_MARKER) === '1') {
-            redirectToLogin();
-            return;
-        }
 
         if (verifying) return;
         verifying = true;
 
         try {
-            const status = await checkSession().catch(() => ({ authenticated: false }));
-            if (!status?.authenticated) {
+            const status = await checkSession();
+            if (status && status.confirmed && !status.authenticated) {
                 sessionStorage.setItem(LOGGED_OUT_MARKER, '1');
                 redirectToLogin();
-            } else {
+            } else if (status && status.authenticated) {
                 sessionStorage.removeItem(LOGGED_OUT_MARKER);
             }
         } finally {
@@ -61,8 +68,15 @@ export const installAuthHistoryGuard = () => {
     };
 
     if (isProtectedPath(window.location.pathname) && sessionStorage.getItem(LOGGED_OUT_MARKER) === '1') {
-        redirectToLogin();
-        return;
+        // Instead of blindly redirecting, verify the session first
+        // as the user might have logged in via another tab or the marker wasn't cleared.
+        checkSession().then((status) => {
+            if (!status?.authenticated) {
+                redirectToLogin();
+            } else {
+                sessionStorage.removeItem(LOGGED_OUT_MARKER);
+            }
+        });
     }
 
     window.addEventListener('pageshow', (event) => {

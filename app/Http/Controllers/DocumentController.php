@@ -48,7 +48,7 @@ class DocumentController extends Controller
 
         return response($pdf->preparationList($booking), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="event-preparation-'.$booking->id.'.pdf"',
+            'Content-Disposition' => 'inline; filename="event-preparation-'.$booking->id.'.pdf"',
         ]);
     }
 

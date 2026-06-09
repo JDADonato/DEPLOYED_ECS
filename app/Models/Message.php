@@ -27,6 +27,9 @@ class Message extends Model
     protected function casts(): array
     {
         return [
+            'conversation_id' => 'integer',
+            'sender_id' => 'integer',
+            'receiver_id' => 'integer',
             'read_at' => 'datetime',
             'edited_at' => 'datetime',
             'deleted_at' => 'datetime',

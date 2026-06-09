@@ -268,6 +268,7 @@ const DashboardMarketing = () => {
 
     // PDF Export State
     const [showExportModal, setShowExportModal] = useState(false);
+    const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
     const [exportMode, setExportMode] = useState('month'); // 'month' or 'range'
     const [exportMonthStart, setExportMonthStart] = useState(() => {
         const now = new Date();
@@ -1954,9 +1955,9 @@ const DashboardMarketing = () => {
                             </>
                         )}
                         {selectedBooking.status === 'Confirmed' && (
-                            <a href={`/documents/bookings/${selectedBooking.id}/preparation.pdf`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
+                            <button onClick={() => setPdfPreviewUrl(`/documents/bookings/${selectedBooking.id}/preparation.pdf`)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
                                 Prep list PDF
-                            </a>
+                            </button>
                         )}
                         <button onClick={() => setActiveTab('messages')} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
                             Open messages
@@ -3443,6 +3444,24 @@ const DashboardMarketing = () => {
                 toast={toast}
             />
             {renderExportModal()}
+            {pdfPreviewUrl && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 sm:p-6" onClick={() => setPdfPreviewUrl(null)}>
+                    <div className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-900">Prep List Preview</h3>
+                            <div className="flex items-center gap-3">
+                                <a href={pdfPreviewUrl} download className="rounded-lg bg-[#720101] px-4 py-2 text-xs font-bold text-white hover:bg-[#5a0101]">Download PDF</a>
+                                <button onClick={() => setPdfPreviewUrl(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 bg-gray-100 p-2">
+                            <iframe src={`${pdfPreviewUrl}#toolbar=0&navpanes=0`} className="h-full w-full rounded-xl border-none bg-white shadow-sm" title="PDF Preview" />
+                        </div>
+                    </div>
+                </div>
+            )}
             <PromptModal
                 isOpen={clarificationPrompt.isOpen}
                 title="Request customer details"

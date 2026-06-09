@@ -158,7 +158,14 @@ class ClientDashboardController extends Controller
             ->map(function ($booking) use ($paymentService, $bookingService) {
                 $nextPayment = $booking->payments
                     ->whereIn('status', ['Pending', 'Failed', 'Rejected'])
-                    ->sortBy('due_date')
+                    ->sortBy(function ($payment) {
+                        return match ($payment->payment_type) {
+                            'Reservation' => 1,
+                            'DownPayment' => 2,
+                            'Final' => 3,
+                            default => 4,
+                        };
+                    })
                     ->first();
                 $tranches = collect($paymentService->calculateTranches($booking))->keyBy('name');
 

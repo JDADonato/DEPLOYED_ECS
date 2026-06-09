@@ -93,6 +93,7 @@ const minutesBetweenMessages = (left, right) => {
 };
 const shouldStartNewMessageGroup = (message, previous) => {
     if (!previous) return true;
+    if (message?.message_type === 'system' || previous?.message_type === 'system') return true;
     if (Boolean(message?.is_mine) !== Boolean(previous?.is_mine)) return true;
     if (String(message?.sender_id || '') !== String(previous?.sender_id || '')) return true;
     if (!sameLocalDay(messageDate(message), messageDate(previous))) return true;
@@ -123,6 +124,7 @@ const buildMessageSections = (items = []) => {
             section.groups.push({
                 id: `${section.id}-${message.sender_id || 'system'}-${message.client_temp_id || message.id || section.groups.length}`,
                 isMine: Boolean(message.is_mine),
+                isSystem: message.message_type === 'system',
                 senderId: message.sender_id,
                 senderName: message.sender_name || 'Unknown',
                 senderRole: message.sender_role || 'Customer',
@@ -1790,15 +1792,30 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
                                                                 <span>{section.label}</span>
                                                             </div>
                                                             {section.groups.map(group => (
-                                                                <div key={group.id} className={`admin-chat-message-group ${group.isMine ? 'is-mine' : 'is-theirs'}`}>
-                                                                    <div className="admin-chat-message-group-label">
-                                                                        <span>{group.isMine ? 'Admin' : group.senderName}</span>
-                                                                        <em>{group.isMine ? 'Support reply' : group.senderRole}</em>
+                                                                group.isSystem ? (
+                                                                    <div key={group.id} className="flex justify-center my-3">
+                                                                        <div className="flex flex-col items-center gap-1.5 max-w-[85%]">
+                                                                            {group.messages.map((msg, index) => (
+                                                                                <div key={String(msg.id || msg.client_temp_id || index)} className="rounded-2xl px-4 py-2 text-[11px] font-bold text-slate-500 shadow-sm shadow-slate-200/50 border border-slate-200/60 bg-white/80 backdrop-blur-sm text-center">
+                                                                                    <span className="flex items-center gap-2 justify-center">
+                                                                                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                                                        {msg.message}
+                                                                                    </span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="admin-chat-message-stack">
-                                                                        {group.messages.map((msg, index) => renderAdminMessageBubble(msg, group, index))}
+                                                                ) : (
+                                                                    <div key={group.id} className={`admin-chat-message-group ${group.isMine ? 'is-mine' : 'is-theirs'}`}>
+                                                                        <div className="admin-chat-message-group-label">
+                                                                            <span>{group.isMine ? 'Admin' : group.senderName}</span>
+                                                                            <em>{group.isMine ? 'Support reply' : group.senderRole}</em>
+                                                                        </div>
+                                                                        <div className="admin-chat-message-stack">
+                                                                            {group.messages.map((msg, index) => renderAdminMessageBubble(msg, group, index))}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
+                                                                )
                                                             ))}
                                                         </section>
                                                     ))}

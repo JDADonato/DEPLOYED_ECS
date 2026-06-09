@@ -27,6 +27,19 @@ class PaymentCalculationService
         $downPaymentDueDays = (int) ($rules->downpayment_due_days ?? 30);
         $finalDueDays = (int) ($rules->final_payment_due_days ?? 10);
 
+        $reservationDue = now()->addHours($reservationHours);
+        $downPaymentDue = $eventDate->copy()->subDays($downPaymentDueDays);
+        if ($downPaymentDue->isBefore($reservationDue)) {
+            $downPaymentDue = $reservationDue->copy();
+        }
+        $finalDue = $eventDate->copy()->subDays($finalDueDays);
+        if ($finalDue->isBefore($reservationDue)) {
+            $finalDue = $reservationDue->copy();
+        }
+        if ($finalDue->isBefore($downPaymentDue)) {
+            $finalDue = $downPaymentDue->copy();
+        }
+
         // Rush 2: Event is less than 10 days away
         if ($daysUntilEvent <= 10) {
             return [
@@ -34,7 +47,7 @@ class PaymentCalculationService
                     'name' => 'Final',
                     'percentage' => 100,
                     'amount' => $totalCost,
-                    'due_date' => now()->addHours($reservationHours)->toIso8601String(),
+                    'due_date' => $reservationDue->toIso8601String(),
                     'description' => '100% Full Payment required immediately for rush events.',
                 ],
             ];
@@ -49,14 +62,14 @@ class PaymentCalculationService
                     'name' => 'DownPayment',
                     'percentage' => $rushPct,
                     'amount' => $totalCost * ($rushPct / 100),
-                    'due_date' => now()->addHours($reservationHours)->toIso8601String(),
+                    'due_date' => $reservationDue->toIso8601String(),
                     'description' => "Because your event is within {$downPaymentDueDays} days, the reservation fee and down payment are combined into a single {$rushPct}% payment required immediately to secure the date.",
                 ],
                 [
                     'name' => 'Final',
                     'percentage' => $finalPct,
                     'amount' => $totalCost * ($finalPct / 100),
-                    'due_date' => $eventDate->copy()->subDays($finalDueDays)->toIso8601String(),
+                    'due_date' => $finalDue->toIso8601String(),
                     'description' => "{$finalPct}% Final Balance due {$finalDueDays} days before the event.",
                 ],
             ];
@@ -68,21 +81,21 @@ class PaymentCalculationService
                 'name' => 'Reservation',
                 'percentage' => $reservationPct,
                 'amount' => $totalCost * ($reservationPct / 100),
-                'due_date' => now()->addHours($reservationHours)->toIso8601String(),
+                'due_date' => $reservationDue->toIso8601String(),
                 'description' => "{$reservationPct}% Reservation Fee to lock in your date.",
             ],
             [
                 'name' => 'DownPayment',
                 'percentage' => $downPaymentPct,
                 'amount' => $totalCost * ($downPaymentPct / 100),
-                'due_date' => $eventDate->copy()->subDays($downPaymentDueDays)->toIso8601String(),
+                'due_date' => $downPaymentDue->toIso8601String(),
                 'description' => "{$downPaymentPct}% Down Payment due {$downPaymentDueDays} days before the event.",
             ],
             [
                 'name' => 'Final',
                 'percentage' => $finalPct,
                 'amount' => $totalCost * ($finalPct / 100),
-                'due_date' => $eventDate->copy()->subDays($finalDueDays)->toIso8601String(),
+                'due_date' => $finalDue->toIso8601String(),
                 'description' => "{$finalPct}% Final Balance due {$finalDueDays} days before the event.",
             ],
         ];
@@ -197,6 +210,7 @@ class PaymentCalculationService
         $nextPayment = $booking->payments()
             ->active()
             ->whereIn('status', ['Pending', 'Failed', 'Rejected'])
+            ->orderByRaw("CASE payment_type WHEN 'Reservation' THEN 1 WHEN 'DownPayment' THEN 2 WHEN 'Final' THEN 3 ELSE 4 END")
             ->orderBy('due_date', 'asc')
             ->first();
 

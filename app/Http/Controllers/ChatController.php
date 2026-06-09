@@ -858,7 +858,7 @@ class ChatController extends Controller
             'sender_id' => $msg->sender_id,
             'message' => $msg->deleted_at ? 'Message deleted' : $msg->message,
             'message_type' => $msg->message_type ?? 'message',
-            'is_mine' => $msg->sender_id === $currentUser->id,
+            'is_mine' => $msg->sender_id == $currentUser->id,
             'read_at' => $msg->read_at,
             'edited_at' => $msg->edited_at,
             'deleted_at' => $msg->deleted_at,

@@ -818,6 +818,20 @@ const ClientDashboard = () => {
         if (activeBookingId) {
             writeStoredDashboardValue(activeBookingStorageKey, activeBookingId);
             writeStoredDashboardValue(sharedSelectedBookingKey, activeBookingId);
+
+            const newUrl = new URL(window.location.href);
+            if (newUrl.searchParams.get('booking') !== String(activeBookingId)) {
+                newUrl.searchParams.set('booking', activeBookingId);
+                
+                // Safely update the URL without triggering an Inertia navigation,
+                // while preserving Inertia's internal history state object.
+                const state = window.history.state ? { ...window.history.state } : null;
+                if (state && state.url) {
+                    state.url = newUrl.pathname + newUrl.search + newUrl.hash;
+                }
+                
+                window.history.replaceState(state, '', newUrl.toString());
+            }
         }
     }, [activeBookingId, activeBookingStorageKey]);
 
@@ -1009,7 +1023,7 @@ const ClientDashboard = () => {
         }
     };
 
-    const handlePaymentSubmit = async (e, nextPayment) => {
+    const handlePaymentSubmit = async (e, nextPayment, payInFull = false) => {
         e.preventDefault();
 
         if (!nextPayment?.id || !activeBookingId) {
@@ -1023,6 +1037,7 @@ const ClientDashboard = () => {
         router.post('/checkout/initialize', {
             booking_id: activeBookingId,
             payment_id: nextPayment.id,
+            pay_in_full: payInFull,
         }, {
             preserveScroll: true,
             onError: () => {
@@ -2490,7 +2505,7 @@ const ClientDashboard = () => {
                                                                 })}
                                                             </div>
                                                             {activeBooking.nextPaymentDue ? (
-                                                                <form onSubmit={(e) => handlePaymentSubmit(e, activeBooking.nextPaymentDue)} className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.status === 'Pending' ? 'opacity-80' : ''}`}>
+                                                                <div className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.status === 'Pending' ? 'opacity-80' : ''}`}>
                                                                     {activeBooking.status === 'Pending' && (
                                                                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-6 text-center">
                                                                             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0aa0b] text-[#1a1a1a] shadow-lg">
@@ -2520,15 +2535,26 @@ const ClientDashboard = () => {
                                                                                 Secure checkout opens on the next screen.
                                                                             </div>
                                                                             <button
-                                                                                type="submit"
+                                                                                type="button"
+                                                                                onClick={(e) => handlePaymentSubmit(e, activeBooking.nextPaymentDue, false)}
                                                                                 disabled={submittingPayment || activeBooking.status === 'Pending'}
                                                                                 className={`rounded-xl bg-[#f0aa0b] px-6 py-3.5 text-sm font-black text-[#1a1a1a] shadow-lg shadow-black/20 transition-all hover:bg-[#d99a08] ${submittingPayment || activeBooking.status === 'Pending' ? 'cursor-not-allowed opacity-70' : ''}`}
                                                                             >
                                                                                 {submittingPayment ? 'Opening Checkout...' : activeBooking.status === 'Pending' ? 'Awaiting Approval' : 'Proceed to Checkout'}
                                                                             </button>
+                                                                            {payments.filter(p => !p.voided_at && ['Pending', 'Failed', 'Rejected'].includes(p.status)).length > 1 && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => handlePaymentSubmit(e, activeBooking.nextPaymentDue, true)}
+                                                                                    disabled={submittingPayment || activeBooking.status === 'Pending'}
+                                                                                    className={`rounded-xl border border-[#f0aa0b]/40 bg-black/20 px-6 py-3 text-sm font-bold text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/10 ${submittingPayment || activeBooking.status === 'Pending' ? 'cursor-not-allowed opacity-70' : ''}`}
+                                                                                >
+                                                                                    Pay Full Balance ({peso(balance)})
+                                                                                </button>
+                                                                            )}
                                                                         </div>
                                                                     </div>
-                                                                </form>
+                                                                </div>
                                                             ) : (
                                                                 <div className="mt-6 rounded-2xl border border-green-400/20 bg-green-500/10 p-5 text-center">
                                                                     <p className="font-bold text-green-200">All caught up. You have no pending payments at this time.</p>

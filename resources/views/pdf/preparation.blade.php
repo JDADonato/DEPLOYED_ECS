@@ -77,8 +77,16 @@
                     <td>{{ $venue }}</td>
                 </tr>
                 <tr>
-                    <th>Menu</th>
-                    <td>{{ $menuItems->isNotEmpty() ? $menuItems->implode(', ') : 'Menu details pending or not recorded' }}</td>
+                    <th>Reservation Time</th>
+                    <td>{{ $booking->reservation_time ?: 'Not specified' }}</td>
+                </tr>
+                <tr>
+                    <th>Serving Time</th>
+                    <td>{{ $booking->serving_time ?: 'Not specified' }}</td>
+                </tr>
+                <tr>
+                    <th>Event Timeline</th>
+                    <td>{!! nl2br(e($booking->event_timeline ?: 'None recorded')) !!}</td>
                 </tr>
                 <tr>
                     <th>Motif</th>
@@ -86,10 +94,34 @@
                 </tr>
                 <tr>
                     <th>Special Instructions</th>
-                    <td>{{ $booking->special_instructions ?: 'None recorded' }}</td>
+                    <td>{!! nl2br(e($booking->special_instructions ?: 'None recorded')) !!}</td>
                 </tr>
             </tbody>
         </table>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Selected Menu</h2>
+        @if ($categorizedMenu->isEmpty())
+            <div class="note">Menu details pending or not recorded.</div>
+        @else
+            <table class="flat-table">
+                <tbody>
+                    @foreach ($categorizedMenu as $category => $items)
+                        <tr>
+                            <th style="width: 24%; text-transform: capitalize;">{{ str_replace('_', ' ', $category) }}</th>
+                            <td>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    @foreach ($items as $item)
+                                        <li>{{ $item }}</li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
     </section>
 
     <section class="section">

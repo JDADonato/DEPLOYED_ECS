@@ -46,10 +46,13 @@ class BrandedPdfService
             'payments' => fn ($query) => $query->active()->orderBy('due_date'),
         ]);
 
-        $menuItems = collect($booking->selected_menu_array ?? [])
-            ->map(fn ($item) => is_array($item) ? ($item['name'] ?? $item['dish_name'] ?? $item['title'] ?? null) : $item)
-            ->filter()
-            ->values();
+        $categorizedMenu = collect($booking->selected_menu_array ?? [])
+            ->map(function ($items) {
+                $itemsArray = is_array($items) ? (array_is_list($items) ? $items : [$items]) : [$items];
+                return collect($itemsArray)->map(function ($item) {
+                    return is_array($item) ? ($item['name'] ?? $item['dish_name'] ?? $item['title'] ?? null) : $item;
+                })->filter()->values();
+            })->filter(fn ($items) => $items->isNotEmpty());
 
         $taskGroups = $booking->preparationTasks
             ->groupBy(fn ($task) => $this->responsibleArea($task->department))
@@ -60,9 +63,9 @@ class BrandedPdfService
             'documentNumber' => sprintf('Booking #%04d', $booking->id),
             'generatedAt' => now(),
             'booking' => $booking,
-            'menuItems' => $menuItems,
+            'categorizedMenu' => $categorizedMenu,
             'venue' => $this->venue($booking),
-            'readiness' => $this->readinessSummary($booking, $menuItems->isNotEmpty()),
+            'readiness' => $this->readinessSummary($booking, $categorizedMenu->isNotEmpty()),
             'taskGroups' => $taskGroups,
         ]);
     }
