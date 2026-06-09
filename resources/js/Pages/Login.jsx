@@ -92,17 +92,17 @@ const Login = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <label className="flex cursor-pointer items-center gap-3">
                         <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-red-900 focus:ring-red-900"
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-red-900 focus:ring-red-900"
                         />
-                        <span className="text-sm font-medium text-slate-600">Remember me</span>
+                        <span className="text-xs font-medium text-slate-600">Remember me</span>
                     </label>
-                    <Link href="/forgot-password" className="text-sm font-bold text-red-900 transition hover:text-amber-700">
+                    <Link href="/forgot-password" className="text-xs font-bold text-red-900 transition hover:text-amber-700">
                         Forgot password?
                     </Link>
                 </div>

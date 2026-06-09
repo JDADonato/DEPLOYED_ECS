@@ -171,7 +171,7 @@ const Register = () => {
                         </div>
                     </div>
 
-                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 transition hover:border-red-200 hover:bg-red-50/50">
+                    <label className="flex cursor-pointer items-center gap-3">
                         <input
                             id="terms" name="terms" type="checkbox"
                             checked={agreedToTerms}
@@ -179,9 +179,9 @@ const Register = () => {
                                 if (e.target.checked && !canAgree) { setShowTerms(true); }
                                 else { setAgreedToTerms(e.target.checked); }
                             }}
-                            className="h-4 w-4 rounded border-slate-300 text-red-900 focus:ring-red-900"
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-red-900 focus:ring-red-900"
                         />
-                        <span className="text-sm text-slate-600">
+                        <span className="text-xs text-slate-600">
                             I agree to the{' '}
                             <button type="button" onClick={() => setShowTerms(true)} className="font-bold text-red-900 underline decoration-red-900/30 underline-offset-4 transition hover:text-amber-700">
                                 Terms and Conditions
