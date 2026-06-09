@@ -238,13 +238,14 @@ const AuthShell = ({
 
                 <header className="absolute inset-x-0 top-0 z-30 mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
                     {backControl("inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/75 px-4 py-2 text-sm font-bold text-slate-600 shadow-sm backdrop-blur transition hover:border-red-200 hover:text-red-900")}
-                    <img src={logoImg} alt="Eloquente Catering" className="h-11 w-auto drop-shadow-sm" />
+                    <img src={logoImg} alt="Eloquente Catering Services" className="h-11 w-auto drop-shadow-sm" />
                 </header>
 
                 <main className="relative z-20 flex h-screen items-center justify-center overflow-hidden px-4 pb-6 pt-20 sm:px-6 sm:pb-7 sm:pt-20 lg:px-10">
                     <div className="w-full max-w-[460px]">
                         <div className={`auth-simple-intro auth-heading ${isTransitioning || isAuthSwitchArrival ? 'auth-simple-intro-fast' : ''} mb-3 text-center`}>
-                            <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Eloquente Catering</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 sm:text-xs sm:tracking-[0.2em]">Eloquente Catering Services</p>
+                            <p className="mt-1 text-[11px] font-bold italic text-slate-600 sm:text-xs">&quot;Where great food speaks for itself&quot;</p>
                             <h1 className="mt-1.5 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">{visualBrandTitle}</h1>
                             <p className="mx-auto mt-1.5 max-w-sm text-xs font-semibold leading-5 text-slate-600 sm:text-sm">{visualBrandCopy}</p>
                         </div>
@@ -281,7 +282,7 @@ const AuthShell = ({
                                 <Sparkles className="h-4 w-4 text-amber-300" />
                                 Eloquente Catering Services
                             </div>
-                            <img src={logoImg} alt="Eloquente Catering" className="mb-8 h-20 w-auto drop-shadow-2xl" />
+                            <img src={logoImg} alt="Eloquente Catering Services" className="mb-8 h-20 w-auto drop-shadow-2xl" />
                             <h1 className="auth-brand-title max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">{brandTitle}</h1>
                             <p className="auth-brand-description mt-4 max-w-md text-sm leading-6 text-white/75 xl:text-base">{brandCopy}</p>
                         </div>
@@ -307,7 +308,7 @@ const AuthShell = ({
                     <div className="w-full max-w-[460px]">
                         <div className="mb-4 flex items-center justify-between lg:hidden">
                             {backControl("inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-red-900")}
-                            <img src={logoImg} alt="Eloquente Catering" className="h-10 w-auto" />
+                            <img src={logoImg} alt="Eloquente Catering Services" className="h-10 w-auto" />
                         </div>
 
                         {authCard}
