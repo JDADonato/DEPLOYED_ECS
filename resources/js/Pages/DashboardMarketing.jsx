@@ -274,7 +274,21 @@ const DashboardMarketing = () => {
         image: '', description: '', is_best_seller: false,
     });
     const [menuItemFormLoading, setMenuItemFormLoading] = useState(false);
-    const [activeConfigTab, setActiveConfigTab] = useState('packages');
+    const [activeConfigTab, setActiveConfigTab] = useState(() => {
+        try {
+            return localStorage.getItem('ecs_marketing_active_config_tab') || 'packages';
+        } catch (e) {
+            return 'packages';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_marketing_active_config_tab', activeConfigTab);
+        } catch (e) {
+            // Ignore
+        }
+    }, [activeConfigTab]);
     const [catalogDrawer, setCatalogDrawer] = useState(null);
     const [packageForm, setPackageForm] = useState(emptyPackageForm());
     const [editingPackageId, setEditingPackageId] = useState(null);

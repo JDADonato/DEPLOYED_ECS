@@ -93,7 +93,21 @@ const statusCopy = (item) => {
 
 const AnnouncementManager = ({ variant = 'marketing', user }) => {
     const [announcements, setAnnouncements] = useState([]);
-    const [filters, setFilters] = useState({ tab: 'all', type: 'all', search: '' });
+    const [filters, setFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('ecs_announcements_filters');
+            return saved ? JSON.parse(saved) : { tab: 'all', type: 'all', search: '' };
+        } catch (e) {
+            return { tab: 'all', type: 'all', search: '' };
+        }
+    });
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_announcements_filters', JSON.stringify(filters));
+        } catch (e) {
+            // Ignore
+        }
+    }, [filters]);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [form, setForm] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);

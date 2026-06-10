@@ -803,7 +803,21 @@ const DashboardAdmin = () => {
     const [pricingOverrides, setPricingOverrides] = useState({});
     const [pricingLoading, setPricingLoading] = useState(false);
     const [activeMenuCategory, setActiveMenuCategory] = useState('starter');
-    const [activeConfigTab, setActiveConfigTab] = useState('packages');
+    const [activeConfigTab, setActiveConfigTab] = useState(() => {
+        try {
+            return localStorage.getItem('ecs_admin_active_config_tab') || 'packages';
+        } catch (e) {
+            return 'packages';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_admin_active_config_tab', activeConfigTab);
+        } catch (e) {
+            // Ignore
+        }
+    }, [activeConfigTab]);
     const [catalogDrawer, setCatalogDrawer] = useState(null);
     const [packages, setPackages] = useState([]);
     const [eventTypes, setEventTypes] = useState([]);
@@ -846,7 +860,21 @@ const DashboardAdmin = () => {
     const [refundQueue, setRefundQueue] = useState([]);
     const [refundLoading, setRefundLoading] = useState(false);
     const [processingRefundId, setProcessingRefundId] = useState(null);
-    const [activeFinanceSegment, setActiveFinanceSegment] = useState('payments');
+    const [activeFinanceSegment, setActiveFinanceSegment] = useState(() => {
+        try {
+            return localStorage.getItem('ecs_admin_active_finance_segment') || 'payments';
+        } catch (e) {
+            return 'payments';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_admin_active_finance_segment', activeFinanceSegment);
+        } catch (e) {
+            // Ignore
+        }
+    }, [activeFinanceSegment]);
     const [financePaymentSearch, setFinancePaymentSearch] = useState('');
     const [financePaymentFilter, setFinancePaymentFilter] = useState('all');
     const [financePaymentSort, setFinancePaymentSort] = useState('priority');
@@ -875,7 +903,21 @@ const DashboardAdmin = () => {
     const [loadingPanel, setLoadingPanel] = useState('all');
     const [expandedAnalyticsPanel, setExpandedAnalyticsPanel] = useState(null);
     const isPanelLoading = (key) => analyticsLoading && !!analytics && (loadingPanel === 'all' || loadingPanel === key);
-    const [activeAnalyticsView, setActiveAnalyticsView] = useState('overview');
+    const [activeAnalyticsView, setActiveAnalyticsView] = useState(() => {
+        try {
+            return localStorage.getItem('ecs_admin_active_analytics_view') || 'overview';
+        } catch (e) {
+            return 'overview';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_admin_active_analytics_view', activeAnalyticsView);
+        } catch (e) {
+            // Ignore
+        }
+    }, [activeAnalyticsView]);
     const [bookingAnalysisOpen, setBookingAnalysisOpen] = useState(false);
     const [analyticsSlowLoading, setAnalyticsSlowLoading] = useState(false);
     const [analyticsChartsAnimated, setAnalyticsChartsAnimated] = useState(false);
@@ -1104,7 +1146,21 @@ const DashboardAdmin = () => {
     const [menuItemPage, setMenuItemPage] = useState(1);
     const [employeePage, setEmployeePage] = useState(1);
     const [customerPage, setCustomerPage] = useState(1);
-    const [accountSegment, setAccountSegment] = useState('staff');
+    const [accountSegment, setAccountSegment] = useState(() => {
+        try {
+            return localStorage.getItem('ecs_admin_account_segment') || 'staff';
+        } catch (e) {
+            return 'staff';
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('ecs_admin_account_segment', accountSegment);
+        } catch (e) {
+            // Ignore
+        }
+    }, [accountSegment]);
     const [customerStatusFilter, setCustomerStatusFilter] = useState('active');
     const [employeeFilters, setEmployeeFilters] = useState({ search: '', role: 'all', account_status: 'all', must_change_password: 'all' });
     const [customerFilters, setCustomerFilters] = useState({ search: '', booking_activity: 'all' });
