@@ -159,7 +159,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] p-4 shadow-2xl md:p-5 animate-scaleIn">
+            <div className="relative w-full max-w-lg max-h-[95vh] overflow-y-auto rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] p-4 shadow-2xl md:p-5 animate-scaleIn">
                 
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-[#720101]/8 pb-2">
@@ -219,7 +219,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                             name="summary"
                             value={form.summary}
                             onChange={handleTextChange}
-                            rows={2}
+                            rows={3}
                             maxLength={500}
                             className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
                             placeholder="A brief preview shown on cards..."
@@ -234,7 +234,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                             name="body"
                             value={form.body}
                             onChange={handleTextChange}
-                            rows={2}
+                            rows={4}
                             className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
                             placeholder="Full details of the announcement..."
                         />
