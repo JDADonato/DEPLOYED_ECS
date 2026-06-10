@@ -2598,7 +2598,7 @@ const DashboardMarketing = () => {
                                 const currentLiveStatus = booking.live_status || 'Not Started';
                                 return (
                                 <li key={booking.id} onClick={() => setSelectedBooking(booking)} className="block cursor-pointer transition-colors hover:bg-[#fffaf3]">
-                                    <div className="px-6 py-5">
+                                    <div className="px-6 py-3.5">
                                         <div className="flex items-center justify-between">
                                             <p className="text-sm font-bold text-primary-700 truncate">
                                                 Booking #{booking.id} - {eventDisplayName(booking)}
@@ -2611,19 +2611,18 @@ const DashboardMarketing = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                                        <div className="mt-1.5 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                                             <StaffStatusBadge tone={!booking.assigned_to ? 'warn' : ownedByMe ? 'good' : 'muted'}>
                                                 {!booking.assigned_to ? 'Unclaimed' : ownedByMe ? 'Assigned to me' : `Owned by ${booking.owner_name || booking.assigned_name || 'staff'}`}
                                             </StaffStatusBadge>
                                             {hasPendingTransfer && <span className="text-[#9f6500]">Transfer requested to {booking.transfer_requested_to_name || 'Marketing staff'}</span>}
-                                            {!canEdit && <span className="text-amber-700">{pendingTransferToMe ? 'Accept this transfer to take ownership' : canClaim ? 'Claim this booking to take action' : 'Owned by another staff member'}</span>}
                                             {booking.clarification_request && (
                                                 <span className="text-[#9f6500]">
                                                     {booking.clarification_response ? 'Customer responded' : 'Waiting for customer details'}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-3 sm:flex sm:justify-between items-center">
+                                        <div className="mt-2.5 sm:flex sm:justify-between items-center">
                                             <div className="sm:flex gap-6">
                                                 <p className="flex items-center text-sm text-gray-600">
                                                     <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -2735,7 +2734,7 @@ const DashboardMarketing = () => {
                                             </div>
                                         </div>
                                         {canEdit && booking.status === 'Confirmed' && (
-                                            <div className="mt-4 flex flex-wrap gap-2">
+                                            <div className="mt-2.5 flex flex-wrap gap-2">
                                                 {LIVE_STATUS_OPTIONS.map((status) => (
                                                     <button
                                                         key={status}
