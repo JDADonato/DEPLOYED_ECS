@@ -78,7 +78,7 @@ const LIVE_STATUS_OPTIONS = ['Not Started', 'On the Way', 'Preparing', 'Serving'
 const BOOKING_WORK_VIEWS = [
     { id: 'needs-action', label: 'Booking Queue' },
     { id: 'mine', label: 'My Bookings' },
-    { id: 'waiting', label: 'Waiting' },
+    { id: 'waiting', label: 'Waiting on Customer' },
 ];
 
 const emptyPackageForm = (defaultType = '') => ({
@@ -2399,7 +2399,7 @@ const DashboardMarketing = () => {
             const waitingOnCustomer = String(booking.review_status || '').toLowerCase() === 'needs customer details' || Boolean(booking.clarification_request && !booking.clarification_response);
             if (bookingReviewView === 'needs-action') return true;
             if (bookingReviewView === 'mine') return ownedByMe;
-            if (bookingReviewView === 'waiting') return waitingOnCustomer;
+            if (bookingReviewView === 'waiting') return ownedByMe && waitingOnCustomer;
             return false;
         });
         const pendingBookings = viewBookings
@@ -2517,19 +2517,14 @@ const DashboardMarketing = () => {
                     )}
                     <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
                         <option value="all">All active statuses</option>
-                        <option value="under review">Under Review</option>
-                        <option value="needs customer details">Needs Customer Details</option>
-                        <option value="clarification received">Clarification Received</option>
+                        <option value="needs customer details">Waiting on customer</option>
                         <option value="approved">Approved</option>
                         <option value="cancelled">Cancelled / Rejected</option>
                     </select>
                     <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
-                        <option value="eventDateAsc">Event date ascending</option>
-                        <option value="eventDateDesc">Event date descending</option>
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
-                        <option value="az">A-Z</option>
-                        <option value="za">Z-A</option>
+                        <option value="eventDateAsc">Event date</option>
                     </select>
                     <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
                 </StaffOpsSearchBar>

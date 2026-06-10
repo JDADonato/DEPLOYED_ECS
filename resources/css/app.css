@@ -10003,24 +10003,40 @@
   }
 
   .marketing-booking-search-row {
-    grid-template-columns: minmax(16rem, .86fr) minmax(28rem, 1.14fr);
+    grid-template-columns: minmax(18rem, 1fr) auto;
     align-items: center;
+    gap: .6rem;
+    padding: .55rem;
   }
 
   .marketing-booking-search-row .staff-ops-search-input {
-    min-height: 3rem;
+    min-height: 2.75rem;
+    padding: .62rem .8rem;
   }
 
   .marketing-booking-search-row .staff-ops-search-controls {
     display: grid;
-    grid-template-columns: minmax(9.5rem, 1fr) minmax(10rem, 1fr) minmax(8.5rem, .76fr);
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-columns: none;
     align-items: center;
-    gap: .55rem;
+    gap: .45rem;
   }
 
   .marketing-booking-search-row .staff-ops-search-controls .staff-control {
-    width: 100%;
-    min-width: 0;
+    width: auto;
+    min-width: 9.5rem;
+    min-height: 2.75rem;
+    padding-block: .58rem;
+  }
+
+  .marketing-booking-search-row .staff-ops-search-controls select.staff-control {
+    min-width: 10.5rem;
+    padding-right: 2.35rem;
+  }
+
+  .marketing-booking-search-row .staff-ops-search-controls input[type="month"].staff-control {
+    min-width: 8.8rem;
   }
 
   .staff-decision-brief {
@@ -10405,7 +10421,16 @@
     }
 
     .marketing-booking-search-row .staff-ops-search-controls {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .marketing-booking-search-row .staff-ops-search-controls .staff-control,
+    .marketing-booking-search-row .staff-ops-search-controls select.staff-control,
+    .marketing-booking-search-row .staff-ops-search-controls input[type="month"].staff-control {
+      width: 100%;
+      min-width: 0;
     }
 
     .staff-settings-nav {
