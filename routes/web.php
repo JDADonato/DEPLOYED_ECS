@@ -55,6 +55,18 @@ Route::get('/sitemap.xml', function () {
 })->name('sitemap');
 Route::get('/api/announcements', [AnnouncementController::class, 'publicIndex'])->middleware('cache.headers:public;max_age=60;etag');
 Route::post('/api/contact-inquiries', [ContactInquiryController::class, 'store'])->middleware('throttle:10,1');
+Route::get('/storage/{path}', function ($path) {
+    if (str_contains($path, '..')) {
+        abort(404);
+    }
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    if (!$disk->exists($path)) {
+        abort(404);
+    }
+    $file = $disk->get($path);
+    $type = $disk->mimeType($path);
+    return response($file, 200)->header('Content-Type', $type);
+})->where('path', '.*');
 Route::post('/webhook/paymongo', PayMongoWebhookController::class)->name('webhook.paymongo');
 Route::post('/api/client-errors', [ClientErrorController::class, 'store'])->middleware('throttle:client-errors');
 Route::post('/api/conversion-events', [ConversionEventController::class, 'store'])->middleware('throttle:60,1');
