@@ -14,6 +14,8 @@ import StaffWorkspaceLayout from '../Layouts/StaffWorkspaceLayout';
 import StaffNavbarSearch from '../Components/staff/StaffNavbarSearch';
 import { AdminCommandStrip, AdminPageSurface, AdminResponsiveTable } from '../Components/admin/AdminSurface';
 import StaffEmptyState from '../Components/staff/StaffEmptyState';
+import StaffStatusBadge from '../Components/staff/StaffStatusBadge';
+import { StaffOpsListRow, StaffOpsPanel } from '../Components/staff/StaffOpsUI';
 import StaffPagination from '../Components/staff/StaffPagination';
 import { StaffCommandBar, StaffInlineInsight, StaffMetricStrip, StaffStatusChip, StaffWorkTable } from '../Components/staff/StaffV2';
 import EventHistoryPanel from '../Components/staff/EventHistoryPanel';
@@ -50,7 +52,7 @@ import {
     paginate,
 } from '../utils/dashboardUtils';
 import { bookingContactEmail, bookingContactName, bookingContactPhone, customerAccountName, customerAccountEmail, customerAccountPhone, hasDifferentBookingContact } from '../utils/customerIdentity';
-import { paymentTypeLabel, staffPaymentStatus } from '../utils/statusLabels';
+import { paymentTypeLabel, staffPaymentStatus, bookingStatusLabel } from '../utils/statusLabels';
 import { createStaffContext, getStaffContextSearchText, hasStaffContext } from '../utils/staffContext';
 
 const AnnouncementManager = lazy(() => import('../Components/content/AnnouncementManager'));
@@ -510,7 +512,6 @@ const formatMonthLabel = (value) => {
     return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 };
 const toMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-const getMonthGridDays = (date) => {
     const firstWeekday = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
     const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
     return [
@@ -666,40 +667,6 @@ const ChartGuide = ({ x, y, items = [] }) => (
         )}
     </div>
 );
-
-const ModelEvaluationCard = ({ tone = 'amber', method, interpretation, metrics = [] }) => {
-    const toneClasses = tone === 'emerald'
-        ? {
-            border: 'border-emerald-100',
-            badge: 'bg-emerald-50 text-emerald-800',
-            kicker: 'text-emerald-700',
-        }
-        : {
-            border: 'border-amber-100',
-            badge: 'bg-amber-50 text-amber-800',
-            kicker: 'text-amber-700',
-        };
-
-    return (
-        <div className={`mt-4 rounded-2xl border ${toneClasses.border} bg-white p-4 shadow-sm`}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className={`text-[11px] font-black uppercase tracking-widest ${toneClasses.kicker}`}>Model Evaluation</p>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-gray-500">{interpretation}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest ${toneClasses.badge}`}>{method}</span>
-            </div>
-            <div className={`mt-4 grid grid-cols-1 gap-3 ${metrics.length > 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
-                {metrics.map(({ label, value }) => (
-                    <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</p>
-                        <p className="mt-1 text-sm font-black text-gray-950">{value}</p>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insight, fallbackInsight = null, guide = null, afterGuide = null, actions, children, loading = false, className = '', chartHeight = 'h-64', revealDelay = '', onExpand, filterPanel }) => (
     <RevealOnScroll as="section" delay={revealDelay} className={`admin-panel admin-analytics-panel ${className}`}>
@@ -868,6 +835,8 @@ const DashboardAdmin = () => {
     const [adminCalendarMonth, setAdminCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [adminCalendarView, setAdminCalendarView] = useState('month');
     const [adminCalendarSearch, setAdminCalendarSearch] = useState('');
+    const [marketingRemoteSummary, setMarketingRemoteSummary] = useState(null);
+    const [marketingCalendarFilters, setMarketingCalendarFilters] = useState({ search: '', status: '', event_type: '', city: '' });
     const [approvingBookingId, setApprovingBookingId] = useState(null);
     const [assistedBookingOpen, setAssistedBookingOpen] = useState(false);
     const [discountModal, setDiscountModal] = useState({ open: false, data: null });
@@ -1519,6 +1488,7 @@ const DashboardAdmin = () => {
         } else if (activeTab === 'bookings-intake' || activeTab === 'marketing-today') {
             bustAdminCache(ADMIN_BOOKINGS_URL);
             fetchBookings({ silent });
+            fetchMarketingSummary({ silent });
             fetchAnalyticsSummary({ silent, force });
         } else if (activeTab === 'finance' || activeTab === 'accounting-today') {
             bustAdminCache('/api/admin/refunds/queue');
@@ -2052,8 +2022,6 @@ const DashboardAdmin = () => {
             return Number(b.booking_id || 0) - Number(a.booking_id || 0);
         });
     }, [refundQueue, refundSearch, refundSort, refundStatusFilter]);
-
-    const upcomingConfirmedEvents = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -2089,7 +2057,6 @@ const DashboardAdmin = () => {
             })
             .sort((a, b) => `${a.event_date || ''} ${a.event_time || ''}`.localeCompare(`${b.event_date || ''} ${b.event_time || ''}`));
     }, [bookings, adminCalendarMonthKey, adminCalendarSearch]);
-    const adminCalendarEventsByDate = useMemo(() => {
         return adminCalendarEvents.reduce((map, booking) => {
             const dateKey = String(booking.event_date || '').substring(0, 10);
             if (!map.has(dateKey)) map.set(dateKey, []);
@@ -2097,7 +2064,6 @@ const DashboardAdmin = () => {
             return map;
         }, new Map());
     }, [adminCalendarEvents]);
-    const adminCalendarDays = useMemo(() => getMonthGridDays(adminCalendarMonth), [adminCalendarMonth]);
     const changeAdminCalendarMonth = (offset) => {
         setAdminCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
     };
@@ -2628,6 +2594,7 @@ const DashboardAdmin = () => {
             fetchReportPreview();
         } else if (activeTab === 'bookings-intake' || activeTab === 'marketing-today') {
             fetchBookings();
+            fetchMarketingSummary();
             fetchAnalyticsSummary();
         } else if (activeTab === 'finance' || activeTab === 'accounting-today') {
             fetchBookings();
@@ -3232,6 +3199,15 @@ const DashboardAdmin = () => {
     };
 
     const currentScrollY = () => (typeof window === 'undefined' ? null : window.scrollY);
+
+    const fetchMarketingSummary = async ({ silent = false } = {}) => {
+        try {
+            const data = await fetchCachedJson('/api/marketing/summary', 30000);
+            setMarketingRemoteSummary(data);
+        } catch (error) {
+            console.error('Failed to fetch marketing summary:', error);
+        }
+    };
 
     const fetchAnalyticsSummary = async ({ silent = false, filters = analyticsFilters, force = false } = {}) => {
         if (!silent) setAnalyticsLoading(true);
@@ -5973,6 +5949,320 @@ const DashboardAdmin = () => {
         );
     };
 
+    const renderMarketingToday = () => {
+        const transferRows = bookings.filter(booking => booking.can_accept_transfer);
+        const waitingRows = bookings.filter(booking => String(booking.review_status || '').toLowerCase() === 'clarification received' || booking.clarification_response);
+        
+        const urgentRowsRemote = marketingRemoteSummary?.urgentRows || [];
+        const pendingRowsRemote = marketingRemoteSummary?.pendingRows || [];
+        
+        const urgentRows = [...transferRows, ...waitingRows, ...urgentRowsRemote]
+            .filter((booking, index, list) => list.findIndex(item => item.id === booking.id) === index)
+            .slice(0, 5);
+        const unclaimedRows = pendingRowsRemote.filter(booking => !booking.assigned_to).slice(0, 5);
+        
+        const pending = marketingRemoteSummary?.pending ?? 0;
+        const needsDetails = marketingRemoteSummary?.needs_details ?? 0;
+        const urgentCount = marketingRemoteSummary?.urgent ?? 0;
+        
+        const actionableTodos = [
+            {
+                id: 'booking-intake',
+                priority: pending > 0 ? 'action' : 'info',
+                title: 'Review submitted bookings',
+                description: pending > 0 ? `${pending} bookings are waiting for ownership or review.` : 'No submitted bookings are waiting right now.',
+                badge: pending,
+                primaryLabel: 'Open',
+                tone: pending > 0 ? 'warn' : 'good',
+                onOpen: () => navigateToWorkspaceTab('marketing', 'bookings'),
+            },
+            {
+                id: 'urgent-bookings',
+                priority: urgentCount > 0 ? 'urgent' : 'info',
+                title: 'Upcoming events need action',
+                description: urgentCount > 0 ? `${urgentCount} unconfirmed events are happening in the next 7 days.` : 'No urgent unconfirmed events.',
+                badge: urgentCount,
+                primaryLabel: 'Open',
+                tone: urgentCount > 0 ? 'danger' : 'good',
+                onOpen: () => navigateToWorkspaceTab('marketing', 'bookings'),
+            },
+            {
+                id: 'needs-details',
+                priority: needsDetails > 0 ? 'action' : 'info',
+                title: 'Customer details needed',
+                description: needsDetails > 0 ? `${needsDetails} bookings are waiting for customer details.` : 'No bookings waiting for customer details.',
+                badge: needsDetails,
+                primaryLabel: 'Open',
+                tone: needsDetails > 0 ? 'warn' : 'good',
+                onOpen: () => navigateToWorkspaceTab('marketing', 'bookings'),
+            }
+        ].filter(action => action.priority !== 'info').slice(0, 8);
+
+        const WorkSection = ({ kicker, title, emptyTitle, emptyMessage, rows, actionLabel, onAction, tone = 'neutral', delay = '' }) => (
+            <StaffOpsPanel
+                eyebrow={kicker}
+                title={title}
+                actionLabel={actionLabel || 'Open'}
+                onAction={onAction}
+                tone={tone}
+                delay={delay}
+            >
+                {rows.length === 0 ? (
+                    <StaffEmptyState title={emptyTitle} message={emptyMessage} />
+                ) : (
+                    <div className="staff-ops-workspace">
+                        {rows.map((booking) => {
+                            const status = bookingStatusLabel(booking.status);
+                            return (
+                                <StaffOpsListRow
+                                    key={booking.id}
+                                    eyebrow={`Booking #${booking.id}`}
+                                    title={eventDisplayName(booking)}
+                                    detail={`${formatDate(booking.event_date)} / ${booking.pax || 0} guests / ${bookingContactName(booking)}`}
+                                    tone={tone === 'danger' ? 'danger' : status.tone === 'warning' ? 'warning' : 'neutral'}
+                                    status={<StaffStatusBadge tone={tone === 'danger' ? 'danger' : status.tone === 'success' ? 'good' : status.tone === 'warning' ? 'warn' : 'muted'}>{status.label}</StaffStatusBadge>}
+                                    actionLabel="Open brief"
+                                    onClick={() => { setEventDetailsModal({ open: true, data: booking }); }}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
+            </StaffOpsPanel>
+        );
+
+        return (
+            <div className="staff-ops-workspace animate-fadeIn">
+                <NextActionPanel
+                    eyebrow="To-Dos"
+                    title="Start with the highest-priority customer work"
+                    description="Admin overview of claimable work, owned blockers, transfers, and customer follow-ups."
+                    actions={actionableTodos}
+                    emptyTitle="No Marketing to-dos waiting"
+                    emptyMessage="Claimable bookings, customer replies, tasting follow-ups, and transfer requests will appear here."
+                />
+                <div className="staff-ops-grid mt-4 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <WorkSection
+                        kicker="Urgent Blockers"
+                        title="Critical follow-ups & transfers"
+                        emptyTitle="No blockers"
+                        emptyMessage="You have no pending transfers or clarification replies."
+                        rows={urgentRows}
+                        actionLabel="Open"
+                        onAction={() => navigateToWorkspaceTab('marketing', 'bookings')}
+                        tone="danger"
+                    />
+                    <WorkSection
+                        kicker="Unclaimed Work"
+                        title="New inquiries & submissions"
+                        emptyTitle="Queue is clear"
+                        emptyMessage="No unassigned bookings are waiting."
+                        rows={unclaimedRows}
+                        actionLabel="Take ownership"
+                        onAction={() => navigateToWorkspaceTab('marketing', 'bookings')}
+                        tone="neutral"
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const renderMarketingCalendar = () => {
+        const adminCalendarEventsFiltered = adminCalendarEvents.filter(booking => {
+            const status = String(booking.status || '').toLowerCase();
+            const reviewStatus = String(booking.review_status || '').toLowerCase();
+            const filterStatus = String(marketingCalendarFilters.status || '').toLowerCase();
+            
+            if (filterStatus && filterStatus !== 'all') {
+                if (filterStatus === 'pending' && status !== 'pending' && reviewStatus !== 'submitted' && reviewStatus !== 'under review') return false;
+                if (filterStatus === 'confirmed' && status !== 'confirmed') return false;
+            }
+
+            if (marketingCalendarFilters.event_type && marketingCalendarFilters.event_type !== 'all') {
+                if (booking.event_type !== marketingCalendarFilters.event_type) return false;
+            }
+            if (marketingCalendarFilters.city && marketingCalendarFilters.city !== 'all') {
+                if (booking.venue_city !== marketingCalendarFilters.city) return false;
+            }
+
+            const search = String(marketingCalendarFilters.search || '').trim().toLowerCase();
+            if (search) {
+                const searchMatch = [
+                    eventDisplayName(booking),
+                    bookingContactName(booking),
+                    booking.venue_city
+                ].some(val => String(val || '').toLowerCase().includes(search));
+                if (!searchMatch) return false;
+            }
+
+            return true;
+        });
+
+        const calendarBookingsByDate = new Map();
+        adminCalendarEventsFiltered.forEach(booking => {
+            const dateKey = String(booking.event_date || '').substring(0, 10);
+            if (!calendarBookingsByDate.has(dateKey)) calendarBookingsByDate.set(dateKey, []);
+            calendarBookingsByDate.get(dateKey).push(booking);
+        });
+
+        const daysInMonth = new Date(adminCalendarMonth.getFullYear(), adminCalendarMonth.getMonth() + 1, 0).getDate();
+        const firstDay = new Date(adminCalendarMonth.getFullYear(), adminCalendarMonth.getMonth(), 1).getDay();
+        const days = [];
+
+        for (let i = 0; i < firstDay; i++) {
+            days.push(<div key={`empty-${i}`} className="marketing-calendar-cell marketing-calendar-cell-empty"></div>);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${adminCalendarMonth.getFullYear()}-${String(adminCalendarMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayBookings = calendarBookingsByDate.get(dateStr) || [];
+
+            days.push(
+                <div key={day} className="marketing-calendar-cell custom-scrollbar">
+                    <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-700">{day}</span>
+                        {dayBookings.length > 0 && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800">{dayBookings.length}</span>}
+                    </div>
+                    {dayBookings.map(booking => (
+                        <div
+                            key={booking.id}
+                            className={`marketing-event-chip mb-1 cursor-pointer rounded-lg px-2 py-1 text-[11px] font-bold transition-transform hover:-translate-y-0.5 ${booking.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                                booking.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-slate-100 text-slate-700'
+                                }`}
+                            title={eventDisplayName(booking)}
+                            onClick={() => { setEventDetailsModal({ open: true, data: booking }); }}
+                        >
+                            <span className="marketing-event-primary">{formatTime(booking.event_time)}</span>
+                            <span className="marketing-event-secondary">{eventDisplayName(booking)}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        const renderCalendarList = () => (
+            <div className="overflow-hidden rounded-2xl border border-amber-100 bg-white">
+                <table className="min-w-full divide-y divide-amber-100 text-sm">
+                    <thead className="bg-[#fffaf3]">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-slate-500">Date</th>
+                            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-slate-500">Event</th>
+                            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-slate-500">Guests</th>
+                            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-slate-500">Venue</th>
+                            <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-slate-500">Owner</th>
+                            <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-wider text-slate-500">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-50">
+                        {adminCalendarEventsFiltered.map((booking) => {
+                             const status = bookingStatusLabel(booking.status);
+                             return (
+                            <tr key={booking.id} className="cursor-pointer hover:bg-[#fffaf3]" onClick={() => { setEventDetailsModal({ open: true, data: booking }); }}>
+                                <td className="px-4 py-3 font-bold text-slate-700">{formatDate(booking.event_date)} {formatTime(booking.event_time)}</td>
+                                <td className="px-4 py-3">
+                                    <div className="font-black text-slate-950">{eventDisplayName(booking)}</div>
+                                    <div className="text-xs font-bold text-slate-500">{bookingContactName(booking)}</div>
+                                </td>
+                                <td className="px-4 py-3 font-bold text-slate-600">{booking.pax || 0}</td>
+                                <td className="px-4 py-3 font-bold text-slate-600">{booking.venue_city || 'Venue pending'}</td>
+                                <td className="px-4 py-3 font-bold text-slate-600">{booking.owner || 'Unassigned'}</td>
+                                <td className="px-4 py-3 text-right">
+                                    <StaffStatusBadge tone={status.tone === 'success' ? 'good' : status.tone === 'danger' ? 'danger' : status.tone === 'warning' ? 'warn' : 'muted'}>{status.label}</StaffStatusBadge>
+                                </td>
+                            </tr>
+                            );
+                        })}
+                        {adminCalendarEventsFiltered.length === 0 && (
+                            <tr><td colSpan="6" className="px-4 py-10"><StaffEmptyState title="No calendar events found" message="No events match this date range or filter." /></td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        );
+
+        return (
+            <div className="animate-fadeIn">
+                <AdminPageSurface className="marketing-calendar-surface overflow-visible pb-12">
+                    <div className="admin-section-heading">
+                        <div>
+                            <p className="admin-kicker">Marketing workspace</p>
+                            <h3>Events Calendar</h3>
+                            <p>Admin view of scheduled events and availability.</p>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-[#720101]/10 bg-[#fffaf3] p-3 lg:flex-row lg:items-center">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-nowrap">
+                            <button type="button" onClick={() => changeAdminCalendarMonth(-1)} className="admin-icon-action" aria-label="Previous month" title="Previous month">
+                                <ChevronDown className="h-4 w-4 rotate-90" />
+                            </button>
+                            <div className="flex h-10 w-36 items-center justify-center rounded-xl border border-[#720101]/10 bg-white px-3 shadow-sm">
+                                <span className="text-sm font-black text-slate-950">{formatMonthLabel(adminCalendarMonthKey)}</span>
+                            </div>
+                            <button type="button" onClick={() => changeAdminCalendarMonth(1)} className="admin-icon-action" aria-label="Next month" title="Next month">
+                                <ChevronDown className="h-4 w-4 -rotate-90" />
+                            </button>
+                            <button type="button" onClick={() => setAdminCalendarMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} className="admin-button-secondary h-10 px-3 text-xs font-black">This month</button>
+                            <div className="ml-2 flex rounded-xl border border-amber-200 bg-white p-1">
+                                <button type="button" onClick={() => setAdminCalendarView('month')} className={`rounded-lg px-3 py-1.5 text-xs font-black transition-colors ${adminCalendarView === 'month' ? 'bg-[#720101] text-white shadow-sm' : 'text-slate-600 hover:bg-[#fffaf3]'}`}>Month</button>
+                                <button type="button" onClick={() => setAdminCalendarView('list')} className={`rounded-lg px-3 py-1.5 text-xs font-black transition-colors ${adminCalendarView === 'list' ? 'bg-[#720101] text-white shadow-sm' : 'text-slate-600 hover:bg-[#fffaf3]'}`}>List</button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1"></div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search events..."
+                                    className="admin-input h-10 w-full pl-9 sm:w-48"
+                                    value={marketingCalendarFilters.search || ''}
+                                    onChange={(e) => setMarketingCalendarFilters(p => ({ ...p, search: e.target.value }))}
+                                />
+                            </div>
+                            <select
+                                className="admin-input h-10 w-full sm:w-36 text-xs"
+                                value={marketingCalendarFilters.status || ''}
+                                onChange={(e) => setMarketingCalendarFilters(p => ({ ...p, status: e.target.value }))}
+                            >
+                                <option value="all">All statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                            </select>
+                            <select
+                                className="admin-input h-10 w-full sm:w-36 text-xs"
+                                value={marketingCalendarFilters.city || ''}
+                                onChange={(e) => setMarketingCalendarFilters(p => ({ ...p, city: e.target.value }))}
+                            >
+                                <option value="all">All cities</option>
+                                {reportCityOptions.map(city => <option key={city} value={city}>{city}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        {adminCalendarView === 'month' ? (
+                            <div className="marketing-calendar-container rounded-2xl border border-amber-100 bg-white">
+                                <div className="marketing-calendar-header">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day}>{day}</div>
+                                    ))}
+                                </div>
+                                <div className="marketing-calendar-grid">
+                                    {days}
+                                </div>
+                            </div>
+                        ) : renderCalendarList()}
+                    </div>
+                </AdminPageSurface>
+            </div>
+        );
+    };
+
+
     const renderWorkspaceOverview = (workspace) => (
         <AdminPageSurface className="admin-workspace-overview">
             <div className="admin-section-heading">
@@ -6161,7 +6451,7 @@ const DashboardAdmin = () => {
         >
                 <div className={ADMIN_FULL_SURFACE_TABS.includes(activeTab) ? `admin-full-surface-tab-shell ${['messages-inquiries', 'customer-messages'].includes(activeTab) ? 'admin-messages-tab-shell' : ''}` : 'space-y-5'}>
                     {activeWorkspace === 'customer' && renderCustomerWorkspace()}
-                    {activeTab === 'marketing-today' && renderWorkspaceOverview('marketing')}
+                    {activeTab === 'marketing-today' && renderMarketingToday()}
                     {activeTab === 'accounting-today' && renderWorkspaceOverview('accounting')}
                     {activeTab === 'today' && (
                         <div className="animate-fadeIn">
@@ -8567,121 +8857,7 @@ const DashboardAdmin = () => {
                             </AdminPageSurface>
                         )
                     }
-                    {activeTab === 'calendar' && (
-                        <AdminPageSurface>
-                            <AdminCommandStrip>
-                                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                    <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-nowrap">
-                                        <button type="button" onClick={() => changeAdminCalendarMonth(-1)} className="admin-icon-action" aria-label="Previous month" title="Previous month">
-                                            <ChevronDown className="h-4 w-4 rotate-90" />
-                                        </button>
-                                        <div className="flex h-10 w-36 items-center rounded-xl border border-[#720101]/10 bg-[#fffaf3] px-3">
-                                            <span className="text-sm font-black text-slate-950">{formatMonthLabel(adminCalendarMonthKey)}</span>
-                                        </div>
-                                        <button type="button" onClick={() => changeAdminCalendarMonth(1)} className="admin-icon-action" aria-label="Next month" title="Next month">
-                                            <ChevronDown className="h-4 w-4 -rotate-90" />
-                                        </button>
-                                        <button type="button" onClick={() => setAdminCalendarMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} className="admin-button-secondary h-10 px-3 text-xs font-black">This month</button>
-                                        <span className="inline-flex h-10 items-center rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-black text-slate-700">
-                                            {adminCalendarEvents.length} {adminCalendarEvents.length === 1 ? 'event' : 'events'}
-                                        </span>
-                                        <span className="inline-flex h-10 max-w-56 items-center rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-bold text-slate-600">
-                                            <span className="mr-2 shrink-0 text-[9px] font-black uppercase tracking-widest text-slate-400">Next</span>
-                                            <span className="truncate">{upcomingConfirmedEvents[0] ? eventDisplayName(upcomingConfirmedEvents[0]) : 'None scheduled'}</span>
-                                        </span>
-                                    </div>
-
-                                    <div className="flex min-w-0 shrink-0 flex-col gap-2 md:flex-row md:items-center lg:justify-end">
-                                        <input
-                                            type="search"
-                                            value={adminCalendarSearch}
-                                            onChange={(event) => setAdminCalendarSearch(event.target.value)}
-                                            placeholder="Search event, customer, venue..."
-                                            className="staff-control h-10 w-full md:w-72"
-                                        />
-                                        <div className="inline-flex h-10 rounded-xl border border-slate-200 bg-slate-50 p-1">
-                                            {['month', 'list'].map((view) => (
-                                                <button key={view} type="button" onClick={() => setAdminCalendarView(view)} className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-widest ${adminCalendarView === view ? 'bg-white text-[#720101] shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}>
-                                                    {view}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </AdminCommandStrip>
-
-                            {adminCalendarView === 'month' ? (
-                                <div className="grid grid-cols-7 overflow-hidden border-t border-[#720101]/10 bg-[#f4e7df]">
-                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                                        <div key={day} className="bg-[#fffaf3] py-3 text-center text-xs font-black uppercase tracking-wide text-slate-500">{day}</div>
-                                    ))}
-                                    {adminCalendarDays.map((day) => {
-                                        if (day.blank) return <div key={day.key} className="marketing-calendar-cell marketing-calendar-cell-empty" />;
-                                        const dayEvents = adminCalendarEventsByDate.get(day.dateKey) || [];
-                                        return (
-                                            <div key={day.key} className="marketing-calendar-cell custom-scrollbar bg-white">
-                                                <div className="mb-2 flex items-center justify-between">
-                                                    <span className="text-xs font-black text-slate-700">{day.day}</span>
-                                                    {dayEvents.length > 0 && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800">{dayEvents.length}</span>}
-                                                </div>
-                                                {dayEvents.map((booking) => (
-                                                    <button
-                                                        type="button"
-                                                        key={booking.id}
-                                                        title={`${formatBookingRef(booking.id)}\n${eventDisplayName(booking)}\n${formatTime(booking.event_time)} / ${booking.pax || 0} guests`}
-                                                        onClick={() => setEventDetailsModal({ open: true, data: booking })}
-                                                        className="marketing-event-chip mb-1 rounded-lg bg-emerald-100 px-2 py-1 text-left text-[11px] font-bold text-emerald-800 transition-transform hover:-translate-y-0.5"
-                                                    >
-                                                        <span className="marketing-event-primary">{eventDisplayName(booking)}</span>
-                                                        <span className="marketing-event-secondary">{formatTime(booking.event_time)} / {booking.pax || 0} guests</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <AdminResponsiveTable>
-                                    <table className="staff-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Event</th>
-                                                <th>Booking contact</th>
-                                                <th>Guests</th>
-                                                <th className="text-right">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {adminCalendarEvents.map((booking) => (
-                                                <tr key={booking.id} className="cursor-pointer hover:bg-[#fffaf3]" onClick={() => setEventDetailsModal({ open: true, data: booking })}>
-                                                    <td className="font-bold text-slate-700">{formatDate(booking.event_date)} {formatTime(booking.event_time)}</td>
-                                                    <td>
-                                                        <div className="font-black text-slate-950">{eventDisplayName(booking)}</div>
-                                                        <div className="text-xs font-semibold text-slate-500">{formatBookingRef(booking.id)} / {booking.event_type || 'Event'}</div>
-                                                    </td>
-                                                    <td>
-                                                        <div className="font-bold text-slate-800">{bookingContactName(booking)}</div>
-                                                        {hasDifferentBookingContact(booking) && (
-                                                            <div className="text-xs font-semibold text-slate-500">Account: {customerAccountName(booking)}</div>
-                                                        )}
-                                                    </td>
-                                                    <td>{booking.pax || 0}</td>
-                                                    <td className="text-right"><button type="button" className="admin-button-secondary px-3 py-1.5 text-xs font-black">Open</button></td>
-                                                </tr>
-                                            ))}
-                                            {!adminCalendarEvents.length && (
-                                                <tr><td colSpan="5" className="px-4 py-10"><StaffEmptyState title="No calendar events found" message="No confirmed events match this month or search." /></td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </AdminResponsiveTable>
-                            )}
-                            {bookingsLoading && (
-                                <p className="rounded-xl bg-[#fffaf3] p-4 text-sm font-bold text-slate-500">Loading calendar events...</p>
-                            )}
-                        </AdminPageSurface>
-                    )}
+                    {activeTab === 'calendar' && renderMarketingCalendar()}
                     {activeTab === 'handoff' && (
                         <AdminPageSurface>
                             <Suspense fallback={<StaffSkeleton variant="panel" rows={3} label="Loading handoff board" />}>
@@ -9782,3 +9958,11 @@ const DashboardAdmin = () => {
 };
 
 export default DashboardAdmin;
+
+
+
+
+
+
+
+
