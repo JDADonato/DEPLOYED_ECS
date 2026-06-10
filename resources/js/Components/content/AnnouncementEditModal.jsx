@@ -212,35 +212,32 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                         </div>
                     </div>
 
-                    {/* Summary & Body in 2-column grid */}
-                    <div className="grid gap-3 md:grid-cols-2">
-                        {/* Summary */}
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Short Summary</label>
-                            <textarea
-                                name="summary"
-                                value={form.summary}
-                                onChange={handleTextChange}
-                                rows={2}
-                                maxLength={500}
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
-                                placeholder="A brief preview shown on cards..."
-                            />
-                            {errors.summary && <span className="text-[10px] font-semibold text-red-500">{errors.summary}</span>}
-                        </div>
+                    {/* Summary */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Short Summary</label>
+                        <textarea
+                            name="summary"
+                            value={form.summary}
+                            onChange={handleTextChange}
+                            rows={2}
+                            maxLength={500}
+                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
+                            placeholder="A brief preview shown on cards..."
+                        />
+                        {errors.summary && <span className="text-[10px] font-semibold text-red-500">{errors.summary}</span>}
+                    </div>
 
-                        {/* Body */}
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Content / Body</label>
-                            <textarea
-                                name="body"
-                                value={form.body}
-                                onChange={handleTextChange}
-                                rows={2}
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
-                                placeholder="Full details of the announcement..."
-                            />
-                        </div>
+                    {/* Body */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Content / Body</label>
+                        <textarea
+                            name="body"
+                            value={form.body}
+                            onChange={handleTextChange}
+                            rows={2}
+                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
+                            placeholder="Full details of the announcement..."
+                        />
                     </div>
 
                     {/* Image Upload & Fit */}

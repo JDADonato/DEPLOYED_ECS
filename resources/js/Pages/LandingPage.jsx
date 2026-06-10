@@ -1035,14 +1035,6 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
                             <p className="text-xs font-semibold text-slate-500">This is how the announcement reads in customer-facing surfaces. It does not publish or send anything.</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <button
-                                type="button"
-                                onClick={() => handleEditClick(previewAnnouncement)}
-                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f0aa0b] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-[#1a1a1a] transition hover:bg-[#d4950a]"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                Edit Announcement
-                            </button>
                             <Link href={dashboardHrefForUser(user) + '?tab=announcements'} className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#5a0101]">
                                 Back to {user?.role || 'Admin'}
                             </Link>
