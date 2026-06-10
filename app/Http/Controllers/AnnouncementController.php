@@ -236,6 +236,7 @@ class AnnouncementController extends Controller
             'cta_url' => 'nullable|string|max:255',
             'image_path' => 'nullable|string|max:255',
             'image_file' => 'nullable|image|max:2048',
+            'image_fit' => ['nullable', Rule::in(['fit_image', 'fit_text'])],
         ]);
 
         if ($request->hasFile('image_file')) {
@@ -261,6 +262,7 @@ class AnnouncementController extends Controller
             'cta_url' => $announcement->cta_url,
             'image_path' => $announcement->image_path,
             'image_url' => $this->imageUrl($announcement->image_path),
+            'image_fit' => $announcement->image_fit,
             'published_at' => optional($announcement->published_at)->toDateTimeString(),
             'starts_at' => optional($announcement->starts_at)->toDateTimeString(),
             'ends_at' => optional($announcement->ends_at)->toDateTimeString(),

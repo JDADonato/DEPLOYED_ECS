@@ -35,6 +35,7 @@ class Announcement extends Model
         'cta_label',
         'cta_url',
         'image_path',
+        'image_fit',
     ];
 
     protected $casts = [

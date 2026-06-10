@@ -32,6 +32,7 @@ const emptyForm = {
     cta_label: '',
     cta_url: '',
     image_path: '',
+    image_fit: 'fit_text',
 };
 
 const typeLabels = {
@@ -268,6 +269,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
             cta_label: item.cta_label || '',
             cta_url: item.cta_url || '',
             image_path: item.image_path || '',
+            image_fit: item.image_fit || 'fit_text',
         });
         setSelectedUsers(ids.map((id) => ({ id, username: `User #${id}`, email: '', role: '' })));
         setComposerOpen(true);
@@ -294,6 +296,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         cta_label: form.cta_label || null,
         cta_url: form.cta_url || null,
         image_path: form.image_path || null,
+        image_fit: form.image_fit || 'fit_text',
         visibility_roles: form.visibility === 'specific_roles' ? form.visibility_roles : [],
         specific_user_ids: form.visibility === 'specific_users' ? form.specific_user_ids : [],
     });
@@ -554,10 +557,24 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                     <input
                                         type="text"
                                         placeholder="Optional image link"
-                                        className="staff-control"
+                                        className="staff-control mb-3"
                                         value={form.image_path || ''}
                                         onChange={(e) => updateField('image_path', e.target.value)}
                                     />
+
+                                    {(form.image_path || form.image_file) && (
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                            Image Fit Option
+                                            <select
+                                                value={form.image_fit || 'fit_text'}
+                                                onChange={(e) => updateField('image_fit', e.target.value)}
+                                                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none focus:border-[#720101]"
+                                            >
+                                                <option value="fit_text">Text Focus — Cover image background (Sized by text)</option>
+                                                <option value="fit_image">Image Focus — Show full image (Text below)</option>
+                                            </select>
+                                        </label>
+                                    )}
                                 </div>
 
                                 <label className="flex items-center justify-between rounded-xl border border-[#720101]/10 bg-[#fff7e8] px-4 py-3 lg:col-span-2">

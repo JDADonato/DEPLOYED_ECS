@@ -592,52 +592,83 @@ const HomepageAnnouncements = ({ announcements }) => {
     const featuredImage = announcementImage(featured);
 
     return (
-        <section className="bg-white py-20 sm:py-28">
-            <div className="mx-auto max-w-7xl px-5 sm:px-8">
-                {/* Minimal section label */}
-                <Rv>
-                    <p className="text-[11px] font-black uppercase tracking-[.3em] text-[#720101]">Announcements</p>
-                </Rv>
-
+        <section className="bg-white py-4">
+            <div className="w-full px-0">
                 {/* Featured announcement */}
                 <Rv>
-                    <article className="group mt-6 cursor-default">
+                    <article className="group cursor-default">
                         {featuredImage ? (
-                            <div className="relative overflow-hidden rounded-3xl" style={{ minHeight: '26rem', background: '#1a1a1a' }}>
-                                <SmartImage
-                                    src={featuredImage}
-                                    alt=""
-                                    aspectRatio="21 / 9"
-                                    containerClassName="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.03]"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                <div className="absolute inset-x-0 bottom-0 p-8 md:p-12">
-                                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                                        <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
-                                            {announcementTypeLabels[featured.type] || 'Announcement'}
-                                        </span>
-                                        <span className="text-xs font-semibold text-white/50">
-                                            {formatAnnouncementDate(featured)}
-                                        </span>
+                            featured.image_fit === 'fit_image' ? (
+                                <div className="relative overflow-hidden rounded-3xl p-6 md:p-8" style={{ background: '#1a1a1a' }}>
+                                    <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
+                                        <img
+                                            src={featuredImage}
+                                            alt=""
+                                            className="max-h-[30rem] w-full object-contain"
+                                        />
                                     </div>
-                                    <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
-                                        {featured.title}
-                                    </h3>
-                                    {(featured.summary || featured.body) && (
-                                        <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/70 md:text-lg">
-                                            {featured.summary || featured.body}
-                                        </p>
-                                    )}
-                                    {featured.cta_label && featured.cta_url && (
-                                        <Link href={featured.cta_url} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a] transition-all hover:bg-[#f0aa0b]">
-                                            {featured.cta_label}
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                        </Link>
-                                    )}
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                                            <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                                {announcementTypeLabels[featured.type] || 'Announcement'}
+                                            </span>
+                                            <span className="text-xs font-semibold text-white/50">
+                                                {formatAnnouncementDate(featured)}
+                                            </span>
+                                        </div>
+                                        <h3 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl lg:text-4xl max-w-3xl">
+                                            {featured.title}
+                                        </h3>
+                                        {(featured.summary || featured.body) && (
+                                            <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70 md:text-base">
+                                                {featured.summary || featured.body}
+                                            </p>
+                                        )}
+                                        {featured.cta_label && featured.cta_url && (
+                                            <Link href={featured.cta_url} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a] transition-all hover:bg-[#f0aa0b]">
+                                                {featured.cta_label}
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="relative overflow-hidden rounded-3xl" style={{ minHeight: '20rem', background: '#1a1a1a' }}>
+                                    <SmartImage
+                                        src={featuredImage}
+                                        alt=""
+                                        aspectRatio="21 / 9"
+                                        containerClassName="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.03]"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                                    <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
+                                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                                            <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                                {announcementTypeLabels[featured.type] || 'Announcement'}
+                                            </span>
+                                            <span className="text-xs font-semibold text-white/50">
+                                                {formatAnnouncementDate(featured)}
+                                            </span>
+                                        </div>
+                                        <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
+                                            {featured.title}
+                                        </h3>
+                                        {(featured.summary || featured.body) && (
+                                            <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/70 md:text-lg">
+                                                {featured.summary || featured.body}
+                                            </p>
+                                        )}
+                                        {featured.cta_label && featured.cta_url && (
+                                            <Link href={featured.cta_url} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a] transition-all hover:bg-[#f0aa0b]">
+                                                {featured.cta_label}
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            </Link>
+                                        )}
+                                    </div>
+                                </div>
+                            )
                         ) : (
-                            <div className="relative overflow-hidden rounded-3xl p-8 md:p-12" style={{ minHeight: '18rem', background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
+                            <div className="relative overflow-hidden rounded-3xl p-6 md:p-8" style={{ minHeight: '14rem', background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
                                 <div className="flex flex-col justify-end h-full">
                                     <div className="flex flex-wrap items-center gap-3 mb-4">
                                         <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
