@@ -68,6 +68,10 @@ const MARKETING_TAB_ALIASES = {
     food: 'tastings',
     preparation: 'bookings',
     content: 'public-content',
+    announcements: 'public-content',
+    packages: 'public-content',
+    eventTypes: 'public-content',
+    menuItems: 'public-content',
     settings: 'settings',
     documents: 'calendar',
 };
@@ -276,6 +280,15 @@ const DashboardMarketing = () => {
     const [menuItemFormLoading, setMenuItemFormLoading] = useState(false);
     const [activeConfigTab, setActiveConfigTab] = useState(() => {
         try {
+            if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                const urlConfigTab = params.get('configTab');
+                if (urlConfigTab) return urlConfigTab;
+                const urlTab = params.get('tab');
+                if (['announcements', 'packages', 'eventTypes', 'menuItems'].includes(urlTab)) {
+                    return urlTab;
+                }
+            }
             return localStorage.getItem('ecs_marketing_active_config_tab') || 'packages';
         } catch (e) {
             return 'packages';

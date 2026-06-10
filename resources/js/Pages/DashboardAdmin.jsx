@@ -421,6 +421,10 @@ const LEGACY_TAB_DESTINATIONS = {
     messages: { workspace: 'marketing', tab: 'messages' },
     inquiries: { workspace: 'marketing', tab: 'leads' },
     'public-content': { workspace: 'marketing', tab: 'public-content' },
+    announcements: { workspace: 'marketing', tab: 'public-content', configTab: 'announcements' },
+    packages: { workspace: 'marketing', tab: 'public-content', configTab: 'packages' },
+    eventTypes: { workspace: 'marketing', tab: 'public-content', configTab: 'eventTypes' },
+    menuItems: { workspace: 'marketing', tab: 'public-content', configTab: 'menuItems' },
     'public-content:announcements': { workspace: 'marketing', tab: 'public-content', configTab: 'announcements' },
     'public-content:packages': { workspace: 'marketing', tab: 'public-content', configTab: 'packages' },
     'public-content:eventTypes': { workspace: 'marketing', tab: 'public-content', configTab: 'eventTypes' },
@@ -805,6 +809,18 @@ const DashboardAdmin = () => {
     const [activeMenuCategory, setActiveMenuCategory] = useState('starter');
     const [activeConfigTab, setActiveConfigTab] = useState(() => {
         try {
+            if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                const urlConfigTab = params.get('configTab');
+                if (urlConfigTab) return urlConfigTab;
+                const urlTab = params.get('tab');
+                if (['announcements', 'packages', 'eventTypes', 'menuItems'].includes(urlTab)) {
+                    return urlTab;
+                }
+                const aliasedUrlTab = ADMIN_TAB_ALIASES[urlTab] || urlTab;
+                const legacy = LEGACY_TAB_DESTINATIONS[urlTab] || LEGACY_TAB_DESTINATIONS[aliasedUrlTab];
+                if (legacy?.configTab) return legacy.configTab;
+            }
             return localStorage.getItem('ecs_admin_active_config_tab') || 'packages';
         } catch (e) {
             return 'packages';
