@@ -1259,16 +1259,13 @@ const DashboardAccounting = () => {
                 title={`Booking #${booking.id}`}
                 onClose={() => setSelectedFinanceBooking(null)}
                 footer={(
-                    <div className="flex w-full flex-wrap items-center justify-between gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setEditPaymentModal({ isOpen: true, payment: booking.payments?.[0] || null, booking })}
-                            className="staff-button-secondary"
-                        >
-                            Edit payment terms
-                        </button>
-                        <button type="button" onClick={() => setSelectedFinanceBooking(null)} className="staff-button-primary">Done</button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setEditPaymentModal({ isOpen: true, payment: booking.payments?.[0] || null, booking })}
+                        className="staff-button-secondary"
+                    >
+                        Edit payment terms
+                    </button>
                 )}
             >
                 <div className="grid gap-3 sm:grid-cols-3">

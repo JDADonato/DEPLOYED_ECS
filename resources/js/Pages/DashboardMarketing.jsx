@@ -284,7 +284,9 @@ const DashboardMarketing = () => {
     const [inquirySearch, setInquirySearch] = useState('');
     const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
     const [bookingOwnershipFilter, setBookingOwnershipFilter] = useState('all');
-    const [bookingReviewView, setBookingReviewView] = useState('needs-action');
+    const [bookingReviewView, setBookingReviewView] = useState(() => {
+        return localStorage.getItem('ecs_booking_review_view') || 'needs-action';
+    });
     const [bookingFiltersOpen, setBookingFiltersOpen] = useState(false);
     const [inquirySort, setInquirySort] = useState('newest');
     const [inquiryMonth, setInquiryMonth] = useState('');
@@ -406,6 +408,8 @@ const DashboardMarketing = () => {
     useEffect(() => {
         if (!BOOKING_WORK_VIEWS.some((view) => view.id === bookingReviewView)) {
             setBookingReviewView('needs-action');
+        } else {
+            localStorage.setItem('ecs_booking_review_view', bookingReviewView);
         }
     }, [bookingReviewView]);
 
@@ -1918,7 +1922,8 @@ const DashboardMarketing = () => {
                 currentUser={user}
                 title="Event brief"
                 onClose={() => setSelectedBooking(null)}
-                footer={<button onClick={() => setSelectedBooking(null)} className="staff-button-primary">Done</button>}
+                onUpdateLiveStatus={updateLiveStatus}
+                journeySlot={<BookingJourneySummary booking={selectedBooking} />}
                 actionSlot={(
                     <>
                         {pendingTransferToMe && (
@@ -2008,80 +2013,14 @@ const DashboardMarketing = () => {
                     </>
                 )}
             >
-                        <BookingJourneySummary booking={selectedBooking} />
-                        <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-4">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <p className="marketing-kicker">Review workflow</p>
-                                    <h4 className="mt-1 text-lg font-black text-slate-950">{reviewStatusInfo.label}</h4>
-                                    <p className="mt-1 text-sm font-semibold text-slate-500">
-                                        Owner: {selectedBooking.owner_name || selectedBooking.assigned_name || 'Unassigned'}
-                                    </p>
-                                    {hasPendingTransfer && (
-                                        <p className="mt-2 text-xs font-bold text-[#9f6500]">
-                                            Transfer requested to {selectedBooking.transfer_requested_to_name || 'another Marketing staff member'}.
-                                        </p>
-                                    )}
-                                    {!canEdit && (
-                                        <p className="mt-2 text-xs font-bold text-amber-700">
-                                            {pendingTransferToMe ? 'Accept this transfer to become the owner.' : canClaim ? 'Claim this booking to take action.' : 'Owned by another staff member. Actions are locked until ownership is transferred.'}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            {selectedBooking.clarification_request && (
-                                <div className="mt-4 rounded-lg border border-[#f0aa0b]/30 bg-white p-3">
-                                    <p className="text-[11px] font-black uppercase tracking-widest text-[#9f6500]">Customer details requested</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-700">{selectedBooking.clarification_request}</p>
-                                    <p className="mt-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer response</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-700">{selectedBooking.clarification_response || 'Waiting for customer response.'}</p>
-                                </div>
-                            )}
-                            {Array.isArray(selectedBooking.review_tasks) && selectedBooking.review_tasks.length > 0 && (
-                                <div className="mt-4 border-t border-[#720101]/10 pt-4">
-                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Review checklist</p>
-                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                        {selectedBooking.review_tasks.filter(task => task.task_type === 'review').map(task => (
-                                            <button
-                                                key={task.id}
-                                                disabled={!canEdit}
-                                                onClick={() => toggleReviewTask(selectedBooking.id, task)}
-                                                className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-xs font-bold transition ${task.status === 'Done' ? 'border-green-200 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-[#720101]/20'} ${!canEdit ? 'cursor-not-allowed opacity-50' : ''}`}
-                                            >
-                                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] ${task.status === 'Done' ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                                    {task.status === 'Done' ? 'OK' : ''}
-                                                </span>
-                                                {task.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {isApproved && (
-                            <div>
-                                <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 border-b border-gray-100 pb-2 flex items-center gap-1">
-                                    <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Live Status Tracking
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {LIVE_STATUS_OPTIONS.map(status => {
-                                        const isActive = selectedBooking.live_status === status || (!selectedBooking.live_status && status === 'Not Started');
-                                        return (
-                                            <button
-                                                key={status}
-                                                disabled={!canEdit}
-                                                onClick={() => updateLiveStatus(selectedBooking.id, status)}
-                                                className={`px-4 py-2 text-xs font-bold rounded-full border transition-colors ${isActive ? 'bg-[#720101] text-white border-[#720101] shadow-sm' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'} ${!canEdit ? 'cursor-not-allowed opacity-50' : ''}`}
-                                            >
-                                                {status}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                {selectedBooking.clarification_request && (
+                    <div className="rounded-lg border border-[#f0aa0b]/30 bg-white p-3">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-[#9f6500]">Customer details requested</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-700">{selectedBooking.clarification_request}</p>
+                        <p className="mt-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer response</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-700">{selectedBooking.clarification_response || 'Waiting for customer response.'}</p>
+                    </div>
+                )}
             </EventDetailDrawer>
         );
     };
