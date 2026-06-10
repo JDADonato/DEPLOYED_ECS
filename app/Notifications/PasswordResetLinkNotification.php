@@ -2,15 +2,11 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PasswordResetLinkNotification extends Notification implements ShouldQueue
+class PasswordResetLinkNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(private readonly string $url) {}
 
     public function via(object $notifiable): array
