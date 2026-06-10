@@ -5607,7 +5607,8 @@ const DashboardAdmin = () => {
                                 <p className="staff-section-title">Display</p>
                                 <div className="mt-4 grid gap-3">
                                     <input value={eventTypeForm.icon} onChange={e => setEventTypeForm({ ...eventTypeForm, icon: e.target.value })} placeholder="Icon name" className="staff-control" />
-                                    <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="Image link" className="staff-control" />
+                                    <input type="file" accept="image/*" onChange={e => setEventTypeForm({ ...eventTypeForm, image_file: e.target.files[0] })} className="staff-control file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#720101]/10 file:text-[#720101] hover:file:bg-[#720101]/20 cursor-pointer" />
+                                    <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="Image link (optional if uploading file)" className="staff-control" />
                                     <textarea value={eventTypeForm.description} onChange={e => setEventTypeForm({ ...eventTypeForm, description: e.target.value })} placeholder="Description" rows={3} className="staff-control" />
                                 </div>
                             </section>
