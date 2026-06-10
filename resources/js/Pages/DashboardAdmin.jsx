@@ -5516,15 +5516,24 @@ const DashboardAdmin = () => {
                             <section className="staff-drawer-section">
                                 <p className="staff-section-title">Basics</p>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                    <input required value={packageForm.name} onChange={e => setPackageForm({ ...packageForm, name: e.target.value })} placeholder="Package name" className="staff-control" />
-                                    <select required value={packageForm.type} onChange={e => setPackageForm({ ...packageForm, type: e.target.value, event_type_slugs: packageForm.event_type_slugs?.includes(e.target.value) ? packageForm.event_type_slugs : [...(packageForm.event_type_slugs || []), e.target.value] })} className="staff-control">
-                                        {eventTypes.map(type => <option key={type.id} value={type.slug}>{type.label}</option>)}
-                                    </select>
-                                    <select value={packageForm.package_category} onChange={e => setPackageForm({ ...packageForm, package_category: e.target.value })} className="staff-control">
-                                        {PACKAGE_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                    </select>
-                                    <input required type="number" min="0" value={packageForm.base_price_per_head} onChange={e => setPackageForm({ ...packageForm, base_price_per_head: e.target.value })} placeholder="Price / head" className="staff-control" />
-                                    <input required type="number" min="1" value={packageForm.minimum_pax} onChange={e => setPackageForm({ ...packageForm, minimum_pax: e.target.value })} placeholder="Minimum guests" className="staff-control sm:col-span-2" />
+                                    <label className="admin-field-label">
+                                        Package name
+                                        <input required value={packageForm.name} onChange={e => setPackageForm({ ...packageForm, name: e.target.value })} placeholder="e.g. Premium Debut" className="staff-control mt-2 normal-case tracking-normal" />
+                                    </label>
+                                    <label className="admin-field-label">
+                                        Package category
+                                        <select value={packageForm.package_category} onChange={e => setPackageForm({ ...packageForm, package_category: e.target.value })} className="staff-control mt-2 normal-case tracking-normal">
+                                            {PACKAGE_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="admin-field-label">
+                                        Price / head (PHP)
+                                        <input required type="number" min="0" value={packageForm.base_price_per_head} onChange={e => setPackageForm({ ...packageForm, base_price_per_head: e.target.value })} placeholder="0" className="staff-control mt-2 normal-case tracking-normal" />
+                                    </label>
+                                    <label className="admin-field-label">
+                                        Minimum guests
+                                        <input required type="number" min="1" value={packageForm.minimum_pax} onChange={e => setPackageForm({ ...packageForm, minimum_pax: e.target.value })} placeholder="1" className="staff-control mt-2 normal-case tracking-normal" />
+                                    </label>
                                 </div>
                             </section>
                             <section className="staff-drawer-section">
