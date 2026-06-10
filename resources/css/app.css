@@ -10425,18 +10425,38 @@
     }
 
     .marketing-booking-board-toolbar {
-      padding: .75rem .75rem 0;
+      padding: .65rem;
     }
 
     .marketing-booking-board-tabs {
+      grid-template-columns: minmax(0, 1fr);
       align-items: stretch;
-      flex-direction: column;
     }
 
     .marketing-booking-view-tabs {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       width: 100%;
+    }
+
+    .marketing-booking-toolbar-controls {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .marketing-booking-toolbar-search {
+      flex-basis: 100%;
+    }
+
+    .marketing-booking-filter-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      padding: .65rem .1rem 0;
+    }
+
+    .marketing-booking-filter-panel .staff-control {
+      width: 100%;
+      min-width: 0;
     }
 
     .marketing-booking-search-row .staff-ops-search-controls {
@@ -14281,22 +14301,97 @@
 .marketing-booking-board-toolbar {
   display: grid;
   gap: 0;
-  padding: 1rem 1rem 0;
+  border-bottom: 1px solid rgba(114, 1, 1, .1);
+  background: #fffaf3;
+  padding: .9rem;
 }
 
 .marketing-booking-board-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(20rem, max-content) minmax(18rem, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: .75rem;
   border: 1px solid rgba(114, 1, 1, .12);
   border-radius: .9rem;
-  background: #fffaf3;
+  background: rgba(255, 255, 255, .72);
   padding: .38rem;
+}
+
+.marketing-booking-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+}
+
+.marketing-booking-toolbar-search {
+  flex: 1 1 16rem;
+  min-height: 2.55rem;
+  border-radius: .68rem;
+  background: #fff;
+  padding: .58rem .78rem;
+}
+
+.marketing-booking-filter-button {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  border: 1px solid rgba(114, 1, 1, .14);
+  border-radius: .68rem;
+  background: #fff;
+  padding: .55rem .82rem;
+  color: #334155;
+  font-size: .82rem;
+  font-weight: 900;
+  transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.marketing-booking-filter-button:hover,
+.marketing-booking-filter-button.is-open {
+  border-color: rgba(114, 1, 1, .28);
+  background: #fff7e8;
+  color: #720101;
+}
+
+.marketing-booking-filter-button.has-filters {
+  border-color: rgba(114, 1, 1, .24);
+  color: #720101;
+}
+
+.marketing-booking-filter-button span {
+  min-width: 1.25rem;
+  border-radius: 999px;
+  background: rgba(240, 170, 11, .22);
+  padding: .08rem .35rem;
+  color: inherit;
+  font-size: .68rem;
+  font-weight: 950;
+  text-align: center;
+}
+
+.marketing-booking-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-top: .75rem;
+  border-top: 1px solid rgba(114, 1, 1, .12);
+  background: #fff;
+  padding: .75rem .25rem 0;
+}
+
+.marketing-booking-filter-panel .staff-control {
+  min-width: 10.5rem;
+  min-height: 2.6rem;
+  border-color: rgba(114, 1, 1, .14);
+  background-color: #fff;
+  font-size: .86rem;
 }
 
 .marketing-booking-board-list {
   overflow: hidden;
+  background: #fff;
 }
 
 .marketing-booking-view-tabs {

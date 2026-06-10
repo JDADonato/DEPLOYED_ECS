@@ -19,7 +19,7 @@ import NextActionPanel from '../Components/staff/NextActionPanel';
 import RoleSettingsPanel from '../Components/staff/RoleSettingsPanel';
 import StaffStatusBadge from '../Components/staff/StaffStatusBadge';
 import StaffSkeleton, { StaffWorkspaceSkeleton } from '../Components/staff/StaffSkeleton';
-import { StaffDecisionBrief, StaffOpsListRow, StaffOpsMetricStrip, StaffOpsPanel, StaffOpsSearchBar } from '../Components/staff/StaffOpsUI';
+import { StaffDecisionBrief, StaffOpsListRow, StaffOpsMetricStrip, StaffOpsPanel } from '../Components/staff/StaffOpsUI';
 import { bookingStatusLabel, reviewStatusLabel } from '../utils/statusLabels';
 import useSmartRefresh from '../hooks/useSmartRefresh';
 import useStaffContextNavigation from '../hooks/useStaffContextNavigation';
@@ -285,6 +285,7 @@ const DashboardMarketing = () => {
     const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
     const [bookingOwnershipFilter, setBookingOwnershipFilter] = useState('all');
     const [bookingReviewView, setBookingReviewView] = useState('needs-action');
+    const [bookingFiltersOpen, setBookingFiltersOpen] = useState(false);
     const [inquirySort, setInquirySort] = useState('newest');
     const [inquiryMonth, setInquiryMonth] = useState('');
     const [inquiryPage, setInquiryPage] = useState(1);
@@ -2461,6 +2462,12 @@ const DashboardMarketing = () => {
             mine: 'No bookings are assigned to you.',
             waiting: 'No bookings are waiting on customer details.',
         }[bookingReviewView] || 'No bookings match this view.';
+        const activeBookingFilterCount = [
+            bookingReviewView === 'needs-action' && bookingOwnershipFilter !== 'all',
+            bookingReviewView !== 'waiting' && inquiryStatusFilter !== 'all',
+            inquirySort !== 'newest',
+            Boolean(inquiryMonth),
+        ].filter(Boolean).length;
         return (
             <div className="staff-ops-workspace">
                 {pendingTransferBookings.length > 0 && (
@@ -2504,42 +2511,62 @@ const DashboardMarketing = () => {
                                     </button>
                                 ))}
                             </div>
-                            {hasMarketingStaffContext && (
-                                <button type="button" className="staff-v2-link-action" onClick={() => setMarketingContextPanelOpen(true)}>
-                                    Context applied
+                            <div className="marketing-booking-toolbar-controls">
+                                {hasMarketingStaffContext && (
+                                    <button type="button" className="staff-v2-link-action" onClick={() => setMarketingContextPanelOpen(true)}>
+                                        Context applied
+                                    </button>
+                                )}
+                                <label className="staff-ops-search-input marketing-booking-toolbar-search">
+                                    <span aria-hidden="true">⌕</span>
+                                    <input
+                                        type="search"
+                                        value={inquirySearch}
+                                        onChange={handleInquirySearchChange}
+                                        placeholder="Search booking, customer, phone, or city"
+                                        aria-label="Search bookings"
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    className={`marketing-booking-filter-button${bookingFiltersOpen ? ' is-open' : ''}${activeBookingFilterCount > 0 ? ' has-filters' : ''}`}
+                                    onClick={() => setBookingFiltersOpen((open) => !open)}
+                                    aria-expanded={bookingFiltersOpen}
+                                    aria-controls="marketing-booking-filter-panel"
+                                >
+                                    <Filter size={18} strokeWidth={2.5} />
+                                    Filters
+                                    {activeBookingFilterCount > 0 && <span>{activeBookingFilterCount}</span>}
                                 </button>
-                            )}
+                            </div>
                         </div>
-                        <StaffOpsSearchBar
-                            className="marketing-booking-search-row"
-                            value={inquirySearch}
-                            onChange={handleInquirySearchChange}
-                            placeholder="Search booking, customer, phone, or city"
-                        >
-                            {bookingReviewView === 'needs-action' && (
-                                <select value={bookingOwnershipFilter} onChange={(event) => setBookingOwnershipFilter(event.target.value)} className="staff-control" aria-label="Booking ownership filter">
-                                    <option value="all">All ownership</option>
-                                    <option value="unclaimed">Unclaimed</option>
-                                    <option value="claimed">Claimed</option>
-                                    <option value="mine">Assigned to me</option>
+                        {bookingFiltersOpen && (
+                            <div id="marketing-booking-filter-panel" className="marketing-booking-filter-panel">
+                                {bookingReviewView === 'needs-action' && (
+                                    <select value={bookingOwnershipFilter} onChange={(event) => setBookingOwnershipFilter(event.target.value)} className="staff-control" aria-label="Booking ownership filter">
+                                        <option value="all">All ownership</option>
+                                        <option value="unclaimed">Unclaimed</option>
+                                        <option value="claimed">Claimed</option>
+                                        <option value="mine">Assigned to me</option>
+                                    </select>
+                                )}
+                                {bookingReviewView !== 'waiting' && (
+                                    <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
+                                        <option value="all">All active bookings</option>
+                                        <option value="waiting-approval">Waiting for approval</option>
+                                        <option value="needs customer details">Waiting on customer</option>
+                                        <option value="clarification received">Customer replied</option>
+                                        <option value="approved">Approved for reservation</option>
+                                    </select>
+                                )}
+                                <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
+                                    <option value="newest">Newest</option>
+                                    <option value="oldest">Oldest</option>
+                                    <option value="eventDateAsc">Event date</option>
                                 </select>
-                            )}
-                            {bookingReviewView !== 'waiting' && (
-                                <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
-                                    <option value="all">All active bookings</option>
-                                    <option value="waiting-approval">Waiting for approval</option>
-                                    <option value="needs customer details">Waiting on customer</option>
-                                    <option value="clarification received">Customer replied</option>
-                                    <option value="approved">Approved for reservation</option>
-                                </select>
-                            )}
-                            <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
-                                <option value="newest">Newest</option>
-                                <option value="oldest">Oldest</option>
-                                <option value="eventDateAsc">Event date</option>
-                            </select>
-                            <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
-                        </StaffOpsSearchBar>
+                                <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
+                            </div>
+                        )}
                     </div>
                     <div className="marketing-booking-board-list">
                         <ul className="divide-y divide-amber-100/70">
