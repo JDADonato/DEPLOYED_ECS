@@ -7,8 +7,9 @@ import { useAuth } from '../context/AuthContext';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { login } = useAuth();
+    const { login, reactivate } = useAuth();
 
+    const [requiresReactivation, setRequiresReactivation] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -23,13 +24,33 @@ const Login = () => {
             const result = await login(username, password, rememberMe);
 
             if (!result.success) {
-                setError(result.message);
+                if (result.requires_reactivation) {
+                    setRequiresReactivation(true);
+                    setError('');
+                } else {
+                    setError(result.message);
+                }
                 setLoading(false);
             }
         } catch (err) {
             setError('We could not sign you in. Please try again.');
             setLoading(false);
         }
+    };
+
+    const handleReactivate = async () => {
+        setLoading(true);
+        try {
+            const result = await reactivate(username, password, rememberMe);
+            if (!result.success) {
+                setError(result.message);
+                setRequiresReactivation(false);
+            }
+        } catch (err) {
+            setError('We could not reactivate your account.');
+            setRequiresReactivation(false);
+        }
+        setLoading(false);
     };
 
     return (
@@ -124,6 +145,39 @@ const Login = () => {
                     ) : 'Sign in'}
                 </button>
             </form>
+
+            {requiresReactivation && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+                            <span className="text-xl font-bold text-amber-700">!</span>
+                        </div>
+                        <h3 className="mb-2 text-xl font-black text-slate-900">Reactivate Account?</h3>
+                        <p className="mb-6 text-sm text-slate-600 font-medium">
+                            You previously deactivated this account. Do you want to reactivate it and log in?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setRequiresReactivation(false)}
+                                disabled={loading}
+                                className="w-full rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleReactivate}
+                                disabled={loading}
+                                className="w-full rounded-xl bg-amber-600 py-3 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Reactivate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthShell>
     );
 };

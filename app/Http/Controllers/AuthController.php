@@ -61,6 +61,12 @@ class AuthController extends Controller
         }
 
         if (($user->account_status ?? 'active') !== 'active') {
+            if ($user->deactivated_by === $user->id) {
+                throw ValidationException::withMessages([
+                    'reactivation_required' => 'Your account is deactivated. Do you want to reactivate it?',
+                ]);
+            }
+
             throw ValidationException::withMessages([
                 'username' => ['This account is deactivated. Please contact Eloquente support.'],
             ]);
@@ -91,6 +97,48 @@ class AuthController extends Controller
         // which makes Inertia receive plain JSON instead of a page response.
         return redirect($this->getDashboardRoute($user->role))
             ->with('message', 'Welcome back, '.$user->username.'! We\'re glad to see you again.');
+    }
+
+    public function reactivateAccount(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+            'remember' => 'nullable|boolean',
+        ]);
+
+        $user = User::where('username', $request->username)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'username' => ['The username or password is incorrect.'],
+            ]);
+        }
+
+        if (($user->account_status ?? 'active') === 'active') {
+            return redirect('/login');
+        }
+
+        if ($user->deactivated_by !== $user->id) {
+            throw ValidationException::withMessages([
+                'username' => ['This account is deactivated by an administrator and cannot be reactivated.'],
+            ]);
+        }
+
+        $user->forceFill([
+            'account_status' => 'active',
+            'deactivated_at' => null,
+            'deactivated_by' => null,
+            'deactivation_reason' => null,
+        ])->save();
+
+        $remember = $request->boolean('remember', false);
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
+        $user->forceFill(['last_login_at' => now()])->save();
+
+        return redirect($this->getDashboardRoute($user->role))
+            ->with('message', 'Welcome back! Your account has been reactivated.');
     }
 
     public function register(Request $request)
