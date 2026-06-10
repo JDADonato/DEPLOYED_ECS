@@ -4,13 +4,13 @@ import { X, Loader2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-reac
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
 const typeOptions = [
-    { value: 'general', label: '📢 General Announcement' },
-    { value: 'promo', label: '🎉 Special Offer' },
-    { value: 'event_reminder', label: '📅 Event Reminder' },
-    { value: 'holiday_advisory', label: '🏖️ Holiday Advisory' },
-    { value: 'menu_update', label: '🍽️ Menu Update' },
-    { value: 'service_notice', label: '⚙️ Service Notice' },
-    { value: 'urgent', label: '🚨 Urgent / Important Notice' },
+    { value: 'general', label: 'General Announcement' },
+    { value: 'promo', label: 'Special Offer' },
+    { value: 'event_reminder', label: 'Event Reminder' },
+    { value: 'holiday_advisory', label: 'Holiday Advisory' },
+    { value: 'menu_update', label: 'Menu Update' },
+    { value: 'service_notice', label: 'Service Notice' },
+    { value: 'urgent', label: 'Urgent / Important Notice' },
 ];
 
 const fitOptions = [

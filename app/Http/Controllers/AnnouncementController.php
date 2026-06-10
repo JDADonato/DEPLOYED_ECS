@@ -82,6 +82,9 @@ class AnnouncementController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('announcements', 'image_fit')) {
+            unset($data['image_fit']);
+        }
         $data['slug'] = $this->service->uniqueSlug($data['title']);
         $data['created_by'] = $request->user()->id;
         $data['updated_by'] = $request->user()->id;
@@ -96,6 +99,9 @@ class AnnouncementController extends Controller
     public function update(Request $request, Announcement $announcement)
     {
         $data = $this->validated($request, $announcement->id);
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('announcements', 'image_fit')) {
+            unset($data['image_fit']);
+        }
         $data['slug'] = $this->service->uniqueSlug($data['title'], $announcement->id);
         $data['updated_by'] = $request->user()->id;
 
