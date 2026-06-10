@@ -7,6 +7,7 @@ import SmartImage from '../Components/common/SmartImage';
 import StaffPreviewBanner from '../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../utils/dashboardLinks';
+import AnnouncementEditModal from '../Components/content/AnnouncementEditModal';
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ SVG Icons Ã¢â€â‚¬Ã¢â€â‚¬ */
 const settledStatuses = ['Paid', 'Verified'];
@@ -585,7 +586,7 @@ const formatAnnouncementDate = (announcement) => {
 };
 
 
-const HomepageAnnouncements = ({ announcements, previewMode = false, user = null }) => {
+const HomepageAnnouncements = ({ announcements, previewMode = false, user = null, onEditClick = null }) => {
     if (!announcements.length) return null;
 
     const [featured, ...rest] = announcements;
@@ -602,16 +603,17 @@ const HomepageAnnouncements = ({ announcements, previewMode = false, user = null
                                 <div className="relative overflow-hidden rounded-none w-full" style={{ background: '#1a1a1a' }}>
                                     {previewMode && user && (
                                         <div className="absolute top-4 right-4 z-30">
-                                            <Link
-                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                            <button
+                                                type="button"
+                                                onClick={() => onEditClick?.(featured)}
                                                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
                                                 title="Edit announcement"
                                             >
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                            </Link>
+                                            </button>
                                         </div>
                                     )}
-                                    <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
+                                    <div className="mx-auto max-w-7xl px-5 sm:px-8 xl:px-0 py-12 md:py-16">
                                         <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
                                             <img
                                                 src={featuredImage}
@@ -649,13 +651,14 @@ const HomepageAnnouncements = ({ announcements, previewMode = false, user = null
                                 <div className="relative overflow-hidden rounded-none w-full flex flex-col justify-end" style={{ minHeight: '22rem', background: '#1a1a1a' }}>
                                     {previewMode && user && (
                                         <div className="absolute top-4 right-4 z-30">
-                                            <Link
-                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                            <button
+                                                type="button"
+                                                onClick={() => onEditClick?.(featured)}
                                                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
                                                 title="Edit announcement"
                                             >
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                            </Link>
+                                            </button>
                                         </div>
                                     )}
                                     <SmartImage
@@ -665,7 +668,7 @@ const HomepageAnnouncements = ({ announcements, previewMode = false, user = null
                                         containerClassName="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.03]"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                    <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 w-full py-6 md:py-8">
+                                    <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 xl:px-0 w-full py-12 md:py-16">
                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                             <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
                                                 {announcementTypeLabels[featured.type] || 'Announcement'}
@@ -695,16 +698,17 @@ const HomepageAnnouncements = ({ announcements, previewMode = false, user = null
                             <div className="relative overflow-hidden rounded-none w-full" style={{ background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
                                 {previewMode && user && (
                                     <div className="absolute top-4 right-4 z-30">
-                                        <Link
-                                            href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                        <button
+                                            type="button"
+                                            onClick={() => onEditClick?.(featured)}
                                             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
                                             title="Edit announcement"
                                         >
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                        </Link>
+                                        </button>
                                     </div>
                                 )}
-                                <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
+                                <div className="mx-auto max-w-7xl px-5 sm:px-8 xl:px-0 py-12 md:py-16">
                                     <div className="flex flex-col justify-end h-full">
                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                             <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
@@ -901,6 +905,17 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
     const [journeyData, setJourneyData] = useState(cachedJourneyData);
     const [journeyLoading, setJourneyLoading] = useState(false);
     const [announcements, setAnnouncements] = useState([]);
+    const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const handleEditClick = (announcementItem) => {
+        setEditingAnnouncement(announcementItem);
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveAnnouncement = (updated) => {
+        setAnnouncements((prev) => prev.map((a) => a.id === updated.id ? updated : a));
+    };
 
     useEffect(() => {
         if (user && user.role === 'Client' && user.account_status !== 'deactivated') {
@@ -1019,9 +1034,19 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
                             <h2 className="font-display text-base font-bold text-[#1a1a1a]">Customer-facing announcement preview</h2>
                             <p className="text-xs font-semibold text-slate-500">This is how the announcement reads in customer-facing surfaces. It does not publish or send anything.</p>
                         </div>
-                        <Link href={dashboardHrefForUser(user) + '?tab=announcements'} className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#5a0101]">
-                            Back to {user?.role || 'Admin'}
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handleEditClick(previewAnnouncement)}
+                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f0aa0b] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-[#1a1a1a] transition hover:bg-[#d4950a]"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                Edit Announcement
+                            </button>
+                            <Link href={dashboardHrefForUser(user) + '?tab=announcements'} className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#5a0101]">
+                                Back to {user?.role || 'Admin'}
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1082,7 +1107,7 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
 
             <FloatingJourneyTracker bookings={journeyData.bookings} payments={journeyData.payments} loading={journeyLoading} />
 
-            <HomepageAnnouncements announcements={announcements} previewMode={previewMode} user={user} />
+            <HomepageAnnouncements announcements={announcements} previewMode={previewMode} user={user} onEditClick={handleEditClick} />
 
             <section className="bg-[#fffaf3] px-5 py-14 sm:px-8">
                 <div className="mx-auto max-w-7xl">
@@ -1389,6 +1414,13 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
             </footer>}
 
             */}
+
+            <AnnouncementEditModal 
+                isOpen={isEditModalOpen} 
+                onClose={() => setIsEditModalOpen(false)} 
+                announcement={editingAnnouncement} 
+                onSave={handleSaveAnnouncement} 
+            />
 
             <Footer />
         </div>
