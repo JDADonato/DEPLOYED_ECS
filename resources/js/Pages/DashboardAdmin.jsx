@@ -1587,22 +1587,7 @@ const DashboardAdmin = () => {
             },
         };
     }, [bookings, customers.length, employees.length, refundQueue.length, reportTemplates.length, selectedCustomerId]);
-    const adminNavGroups = useMemo(() => {
-        const sourceGroups = workspaceNavSource[activeWorkspace] || ADMIN_WORKSPACE_NAV_GROUPS;
-        let groups = withNavCounts(sourceGroups, workspaceNavCounts[activeWorkspace] || {});
 
-        if (activeWorkspace === 'customer' && !selectedCustomer) {
-            groups = groups.map((group) => ({
-                ...group,
-                items: group.items.map((item) => ({
-                    ...item,
-                    disabled: Boolean(item.requiresCustomer)
-                }))
-            }));
-        }
-
-        return groups;
-    }, [activeWorkspace, workspaceNavCounts, selectedCustomer]);
     const adminActiveNavId = activeWorkspaceTab;
     const handleAdminNavigate = (nextId) => {
         const rawId = String(nextId || '');
@@ -2516,6 +2501,23 @@ const DashboardAdmin = () => {
             account_status: 'active',
         };
     }, [bookings, customers, selectedCustomerId]);
+
+    const adminNavGroups = useMemo(() => {
+        const sourceGroups = workspaceNavSource[activeWorkspace] || ADMIN_WORKSPACE_NAV_GROUPS;
+        let groups = withNavCounts(sourceGroups, workspaceNavCounts[activeWorkspace] || {});
+
+        if (activeWorkspace === 'customer' && !selectedCustomer) {
+            groups = groups.map((group) => ({
+                ...group,
+                items: group.items.map((item) => ({
+                    ...item,
+                    disabled: Boolean(item.requiresCustomer)
+                }))
+            }));
+        }
+
+        return groups;
+    }, [activeWorkspace, workspaceNavCounts, selectedCustomer]);
     const customerScopedBookings = useMemo(() => (
         selectedCustomerId
             ? bookings.filter((booking) => String(booking.user_id) === String(selectedCustomerId))
