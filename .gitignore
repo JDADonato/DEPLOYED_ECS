@@ -15,7 +15,6 @@ PsySH/
 /auth.json
 /bootstrap/cache/*.php
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /scratch
