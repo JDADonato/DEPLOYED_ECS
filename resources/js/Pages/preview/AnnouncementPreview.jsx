@@ -112,45 +112,47 @@ const AnnouncementPreview = ({ announcement }) => {
                             </div>
 
                             {showHomepage ? (
-                                <div className="p-6 sm:p-8">
+                                <div className="w-full px-0">
                                     <article className="group cursor-default">
                                         {image ? (
                                             announcement.image_fit === 'fit_image' ? (
-                                                <div className="relative overflow-hidden rounded-3xl p-6 md:p-8" style={{ background: '#1a1a1a' }}>
-                                                    <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
-                                                        <img
-                                                            src={image}
-                                                            alt=""
-                                                            className="max-h-[30rem] w-full object-contain"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-3 mb-4">
-                                                            <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
-                                                                {label}
-                                                            </span>
-                                                            <span className="text-xs font-semibold text-white/50">
-                                                                {publishedDate}
-                                                            </span>
+                                                <div className="relative overflow-hidden rounded-none w-full" style={{ background: '#1a1a1a' }}>
+                                                    <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10 md:py-14">
+                                                        <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
+                                                            <img
+                                                                src={image}
+                                                                alt=""
+                                                                className="max-h-[30rem] w-full object-contain"
+                                                            />
                                                         </div>
-                                                        <h3 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl lg:text-4xl max-w-3xl">
-                                                            {announcement.title || 'Announcement title'}
-                                                        </h3>
-                                                        {(summary || body) && (
-                                                            <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70 md:text-base">
-                                                                {summary || body}
-                                                            </p>
-                                                        )}
-                                                        {announcement.cta_label && announcement.cta_url && (
-                                                            <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a]">
-                                                                {announcement.cta_label}
-                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                                            </span>
-                                                        )}
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-3 mb-4">
+                                                                <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                                                    {label}
+                                                                </span>
+                                                                <span className="text-xs font-semibold text-white/50">
+                                                                    {publishedDate}
+                                                                </span>
+                                                            </div>
+                                                            <h3 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl lg:text-4xl max-w-3xl">
+                                                                {announcement.title || 'Announcement title'}
+                                                            </h3>
+                                                            {(summary || body) && (
+                                                                <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70 md:text-base">
+                                                                    {summary || body}
+                                                                </p>
+                                                            )}
+                                                            {announcement.cta_label && announcement.cta_url && (
+                                                                <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a]">
+                                                                    {announcement.cta_label}
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="relative overflow-hidden rounded-3xl" style={{ minHeight: '20rem', background: '#1a1a1a' }}>
+                                                <div className="relative overflow-hidden rounded-none w-full flex flex-col justify-end" style={{ minHeight: '22rem', background: '#1a1a1a' }}>
                                                     <SmartImage
                                                         src={image}
                                                         alt=""
@@ -158,7 +160,7 @@ const AnnouncementPreview = ({ announcement }) => {
                                                         containerClassName="absolute inset-0 h-full w-full transition-transform duration-700"
                                                     />
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                                    <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
+                                                    <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 w-full py-10 md:py-14">
                                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                                             <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
                                                                 {label}
@@ -185,35 +187,37 @@ const AnnouncementPreview = ({ announcement }) => {
                                                 </div>
                                             )
                                         ) : (
-                                            <div className="relative overflow-hidden rounded-3xl p-6 md:p-8" style={{ minHeight: '14rem', background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
-                                                <div className="flex flex-col justify-end h-full">
-                                                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                                                        <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
-                                                            {label}
-                                                        </span>
-                                                        <span className="text-xs font-semibold text-white/40">
-                                                            {publishedDate}
-                                                        </span>
+                                            <div className="relative overflow-hidden rounded-none w-full" style={{ background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
+                                                <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10 md:py-14">
+                                                    <div className="flex flex-col justify-end h-full">
+                                                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                                                            <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                                                {label}
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-white/40">
+                                                                {publishedDate}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
+                                                            {announcement.title || 'Announcement title'}
+                                                        </h3>
+                                                        {(summary || body) && (
+                                                            <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/65 md:text-lg">
+                                                                {summary || body}
+                                                            </p>
+                                                        )}
+                                                        {body && summary && body !== summary && (
+                                                            <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/40">
+                                                                {body}
+                                                            </p>
+                                                        )}
+                                                        {announcement.cta_label && announcement.cta_url && (
+                                                            <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#720101]">
+                                                                {announcement.cta_label}
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
-                                                        {announcement.title || 'Announcement title'}
-                                                    </h3>
-                                                    {(summary || body) && (
-                                                        <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/65 md:text-lg">
-                                                            {summary || body}
-                                                        </p>
-                                                    )}
-                                                    {body && summary && body !== summary && (
-                                                        <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/40">
-                                                            {body}
-                                                        </p>
-                                                    )}
-                                                    {announcement.cta_label && announcement.cta_url && (
-                                                        <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#720101]">
-                                                            {announcement.cta_label}
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
                                         )}
