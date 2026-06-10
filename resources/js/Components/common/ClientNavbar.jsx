@@ -38,7 +38,7 @@ const ClientNavbar = ({ user, logout, activePath }) => {
                             <Link href={dash()} prefetch="hover" className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-sm transition-colors ${path.startsWith('/dashboard') ? 'bg-[#f0aa0b] text-[#1a1a1a]' : 'bg-white text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a]'}`}>
                                 Dashboard
                             </Link>
-                            <NotificationBell variant="light" />
+                            {user?.account_status !== 'deactivated' && <NotificationBell variant="light" />}
                             <UserDropdown user={user} dashLink={dash()} />
                         </div>
                     ) : (

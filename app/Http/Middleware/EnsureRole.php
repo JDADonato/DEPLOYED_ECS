@@ -20,8 +20,15 @@ class EnsureRole
         }
 
         if ((Auth::user()->account_status ?? 'active') !== 'active') {
+            if (Auth::user()->role === 'Client') {
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json(['error' => 'This account is deactivated.'], 403);
+                }
+                // Redirect clients to home page to see reactivation overlay instead of logging them out
+                return redirect('/')->with('error', 'Please reactivate your account.');
+            }
+            
             Auth::logout();
-
             return redirect()->route('login')->with('error', 'This account is deactivated.');
         }
 

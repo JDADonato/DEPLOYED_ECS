@@ -14,7 +14,7 @@ import DeferredChatBubble from '../Components/common/DeferredChatBubble';
 const DefaultLayout = ({ children }) => {
     const { auth } = usePage().props;
     const user = auth?.user;
-    const shouldShowChat = user?.role === 'Client';
+    const shouldShowChat = user?.role === 'Client' && user?.account_status !== 'deactivated';
 
     // Scroll position retention
     useEffect(() => {
