@@ -1167,6 +1167,60 @@ const ClientDashboard = () => {
         autoSelectedInitialSection.current = true;
     }, [activeBooking, activeSection, loading, remainingJourneySteps]);
 
+    if (user?.account_status === 'deactivated') {
+        const handleReactivate = () => {
+            router.post('/profile/reactivate', {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // The backend will redirect, or we can just reload
+                    window.location.reload();
+                }
+            });
+        };
+
+        return (
+            <div className="min-h-screen bg-[#f7f4ee] font-sans">
+                <ClientNavbar user={user} logout={logout} />
+                <main className="relative mx-auto flex min-h-[80vh] max-w-7xl items-center justify-center px-5 py-8 sm:px-8">
+                    <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-[#720101]/10">
+                        <div className="relative h-24 bg-gradient-to-r from-[#720101] to-[#910505]">
+                            <div className="absolute -bottom-8 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-2xl bg-white shadow-xl ring-4 ring-white">
+                                <svg className="h-8 w-8 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div className="px-8 pb-8 pt-12 text-center">
+                            <h3 className="mb-3 font-display text-2xl font-black text-[#1a1a1a]">Account Deactivated</h3>
+                            <p className="mb-8 text-sm font-medium leading-relaxed text-gray-500">
+                                You previously deactivated this account. By reactivating, you'll regain full access to your bookings, payments, and event history.
+                            </p>
+                            
+                            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                                <button
+                                    onClick={logout}
+                                    className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-3.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleReactivate}
+                                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#720101] px-6 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-[#5a0101] focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2"
+                                >
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Reactivate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#f7f4ee] font-sans">

@@ -59,6 +59,35 @@ class ProfileController extends Controller
         return redirect('/')->with('message', 'Your account has been deactivated. Eloquente will retain booking and payment records for business records.');
     }
 
+    public function reactivateAccount(Request $request)
+    {
+        $user = $request->user();
+
+        abort_unless($user && $user->role === 'Client', 403);
+
+        if (($user->account_status ?? 'active') === 'active') {
+            return redirect('/dashboard');
+        }
+
+        if ($user->deactivated_by !== $user->id) {
+            return back()->withErrors(['message' => 'This account was deactivated by an administrator and cannot be reactivated.']);
+        }
+
+        $user->forceFill([
+            'account_status' => 'active',
+            'deactivated_at' => null,
+            'deactivated_by' => null,
+            'deactivation_reason' => null,
+        ])->save();
+
+        app(\App\Services\OperationalBroadcastService::class)
+            ->adminChanged('accounts', 'user', $user->id, 'active', 'Customer account reactivated.');
+
+        $this->recordProfileAudit($request, ['account_reactivation']);
+
+        return redirect('/dashboard')->with('message', 'Welcome back, '.$user->username.'! Your account has been reactivated.');
+    }
+
     public function update(Request $request)
     {
         $user = $request->user();

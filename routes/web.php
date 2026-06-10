@@ -62,7 +62,6 @@ Route::post('/api/conversion-events', [ConversionEventController::class, 'store'
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => Inertia::render('Login'))->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::post('/reactivate-account', [AuthController::class, 'reactivateAccount'])->middleware('throttle:5,1');
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendPasswordReset'])->middleware('throttle:5,1')->name('password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
@@ -105,6 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', fn () => Inertia::render('Profile/Edit'))->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/account', [ProfileController::class, 'deleteAccount'])->middleware('throttle:3,1')->name('profile.account.delete');
+    Route::post('/profile/reactivate', [ProfileController::class, 'reactivateAccount'])->middleware('throttle:5,1');
     Route::get('/profile/avatar', [ProfileController::class, 'avatar'])->name('profile.avatar');
     Route::post('/profile/password-code', [ProfileController::class, 'sendPasswordCode'])->middleware('throttle:5,1')->name('profile.password-code');
     Route::get('/api/profile/activity', [ProfileController::class, 'activity'])->name('profile.activity');
