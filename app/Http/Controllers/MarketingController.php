@@ -61,8 +61,10 @@ class MarketingController extends Controller
      */
     public function getAllBookings(Request $request)
     {
-        $query = Booking::with(['user:id,full_name,username,email,phone,role', 'assignee:id,full_name,username', 'createdByStaff:id,full_name,username', 'transferRequestedTo:id,full_name,username', 'transferRequestedBy:id,full_name,username', 'reviewTasks', 'preparationTasks', 'historyNotes:id,booking_id,user_id,body,created_at'])
+        $query = Booking::with(['user:id,full_name,username,email,phone,role', 'assignee:id,full_name,username', 'createdByStaff:id,full_name,username', 'transferRequestedTo:id,full_name,username', 'transferRequestedBy:id,full_name,username', 'reviewTasks', 'preparationTasks', 'historyNotes:id,booking_id,user_id,body,created_at', 'payments' => fn ($paymentQuery) => $paymentQuery->active()])
+            ->when($request->boolean('active_only', true), fn ($q) => $q->whereNotIn('status', ['Completed', 'completed', 'Cancelled', 'cancelled']))
             ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
+            ->when($request->query('review_status'), fn ($q, $status) => $q->where('review_status', $status))
             ->when($request->query('date_from'), fn ($q, $date) => $q->whereDate('event_date', '>=', $date))
             ->when($request->query('date_to'), fn ($q, $date) => $q->whereDate('event_date', '<=', $date))
             ->when($request->query('search'), function ($q, $search) {
@@ -81,7 +83,21 @@ class MarketingController extends Controller
                         ->orWhereRaw('LOWER(phone) LIKE ?', [$term])));
             });
 
-        match ($request->query('sort', 'eventDateSoonest')) {
+        $user = $request->user();
+        $ownership = $request->query('ownership');
+        if ($ownership === 'unclaimed') {
+            $query->whereNull('assigned_to');
+        } elseif ($ownership === 'claimed') {
+            $query->whereNotNull('assigned_to');
+        } elseif ($ownership === 'mine' && $user) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        if ($request->query('scope') === 'mine' && $user && $user->role === 'Marketing') {
+            $query->where('assigned_to', $user->id);
+        }
+
+        match ($request->query('sort', 'bookingNewest')) {
             'eventDateLatest' => $query->orderBy('event_date', 'desc'),
             'bookingNewest' => $query->orderBy('created_at', 'desc'),
             'bookingOldest' => $query->orderBy('created_at', 'asc'),
@@ -755,6 +771,74 @@ class MarketingController extends Controller
         ]);
     }
 
+    public function requestTransfer(Request $request, int $id)
+    {
+        $booking = Booking::find($id);
+
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        $user = Auth::user();
+        if ($user->role !== 'Marketing') {
+            return response()->json(['error' => 'Only Marketing staff can request booking transfers.'], 403);
+        }
+
+        if (is_null($booking->assigned_to)) {
+            return response()->json(['error' => 'This booking is unassigned. Claim it instead.'], 422);
+        }
+
+        if ((int) $booking->assigned_to === (int) $user->id) {
+            return response()->json(['error' => 'This booking is already assigned to you.'], 422);
+        }
+
+        if ($booking->transfer_requested_to || $booking->transfer_requested_by) {
+            return response()->json(['error' => 'A transfer request is already pending for this booking.'], 422);
+        }
+
+        $booking->update([
+            'transfer_requested_to' => $booking->assigned_to,
+            'transfer_requested_by' => $user->id,
+            'transfer_requested_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transfer request sent to the current owner.',
+            'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'transferRequestedTo', 'transferRequestedBy', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
+        ]);
+    }
+
+    public function cancelTransfer(Request $request, int $id)
+    {
+        $booking = Booking::find($id);
+
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        $user = Auth::user();
+        $canCancel = $user->role === 'Admin'
+            || (int) $booking->transfer_requested_by === (int) $user->id
+            || (int) $booking->assigned_to === (int) $user->id;
+
+        if (! $canCancel) {
+            return response()->json(['error' => 'Only the requester, owner, or admin can cancel this transfer request.'], 403);
+        }
+
+        $booking->update([
+            'transfer_requested_to' => null,
+            'transfer_requested_by' => null,
+            'transfer_requested_at' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transfer request cancelled.',
+            'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'transferRequestedTo', 'transferRequestedBy', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
+        ]);
+    }
+
     public function acceptTransfer(Request $request, int $id)
     {
         $booking = Booking::find($id);
@@ -768,8 +852,12 @@ class MarketingController extends Controller
             return response()->json(['error' => 'Only the requested Marketing staff member can accept this transfer.'], 403);
         }
 
+        $newOwnerId = (int) $booking->assigned_to === (int) $booking->transfer_requested_to
+            ? $booking->transfer_requested_by
+            : $user->id;
+
         $booking->update([
-            'assigned_to' => $user->id,
+            'assigned_to' => $newOwnerId,
             'transfer_requested_to' => null,
             'transfer_requested_by' => null,
             'transfer_requested_at' => null,
@@ -937,6 +1025,54 @@ class MarketingController extends Controller
             'success' => true,
             'message' => 'Details requested from customer.',
             'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
+        ]);
+    }
+
+    public function sendReminder(Request $request, int $id)
+    {
+        $booking = Booking::with(['user', 'payments' => fn ($paymentQuery) => $paymentQuery->active()])->find($id);
+
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        if ($guard = $this->ensureCanMutateBooking($booking)) {
+            return $guard;
+        }
+
+        $data = $request->validate([
+            'message' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $email = $booking->client_email ?: $booking->user?->email;
+        if (! $email) {
+            return response()->json(['error' => 'No customer email is available for this booking.'], 422);
+        }
+
+        $journey = app(\App\Services\BookingJourneyService::class)->summarize($booking);
+        $nextAction = $journey['next_action']['description'] ?? 'Please review the remaining details for your booking.';
+        $customMessage = trim((string) ($data['message'] ?? ''));
+
+        try {
+            Mail::raw(
+                ($customMessage ?: $nextAction)."\n\nBooking #{$booking->id}: ".($booking->event_name ?: $booking->event_type ?: 'Eloquente event')."\n\nYou can continue from your Eloquente dashboard or reply to the team for help.",
+                fn ($message) => $message
+                    ->to($email)
+                    ->subject("Reminder for your Eloquente booking #{$booking->id}")
+            );
+        } catch (\Throwable $exception) {
+            Log::warning('Booking reminder email failed.', [
+                'booking_id' => $booking->id,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Could not send the reminder email right now.'], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reminder email sent.',
+            'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes', 'payments'])),
         ]);
     }
 

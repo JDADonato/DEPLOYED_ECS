@@ -35,7 +35,7 @@ const ROLE_DEFAULTS = {
 
 const TAB_OPTIONS = {
     admin: [
-        ['today', 'Today'],
+        ['today', 'Command Center'],
         ['bookings-intake', 'Bookings & Intake'],
         ['calendar', 'Calendar'],
         ['handoff', 'Handoff'],
@@ -51,19 +51,18 @@ const TAB_OPTIONS = {
         ['history', 'Event History'],
     ],
     marketing: [
-        ['today', 'Today'],
+        ['today', 'To-Dos'],
         ['bookings', 'Bookings'],
-        ['leads', 'Guest Inquiries'],
         ['tastings', 'Food Tastings'],
-        ['calendar', 'Calendar'],
-        ['handoff', 'Event Handoff'],
         ['messages', 'Messages'],
+        ['calendar', 'Calendar'],
+        ['leads', 'Guest Inquiries'],
         ['public-content', 'Public Content'],
         ['availability', 'Availability'],
         ['history', 'Event History'],
     ],
     accounting: [
-        ['today', 'Today'],
+        ['today', 'To-Dos'],
         ['payments', 'Payments'],
         ['reconciliation', 'Reconciliation'],
         ['refunds', 'Refunds'],

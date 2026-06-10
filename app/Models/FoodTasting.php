@@ -24,6 +24,9 @@ class FoodTasting extends Model
         'outcome_notes',
         'handled_by',
         'duplicate_user_id',
+        'transfer_requested_to',
+        'transfer_requested_by',
+        'transfer_requested_at',
     ];
 
     protected function casts(): array
@@ -33,6 +36,7 @@ class FoodTasting extends Model
             'confirmed_at' => 'datetime',
             'completed_at' => 'datetime',
             'archived_at' => 'datetime',
+            'transfer_requested_at' => 'datetime',
         ];
     }
 
@@ -46,5 +50,20 @@ class FoodTasting extends Model
     public function duplicateUser()
     {
         return $this->belongsTo(User::class, 'duplicate_user_id');
+    }
+
+    public function handler()
+    {
+        return $this->belongsTo(User::class, 'handled_by');
+    }
+
+    public function transferRequestedTo()
+    {
+        return $this->belongsTo(User::class, 'transfer_requested_to');
+    }
+
+    public function transferRequestedBy()
+    {
+        return $this->belongsTo(User::class, 'transfer_requested_by');
     }
 }

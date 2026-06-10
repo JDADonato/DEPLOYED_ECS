@@ -40,13 +40,12 @@ export const MARKETING_WORKSPACE_NAV_GROUPS = [
     {
         label: 'Daily work',
         items: [
-            { id: 'today', label: 'Today', description: 'Review marketing priorities that need admin attention.', aliases: ['marketing today', 'daily work'] },
+            { id: 'today', label: 'To-Dos', description: 'Review the highest-priority customer work assigned to you or ready to claim.', aliases: ['marketing today', 'daily work', 'tasks', 'to dos', 'todos'] },
             { id: 'bookings', label: 'Bookings', description: 'Monitor booking review and takeover booking work when needed.', aliases: ['booking review', 'intake', 'reservations'] },
-            { id: 'leads', label: 'Guest Inquiries', description: 'Review guest inquiries and customer communication queues.', aliases: ['inquiries', 'leads', 'contact inquiries'] },
             { id: 'tastings', label: 'Food Tastings', description: 'Monitor food tasting requests and outcomes.', aliases: ['tasting', 'sampling'] },
-            { id: 'calendar', label: 'Calendar', description: 'Review confirmed event dates and schedule context.', aliases: ['schedule', 'events'] },
-            { id: 'handoff', label: 'Event Handoff', description: 'Track upcoming event preparation and handoff readiness.', aliases: ['handoff', 'preparation', 'prep'] },
             { id: 'messages', label: 'Messages', description: 'Monitor customer conversations and join only when escalation is needed.', aliases: ['chat', 'support'] },
+            { id: 'calendar', label: 'Calendar', description: 'Review confirmed event dates and schedule context.', aliases: ['schedule', 'events'] },
+            { id: 'leads', label: 'Guest Inquiries', description: 'Review guest inquiries and customer communication queues.', aliases: ['inquiries', 'leads', 'contact inquiries'] },
         ],
     },
     {
@@ -64,7 +63,7 @@ export const ACCOUNTING_WORKSPACE_NAV_GROUPS = [
     {
         label: 'Daily work',
         items: [
-            { id: 'today', label: 'Today', description: 'Review finance priorities that need admin attention.', aliases: ['accounting today', 'daily work'] },
+            { id: 'today', label: 'To-Dos', description: 'Review the highest-priority finance work for today.', aliases: ['accounting today', 'daily work', 'tasks', 'to dos', 'todos'] },
             { id: 'payments', label: 'Payments', description: 'Monitor pending proofs, overdue terms, and exceptions.', aliases: ['payment verification', 'billing', 'checkout'] },
             { id: 'reconciliation', label: 'Reconciliation', description: 'Review payment exceptions and reconciliation work.', aliases: ['exceptions', 'matching', 'issues'] },
             { id: 'refunds', label: 'Refunds', description: 'Review refundable cancellations and refund processing.', aliases: ['refund queue', 'cancellations'] },

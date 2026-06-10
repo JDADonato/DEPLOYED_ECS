@@ -41,7 +41,6 @@ import { StaffCommandBar } from '../Components/staff/StaffV2';
 
 const StaffMessaging = lazy(() => import('../Components/common/StaffMessaging'));
 const AnnouncementManager = lazy(() => import('../Components/content/AnnouncementManager'));
-const PreparationBoard = lazy(() => import('../Components/operations/PreparationBoard'));
 const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTastingQueue'));
 import { getListData } from '../utils/apiResponses';
 import csrfFetch from '../utils/csrf';
@@ -61,23 +60,24 @@ const SECURITY_OPTIONS = [
 ];
 
 const MARKETING_BOOKINGS_URL = '/api/marketing/bookings';
-const MARKETING_WORKSPACE_TABS = ['today', 'bookings', 'leads', 'tastings', 'calendar', 'handoff', 'messages', 'public-content', 'availability', 'settings', 'history'];
-const MARKETING_CONTEXT_TABS = ['bookings', 'handoff', 'leads', 'messages', 'history'];
+const MARKETING_WORKSPACE_TABS = ['today', 'bookings', 'tastings', 'messages', 'calendar', 'leads', 'public-content', 'availability', 'settings', 'history'];
+const MARKETING_CONTEXT_TABS = ['bookings', 'leads', 'messages', 'history'];
 const MARKETING_TAB_ALIASES = {
     intake: 'bookings',
     inquiries: 'bookings',
     tasting: 'tastings',
     food: 'tastings',
-    preparation: 'handoff',
+    preparation: 'bookings',
     content: 'public-content',
     settings: 'settings',
     documents: 'calendar',
 };
 const BOOKING_BACKED_TABS = ['calendar', 'bookings'];
 const ACTIVE_CALENDAR_STATUSES = ['pending', 'confirmed'];
+const LIVE_STATUS_OPTIONS = ['Not Started', 'On the Way', 'Preparing', 'Serving', 'Completed'];
 const BOOKING_WORK_VIEWS = [
-    { id: 'needs-action', label: 'Needs Action' },
-    { id: 'mine', label: 'Assigned to Me' },
+    { id: 'needs-action', label: 'Booking Queue' },
+    { id: 'mine', label: 'My Bookings' },
     { id: 'waiting', label: 'Waiting' },
 ];
 
@@ -197,6 +197,50 @@ const buildMarketingPageSearchEntries = () => MARKETING_WORKSPACE_NAV_GROUPS.fla
     }))
 ));
 
+const BookingJourneySummary = ({ booking }) => {
+    const journey = booking?.journey_summary;
+    const steps = Array.isArray(journey?.steps) ? journey.steps : [];
+    if (!journey || steps.length === 0) return null;
+
+    return (
+        <section className="rounded-xl border border-[#720101]/10 bg-white p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="marketing-kicker">Customer journey</p>
+                    <h4 className="mt-1 text-lg font-black text-slate-950">{journey.percent}% complete</h4>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                        {journey.remaining === 0 ? 'No customer-facing steps need action right now.' : `${journey.remaining} step${journey.remaining > 1 ? 's' : ''} remaining.`}
+                    </p>
+                </div>
+                {journey.next_action && (
+                    <StaffStatusBadge tone={journey.next_action.priority === 'urgent' ? 'danger' : journey.next_action.priority === 'followup' ? 'warn' : 'muted'}>
+                        {journey.next_action.label}
+                    </StaffStatusBadge>
+                )}
+            </div>
+            {journey.next_action && (
+                <div className="mt-4 rounded-lg border border-amber-100 bg-[#fffaf3] p-3">
+                    <p className="text-xs font-black uppercase tracking-widest text-[#9f6500]">Next best action</p>
+                    <p className="mt-1 text-sm font-bold text-slate-700">{journey.next_action.description || journey.next_action.action}</p>
+                </div>
+            )}
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {steps.map((step) => (
+                    <div key={step.key} className={`rounded-lg border px-3 py-2 ${step.done ? 'border-emerald-100 bg-emerald-50' : step.locked ? 'border-slate-100 bg-slate-50' : 'border-amber-100 bg-[#fffaf3]'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-black text-slate-900">{step.label}</p>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${step.done ? 'text-emerald-700' : step.locked ? 'text-slate-400' : 'text-[#9f6500]'}`}>
+                                {step.done ? 'Done' : step.locked ? 'Locked' : step.owner}
+                            </span>
+                        </div>
+                        {!step.done && <p className="mt-1 text-xs font-semibold text-slate-500">{step.action}</p>}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const DashboardMarketing = () => {
     const { user } = useAuth();
     const toast = useToast();
@@ -240,8 +284,9 @@ const DashboardMarketing = () => {
     const [claimingBookingIds, setClaimingBookingIds] = useState({});
     const [inquirySearch, setInquirySearch] = useState('');
     const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
+    const [bookingOwnershipFilter, setBookingOwnershipFilter] = useState('all');
     const [bookingReviewView, setBookingReviewView] = useState('needs-action');
-    const [inquirySort, setInquirySort] = useState('eventDateAsc');
+    const [inquirySort, setInquirySort] = useState('newest');
     const [inquiryMonth, setInquiryMonth] = useState('');
     const [inquiryPage, setInquiryPage] = useState(1);
     const [inquiryPerPage, setInquiryPerPage] = useState(25);
@@ -308,7 +353,7 @@ const DashboardMarketing = () => {
 
         if (!hasStaffContext(context) || !searchText) return;
 
-        if (['bookings', 'handoff'].includes(targetTab)) {
+        if (targetTab === 'bookings') {
             setInquirySearch(searchText);
             setInquiryStatusFilter('all');
             setInquiryMonth('');
@@ -431,7 +476,7 @@ const DashboardMarketing = () => {
     useEffect(() => {
         if (activeTab === 'today') {
             fetchMarketingSummary();
-            fetchBookings({ scope: 'page' });
+            fetchBookings({ scope: 'all' });
             const backgroundTimer = window.setTimeout(() => {
                 fetchContactLeads({ silent: true });
                 fetchFeedbackSummary();
@@ -460,6 +505,11 @@ const DashboardMarketing = () => {
     }, [activeTab, selectedMonthKey, calendarFilters]);
 
     useEffect(() => {
+        if (activeTab !== 'bookings') return;
+        fetchBookings({ scope: 'all', force: true });
+    }, [activeTab, bookingOwnershipFilter, inquirySort]);
+
+    useEffect(() => {
         if (activeTab !== 'leads') return;
         const timer = window.setTimeout(() => fetchContactLeads(), 250);
         return () => window.clearTimeout(timer);
@@ -474,7 +524,7 @@ const DashboardMarketing = () => {
         refresh: ({ silent = false, force = false } = {}) => {
             if (activeTab === 'today') {
                 fetchMarketingSummary({ silent, force: true });
-                fetchBookings({ silent, scope: 'page', force: true });
+                fetchBookings({ silent, scope: 'all', force: true });
                 fetchFeedbackSummary({ force: true });
             } else if (activeTab === 'public-content') {
                 fetchMarketingSettings({ force: true });
@@ -494,8 +544,14 @@ const DashboardMarketing = () => {
         const requestId = bookingRequestRef.current + 1;
         bookingRequestRef.current = requestId;
         try {
-            const params = '';
-            const cacheKey = smartCacheKey(`marketing:bookings:${scope}`);
+            const query = new URLSearchParams({
+                scope: scope === 'page' ? 'mine' : 'all',
+                active_only: '1',
+                sort: inquirySort === 'oldest' ? 'bookingOldest' : inquirySort === 'eventDateAsc' ? 'eventDateSoonest' : inquirySort === 'eventDateDesc' ? 'eventDateLatest' : 'bookingNewest',
+            });
+            if (scope === 'all' && bookingOwnershipFilter !== 'all') query.set('ownership', bookingOwnershipFilter === 'mine' ? 'mine' : bookingOwnershipFilter);
+            const params = `?${query.toString()}`;
+            const cacheKey = smartCacheKey(`marketing:bookings:${scope}:${bookingOwnershipFilter}:${inquirySort}`);
             const cached = readSmartCache(cacheKey);
             if (cached?.data && bookings.length === 0) {
                 setBookings(getListData(cached.data));
@@ -838,6 +894,36 @@ const DashboardMarketing = () => {
         }
     };
 
+    const requestBookingTransfer = async (id) => {
+        try {
+            const response = await csrfFetch(`/api/marketing/bookings/${id}/transfer/request`, {
+                method: 'POST',
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Transfer request failed');
+            mergeUpdatedBooking(data.booking);
+            toast.success(data.message || 'Transfer request sent.');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Could not request this booking transfer.');
+        }
+    };
+
+    const cancelBookingTransfer = async (id) => {
+        try {
+            const response = await csrfFetch(`/api/marketing/bookings/${id}/transfer/cancel`, {
+                method: 'POST',
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Transfer cancellation failed');
+            mergeUpdatedBooking(data.booking);
+            toast.success(data.message || 'Transfer request cancelled.');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Could not cancel this transfer request.');
+        }
+    };
+
     const respondToTransfer = async (id, action) => {
         try {
             const response = await csrfFetch(`/api/marketing/bookings/${id}/transfer/${action}`, {
@@ -870,6 +956,23 @@ const DashboardMarketing = () => {
 
     const requestClarification = (id) => {
         setClarificationPrompt({ isOpen: true, bookingId: id });
+    };
+
+    const sendBookingReminder = async (id, message = '') => {
+        try {
+            const response = await csrfFetch(`/api/marketing/bookings/${id}/reminder`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Reminder failed');
+            if (data.booking) mergeUpdatedBooking(data.booking);
+            toast.success(data.message || 'Reminder email sent.');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Could not send reminder.');
+        }
     };
 
     const submitClarificationRequest = async (message) => {
@@ -1301,13 +1404,12 @@ const DashboardMarketing = () => {
     } : marketingBookingIndexes;
 
     const tabMeta = {
-        today: 'Today',
+        today: 'To-Dos',
         bookings: 'Bookings',
         leads: 'Guest Inquiries',
         tastings: 'Food Tastings',
         calendar: 'Calendar',
         availability: 'Availability',
-        handoff: 'Event Handoff',
         messages: 'Messages',
         history: 'Event History',
         'public-content': 'Public Content',
@@ -1477,16 +1579,6 @@ const DashboardMarketing = () => {
             onOpen: () => setActiveTab('leads'),
         },
         {
-            id: 'upcoming-handoffs',
-            priority: marketingSummary.upcoming > 0 ? 'followup' : 'info',
-            title: 'Prepare upcoming events',
-            description: marketingSummary.upcoming > 0 ? `${marketingSummary.upcoming} approved events need preparation visibility.` : 'No upcoming approved events need handoff yet.',
-            badge: marketingSummary.upcoming,
-            primaryLabel: 'Open',
-            tone: marketingSummary.upcoming > 0 ? 'warn' : 'good',
-            onOpen: () => setActiveTab('handoff'),
-        },
-        {
             id: 'messages',
             priority: 'action',
             title: 'Customer messages',
@@ -1545,7 +1637,7 @@ const DashboardMarketing = () => {
     }, [marketingContextBookings, marketingStaffContext.customerQuery]);
 
     const openMarketingContextTab = useCallback((tab, searchText = marketingContextSearchText) => {
-        if (['bookings', 'handoff'].includes(tab)) {
+        if (tab === 'bookings') {
             setInquirySearch(searchText);
             setInquiryStatusFilter('all');
             setBookingReviewView('needs-action');
@@ -1630,7 +1722,6 @@ const DashboardMarketing = () => {
                         </section>
                         <section className="staff-context-actions">
                             <button type="button" onClick={() => openMarketingContextTab('bookings')}>Open bookings</button>
-                            <button type="button" onClick={() => openMarketingContextTab('handoff')}>Open handoff</button>
                             <button type="button" onClick={() => { setActiveTab('messages'); setMarketingContextPanelOpen(false); }}>Open messages</button>
                             <button type="button" onClick={() => openMarketingContextTab('history')}>Open history</button>
                             {primaryBooking && (
@@ -1652,12 +1743,13 @@ const DashboardMarketing = () => {
             .slice(0, 5);
         const unclaimedRows = marketingSummary.pendingRows.filter(booking => !booking.assigned_to).slice(0, 5);
         const ownedRows = marketingSummary.pendingRows.filter(booking => Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id)).slice(0, 5);
-        const handoffRows = marketingSummary.upcomingRows.slice(0, 5);
-
         const openBookingsView = (view) => {
             setBookingReviewView(view);
             setActiveTab('bookings');
         };
+        const actionableTodos = marketingNextActions
+            .filter((action) => action.priority !== 'info')
+            .slice(0, 8);
 
         const WorkSection = ({ kicker, title, emptyTitle, emptyMessage, rows, actionLabel, onAction, tone = 'neutral', delay = '' }) => (
             <StaffOpsPanel
@@ -1694,97 +1786,14 @@ const DashboardMarketing = () => {
 
         return (
             <div className="staff-ops-workspace">
-                <StaffOpsMetricStrip
-                    metrics={[
-                        {
-                            label: 'Booking reviews',
-                            value: marketingSummary.pending,
-                            description: `${marketingSummary.needsDetails} waiting on customer details`,
-                            actionLabel: 'Open bookings',
-                            onAction: () => openBookingsView('needs-action'),
-                            tone: marketingSummary.pending > 0 ? 'warning' : 'neutral',
-                        },
-                        {
-                            label: 'Urgent work',
-                            value: urgentRows.length,
-                            description: 'Transfers, replies, and near-date blockers',
-                            actionLabel: 'Review now',
-                            onAction: () => openBookingsView('needs-action'),
-                            tone: urgentRows.length > 0 ? 'danger' : 'neutral',
-                        },
-                        {
-                            label: 'Handoff',
-                            value: marketingSummary.upcoming,
-                            description: 'Confirmed events moving to operations',
-                            actionLabel: 'Open handoff',
-                            onAction: () => setActiveTab('handoff'),
-                        },
-                        {
-                            label: 'Follow-ups',
-                            value: (leadData.summary?.open || 0) + (feedbackSummary.followUps || 0),
-                            description: 'Guest inquiries and feedback follow-ups',
-                            actionLabel: 'Open leads',
-                            onAction: () => setActiveTab('leads'),
-                        },
-                    ]}
-                />
-                <StaffDecisionBrief
-                    source="Marketing read"
-                    finding={urgentRows.length > 0 ? 'Marketing has work that can block event progress.' : 'Marketing queues are under control.'}
-                    signal={urgentRows.length > 0 ? `${urgentRows.length} transfer, reply, or near-event item needs attention before the queue moves smoothly.` : 'No urgent transfer, reply, or near-event blockers are currently waiting.'}
-                    nextMove={urgentRows.length > 0 ? 'Open needs action and clear the oldest customer-facing blocker first.' : 'Keep reviewing new booking submissions and follow-ups as they arrive.'}
-                    tone={urgentRows.length > 0 ? 'danger' : 'neutral'}
-                />
                 <NextActionPanel
-                    title="Marketing work needing action"
-                    actions={marketingNextActions}
-                    emptyTitle="No Marketing actions waiting"
-                    emptyMessage="Claim requests, customer replies, guest inquiries, and feedback follow-ups will appear here."
+                    eyebrow="To-Dos"
+                    title="Start with the highest-priority customer work"
+                    description="Only claimable work, owned blockers, transfers, and customer follow-ups appear here."
+                    actions={actionableTodos}
+                    emptyTitle="No Marketing to-dos waiting"
+                    emptyMessage="Claimable bookings, customer replies, tasting follow-ups, and transfer requests will appear here."
                 />
-                <div className="staff-ops-grid-three">
-                    <WorkSection
-                        kicker="Urgent"
-                        title="Transfers, replies, and near events"
-                        emptyTitle="No urgent blockers"
-                        emptyMessage="Transfers, customer replies, and near-date blockers will appear here."
-                        rows={urgentRows}
-                        actionLabel="Open needs action"
-                        onAction={() => openBookingsView('needs-action')}
-                        tone="danger"
-                        delay="rv-d1"
-                    />
-                    <WorkSection
-                        kicker="Booking intake"
-                        title="Available and owned reviews"
-                        emptyTitle="No booking intake waiting"
-                        emptyMessage="New submissions and owned reviews are clear."
-                        rows={[...unclaimedRows, ...ownedRows].slice(0, 6)}
-                        actionLabel="Open bookings"
-                        onAction={() => openBookingsView('needs-action')}
-                        tone="warning"
-                        delay="rv-d2"
-                    />
-                    <WorkSection
-                        kicker="Upcoming handoff"
-                        title="Confirmed events to coordinate"
-                        emptyTitle="No upcoming approved events"
-                        emptyMessage="Confirmed events will appear here for handoff follow-up."
-                        rows={handoffRows}
-                        actionLabel="Open handoff"
-                        onAction={() => setActiveTab('handoff')}
-                        delay="rv-d3"
-                    />
-                </div>
-                <StaffOpsPanel eyebrow="Follow-up" title="Leads, messages, and feedback" delay="rv-d1">
-                    <StaffOpsMetricStrip
-                        metrics={[
-                            { label: 'Guest inquiries', value: leadData.summary?.open || 0, actionLabel: 'Open leads', onAction: () => setActiveTab('leads') },
-                            { label: 'Messages', value: 'Inbox', actionLabel: 'Open messages', onAction: () => setActiveTab('messages') },
-                            { label: 'Feedback', value: feedbackSummary.followUps || 0, actionLabel: 'Review history', onAction: () => setActiveTab('history') },
-                            { label: 'Tastings', value: 'Queue', actionLabel: 'Open tastings', onAction: () => setActiveTab('tastings') },
-                        ]}
-                    />
-                </StaffOpsPanel>
             </div>
         );
     };
@@ -1939,9 +1948,24 @@ const DashboardMarketing = () => {
                                 Unclaim booking
                             </button>
                         )}
+                        {selectedBooking.can_request_transfer && (
+                            <button onClick={() => requestBookingTransfer(selectedBooking.id)} className="rounded-lg border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] hover:bg-[#720101]/5">
+                                Request transfer
+                            </button>
+                        )}
+                        {hasPendingTransfer && Number(selectedBooking.transfer_requested_by) === Number(user?.id) && (
+                            <button onClick={() => cancelBookingTransfer(selectedBooking.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 hover:bg-slate-50">
+                                Cancel transfer
+                            </button>
+                        )}
                         {canEdit && (
                             <button onClick={() => requestClarification(selectedBooking.id)} className="rounded-lg border border-[#f0aa0b]/40 bg-[#fff7e8] px-3 py-2 text-xs font-black text-[#9f6500] hover:bg-[#fff0cf]">
                                 Request details
+                            </button>
+                        )}
+                        {canEdit && (
+                            <button onClick={() => sendBookingReminder(selectedBooking.id)} className="rounded-lg border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] hover:bg-[#720101]/5">
+                                Send reminder
                             </button>
                         )}
                         {canEdit && selectedBooking.status === 'Pending' && (
@@ -1959,12 +1983,16 @@ const DashboardMarketing = () => {
                                 Prep list PDF
                             </button>
                         )}
+                        <button onClick={() => setPdfPreviewUrl(`/documents/bookings/${selectedBooking.id}/preparation.pdf`)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
+                            Export details
+                        </button>
                         <button onClick={() => setActiveTab('messages')} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
                             Open messages
                         </button>
                     </>
                 )}
             >
+                        <BookingJourneySummary booking={selectedBooking} />
                         <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
@@ -2022,7 +2050,7 @@ const DashboardMarketing = () => {
                                     Live Status Tracking
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {['Not Started', 'On the Way', 'Preparing', 'Serving', 'Completed'].map(status => {
+                                    {LIVE_STATUS_OPTIONS.map(status => {
                                         const isActive = selectedBooking.live_status === status || (!selectedBooking.live_status && status === 'Not Started');
                                         return (
                                             <button
@@ -2356,25 +2384,20 @@ const DashboardMarketing = () => {
     );
 
     const renderBookings = () => {
-        const reviewableBookings = bookings.filter(b => (
-            !['Completed', 'completed', 'Cancelled', 'cancelled'].includes(b.status)
-            && (b.status === 'Pending' || ['Submitted', 'Under Review', 'Needs Customer Details', 'Clarification Received'].includes(b.review_status))
-        ));
-        const reviewCounts = reviewableBookings.reduce((counts, booking) => {
+        const activeBookings = bookings.filter(b => !['Completed', 'completed', 'Cancelled', 'cancelled'].includes(b.status));
+        const reviewCounts = activeBookings.reduce((counts, booking) => {
             const ownedByMe = Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id);
             const waitingOnCustomer = String(booking.review_status || '').toLowerCase() === 'needs customer details' || Boolean(booking.clarification_request && !booking.clarification_response);
-            const customerResponded = String(booking.review_status || '').toLowerCase() === 'clarification received' || Boolean(booking.clarification_response);
             if (ownedByMe) counts.mine += 1;
             if (waitingOnCustomer) counts.waiting += 1;
-            if (!booking.assigned_to || booking.can_accept_transfer || (ownedByMe && customerResponded) || (ownedByMe && !waitingOnCustomer)) counts['needs-action'] += 1;
+            counts['needs-action'] += 1;
             return counts;
         }, { 'needs-action': 0, mine: 0, waiting: 0 });
-        const pendingTransferBookings = reviewableBookings.filter(booking => booking.can_accept_transfer);
-        const viewBookings = reviewableBookings.filter((booking) => {
+        const pendingTransferBookings = activeBookings.filter(booking => booking.can_accept_transfer);
+        const viewBookings = activeBookings.filter((booking) => {
             const ownedByMe = Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id);
             const waitingOnCustomer = String(booking.review_status || '').toLowerCase() === 'needs customer details' || Boolean(booking.clarification_request && !booking.clarification_response);
-            const customerResponded = String(booking.review_status || '').toLowerCase() === 'clarification received' || Boolean(booking.clarification_response);
-            if (bookingReviewView === 'needs-action') return !booking.assigned_to || booking.can_accept_transfer || (ownedByMe && customerResponded) || (ownedByMe && !waitingOnCustomer);
+            if (bookingReviewView === 'needs-action') return true;
             if (bookingReviewView === 'mine') return ownedByMe;
             if (bookingReviewView === 'waiting') return waitingOnCustomer;
             return false;
@@ -2383,9 +2406,20 @@ const DashboardMarketing = () => {
             .filter((booking) => {
                 const query = inquirySearch.trim().toLowerCase();
                 const reviewStatus = String(booking.review_status || booking.status || '').toLowerCase();
+                const statusText = String(booking.status || '').toLowerCase();
                 const eventMonth = booking.event_date ? String(booking.event_date).slice(0, 7) : '';
+                const ownedByMe = Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id);
 
-                if (inquiryStatusFilter !== 'all' && reviewStatus !== inquiryStatusFilter) return false;
+                if (bookingReviewView === 'needs-action') {
+                    if (bookingOwnershipFilter === 'unclaimed' && booking.assigned_to) return false;
+                    if (bookingOwnershipFilter === 'claimed' && !booking.assigned_to) return false;
+                    if (bookingOwnershipFilter === 'mine' && !ownedByMe) return false;
+                }
+                if (inquiryStatusFilter !== 'all') {
+                    if (inquiryStatusFilter === 'approved' && !(statusText === 'confirmed' || reviewStatus === 'approved for reservation')) return false;
+                    else if (inquiryStatusFilter === 'cancelled' && !(statusText === 'cancelled' || reviewStatus === 'not available')) return false;
+                    else if (!['approved', 'cancelled'].includes(inquiryStatusFilter) && reviewStatus !== inquiryStatusFilter) return false;
+                }
                 if (inquiryMonth && eventMonth !== inquiryMonth) return false;
                 if (!query) return true;
 
@@ -2416,7 +2450,7 @@ const DashboardMarketing = () => {
             });
         const pagedPendingBookings = pendingBookings.slice((inquiryPage - 1) * inquiryPerPage, inquiryPage * inquiryPerPage);
         const emptyBookingMessage = {
-            'needs-action': 'No bookings need action right now.',
+            'needs-action': 'No active bookings match this queue.',
             mine: 'No bookings are assigned to you.',
             waiting: 'No bookings are waiting on customer details.',
         }[bookingReviewView] || 'No bookings match this view.';
@@ -2473,12 +2507,21 @@ const DashboardMarketing = () => {
                     onChange={handleInquirySearchChange}
                     placeholder="Search booking, customer, phone, or city"
                 >
+                    {bookingReviewView === 'needs-action' && (
+                        <select value={bookingOwnershipFilter} onChange={(event) => setBookingOwnershipFilter(event.target.value)} className="staff-control" aria-label="Booking ownership filter">
+                            <option value="all">All ownership</option>
+                            <option value="unclaimed">Unclaimed</option>
+                            <option value="claimed">Claimed</option>
+                            <option value="mine">Assigned to me</option>
+                        </select>
+                    )}
                     <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
                         <option value="all">All active statuses</option>
-                        <option value="submitted">Submitted</option>
                         <option value="under review">Under Review</option>
                         <option value="needs customer details">Needs Customer Details</option>
                         <option value="clarification received">Clarification Received</option>
+                        <option value="approved">Approved</option>
+                        <option value="cancelled">Cancelled / Rejected</option>
                     </select>
                     <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
                         <option value="eventDateAsc">Event date ascending</option>
@@ -2501,6 +2544,9 @@ const DashboardMarketing = () => {
                                 const canClaim = canClaimBooking(booking) && !isClaiming;
                                 const pendingTransferToMe = Boolean(booking.can_accept_transfer);
                                 const hasPendingTransfer = Boolean(booking.transfer_requested_to);
+                                const ownedByMe = Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id);
+                                const displayReviewBadge = booking.review_status && String(booking.review_status).toLowerCase() !== 'submitted';
+                                const currentLiveStatus = booking.live_status || 'Not Started';
                                 return (
                                 <li key={booking.id} onClick={() => setSelectedBooking(booking)} className="block cursor-pointer transition-colors hover:bg-[#fffaf3]">
                                     <div className="px-6 py-5">
@@ -2508,14 +2554,18 @@ const DashboardMarketing = () => {
                                             <p className="text-sm font-bold text-primary-700 truncate">
                                                 Booking #{booking.id} - {eventDisplayName(booking)}
                                             </p>
-                                            <div className="ml-2 flex-shrink-0 flex">
-                                                <p className="inline-flex rounded-md bg-yellow-100 px-3 py-1 text-xs font-bold leading-5 text-yellow-800">
-                                                    {booking.review_status || booking.status}
-                                                </p>
-                                            </div>
+                                            {displayReviewBadge && (
+                                                <div className="ml-2 flex-shrink-0 flex">
+                                                    <StaffStatusBadge tone={reviewStatusLabel(booking.review_status).tone === 'success' ? 'good' : reviewStatusLabel(booking.review_status).tone === 'danger' ? 'danger' : reviewStatusLabel(booking.review_status).tone === 'warning' ? 'warn' : 'muted'}>
+                                                        {booking.review_status}
+                                                    </StaffStatusBadge>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
-                                            <span>Owner: {booking.owner_name || booking.assigned_name || 'Unassigned'}</span>
+                                            <StaffStatusBadge tone={!booking.assigned_to ? 'warn' : ownedByMe ? 'good' : 'muted'}>
+                                                {!booking.assigned_to ? 'Unclaimed' : ownedByMe ? 'Assigned to me' : `Owned by ${booking.owner_name || booking.assigned_name || 'staff'}`}
+                                            </StaffStatusBadge>
                                             {hasPendingTransfer && <span className="text-[#9f6500]">Transfer requested to {booking.transfer_requested_to_name || 'Marketing staff'}</span>}
                                             {!canEdit && <span className="text-amber-700">{pendingTransferToMe ? 'Accept this transfer to take ownership' : canClaim ? 'Claim this booking to take action' : 'Owned by another staff member'}</span>}
                                             {booking.clarification_request && (
@@ -2573,6 +2623,22 @@ const DashboardMarketing = () => {
                                                         Unclaim
                                                     </button>
                                                 )}
+                                                {booking.can_request_transfer && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); requestBookingTransfer(booking.id); }}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#720101]/15 bg-white px-4 py-1.5 font-bold text-[#720101] transition-colors hover:bg-[#720101]/5"
+                                                    >
+                                                        Request transfer
+                                                    </button>
+                                                )}
+                                                {hasPendingTransfer && Number(booking.transfer_requested_by) === Number(user?.id) && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); cancelBookingTransfer(booking.id); }}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-1.5 font-bold text-slate-600 transition-colors hover:bg-slate-50"
+                                                    >
+                                                        Cancel request
+                                                    </button>
+                                                )}
                                                 {canEdit && (
                                                     <>
                                                         <button
@@ -2580,6 +2646,12 @@ const DashboardMarketing = () => {
                                                             className="inline-flex items-center gap-1.5 rounded-lg border border-[#f0aa0b]/40 bg-[#fff7e8] px-4 py-1.5 font-bold text-[#9f6500] transition-colors hover:bg-[#fff0cf]"
                                                         >
                                                             {user?.role === 'Admin' && !booking.assigned_to ? 'Override details' : 'Ask details'}
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); sendBookingReminder(booking.id); }}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#720101]/15 bg-white px-4 py-1.5 font-bold text-[#720101] transition-colors hover:bg-[#720101]/5"
+                                                        >
+                                                            Remind customer
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); updateStatus(booking.id, 'Confirmed'); }}
@@ -2609,6 +2681,20 @@ const DashboardMarketing = () => {
                                                 )}
                                             </div>
                                         </div>
+                                        {canEdit && booking.status === 'Confirmed' && (
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {LIVE_STATUS_OPTIONS.map((status) => (
+                                                    <button
+                                                        key={status}
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); updateLiveStatus(booking.id, status); }}
+                                                        className={`rounded-full border px-3 py-1 text-[11px] font-black transition ${currentLiveStatus === status ? 'border-[#720101] bg-[#720101] text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                                                    >
+                                                        {status}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </li>
                             );})}
@@ -3199,7 +3285,7 @@ const DashboardMarketing = () => {
             roleLabel="Marketing team"
             label="Preparing marketing workspace"
             navGroups={[
-                { label: 'Daily work', items: ['Today', 'Bookings', 'Guest Inquiries', 'Calendar', 'Event Handoff', 'Messages'] },
+                { label: 'Daily work', items: ['To-Dos', 'Bookings', 'Food Tastings', 'Messages', 'Calendar', 'Guest Inquiries'] },
                 { label: 'Operations', items: ['Public Content', 'Availability', 'Settings', 'Event History'] },
             ]}
         />
@@ -3316,12 +3402,11 @@ const DashboardMarketing = () => {
                 bookings: dashboardSummary.pending,
                 leads: leadData.summary?.open || 0,
                 calendar: dashboardSummary.monthEvents,
-                handoff: marketingSummary.upcoming,
             })}
         >
                 <StaffPageHeader
-                    eyebrow={activeTab === 'today' ? 'Today' : 'Marketing workflow'}
-                    title={activeTab === 'today' ? 'Booking workbench' : tabMeta[activeTab]}
+                    eyebrow={activeTab === 'today' ? 'To-Dos' : 'Marketing workflow'}
+                    title={activeTab === 'today' ? 'Your priority work' : tabMeta[activeTab]}
                     metrics={[
                         { label: 'Upcoming', value: dashboardSummary.upcoming, helpText: 'Upcoming pending or confirmed bookings that still need Marketing visibility.' },
                         { label: 'Pending', value: dashboardSummary.pending, helpText: 'Booking requests that have not yet been approved or rejected.' },
@@ -3406,11 +3491,6 @@ const DashboardMarketing = () => {
                     </Suspense>
                 )}
                 {activeTab === 'availability' && renderAvailability()}
-                {activeTab === 'handoff' && (
-                    <Suspense fallback={<StaffSkeleton variant="panel" rows={3} label="Loading preparation board" />}>
-                        <PreparationBoard />
-                    </Suspense>
-                )}
                 {activeTab === 'public-content' && renderPublicContent()}
                 {activeTab === 'settings' && (
                     <RoleSettingsPanel role="marketing" onNavigate={setActiveTab} />

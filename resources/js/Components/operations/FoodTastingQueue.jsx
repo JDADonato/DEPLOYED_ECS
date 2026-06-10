@@ -30,6 +30,7 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
     const [savingId, setSavingId] = useState(null);
     const [filters, setFilters] = useState({
         search: '',
+        ownership: 'all',
         statusGroup: 'all',
         dateWindow: 'all',
         sort: 'date-asc',
@@ -83,12 +84,17 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                 row.outcome_notes,
             ].some((value) => String(value || '').toLowerCase().includes(queryText));
             const matchesStatus = !selectedStatusGroup?.statuses?.length || selectedStatusGroup.statuses.includes(rowStatus);
+            const ownedByMe = Number(row.owner_id ?? row.handled_by) === Number(auth?.user?.id);
+            const matchesOwnership = filters.ownership === 'all'
+                || (filters.ownership === 'unclaimed' && !row.handled_by)
+                || (filters.ownership === 'claimed' && row.handled_by)
+                || (filters.ownership === 'mine' && ownedByMe);
             const matchesDate = filters.dateWindow === 'all'
                 || (filters.dateWindow === 'upcoming' && preferredDate && preferredDate >= today)
                 || (filters.dateWindow === 'past' && preferredDate && preferredDate < today)
                 || (filters.dateWindow === 'unscheduled' && !preferredDate);
 
-            return matchesSearch && matchesStatus && matchesDate;
+            return matchesSearch && matchesStatus && matchesOwnership && matchesDate;
         });
 
         return [...filteredRows].sort((a, b) => {
@@ -130,6 +136,23 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.message || payload.error || 'Could not update tasting.');
             notify('Food tasting updated.');
+            tastingResource.markChanged(row.id);
+            loadRows({ silent: true });
+        } catch (error) {
+            notify(error.message || 'Could not update tasting.', 'error');
+        } finally {
+            setSavingId(null);
+        }
+    };
+
+    const postTastingAction = async (row, action, successMessage) => {
+        setSavingId(row.id);
+        try {
+            const response = await csrfFetch(`/api/marketing/food-tastings/${row.id}/${action}`, { method: 'POST' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.message || payload.error || 'Could not update tasting.');
+            notify(payload.message || successMessage);
+            setRows((current) => current.map((item) => item.id === row.id ? (payload.tasting || item) : item));
             tastingResource.markChanged(row.id);
             loadRows({ silent: true });
         } catch (error) {
@@ -183,6 +206,12 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                 </div>
                 <select value={filters.statusGroup} onChange={(event) => setFilters((current) => ({ ...current, statusGroup: event.target.value }))} className="staff-control">
                     {STATUS_FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <select value={filters.ownership} onChange={(event) => setFilters((current) => ({ ...current, ownership: event.target.value }))} className="staff-control">
+                    <option value="all">All ownership</option>
+                    <option value="unclaimed">Unclaimed</option>
+                    <option value="claimed">Claimed</option>
+                    <option value="mine">Assigned to me</option>
                 </select>
                 <select value={filters.dateWindow} onChange={(event) => setFilters((current) => ({ ...current, dateWindow: event.target.value }))} className="staff-control">
                     <option value="all">All dates</option>
@@ -249,6 +278,16 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                                     <td className="px-6 py-4">
                                         <div className="font-black text-slate-950">{row.client_name || 'Guest'}</div>
                                         <div className="text-xs font-bold text-slate-500">{row.client_email || 'No email'} / {row.client_phone || 'No phone'}</div>
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${!row.handled_by ? 'bg-amber-50 text-amber-700' : Number(row.handled_by) === Number(auth?.user?.id) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                {!row.handled_by ? 'Unclaimed' : Number(row.handled_by) === Number(auth?.user?.id) ? 'Assigned to me' : `Owned by ${row.owner_name || 'staff'}`}
+                                            </span>
+                                            {row.transfer_requested_to && (
+                                                <span className="inline-flex rounded-full bg-[#fff7e8] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#9f6500]">
+                                                    Transfer pending
+                                                </span>
+                                            )}
+                                        </div>
                                         {row.duplicate_customer && (
                                             <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-700">
                                                 {row.duplicate_customer.is_deactivated ? 'Matches deactivated customer' : 'Matches customer'}
@@ -258,10 +297,42 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                                     <td className="px-6 py-4 font-bold text-slate-700">{formatDate(row.preferred_date)} / {row.preferred_time || 'Time pending'}</td>
                                     <td className="max-w-md px-6 py-4 text-sm font-semibold text-slate-600">{row.outcome_notes || row.notes || 'No notes yet.'}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end">
+                                        <div className="flex flex-col items-end gap-2">
                                             <select disabled={savingId === row.id} value={row.status || 'Pending'} onChange={(event) => updateStatus(row, event.target.value)} className="staff-control max-w-[170px] text-xs">
                                                 {STATUS_OPTIONS.filter((status) => status !== 'All').map((status) => <option key={status} value={status}>{status}</option>)}
                                             </select>
+                                            <div className="flex flex-wrap justify-end gap-2">
+                                                {row.can_claim && (
+                                                    <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'claim', 'Food tasting claimed.')} className="staff-row-action">
+                                                        Claim
+                                                    </button>
+                                                )}
+                                                {row.can_edit && row.handled_by && (
+                                                    <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'release', 'Food tasting released.')} className="staff-row-action">
+                                                        Release
+                                                    </button>
+                                                )}
+                                                {row.can_request_transfer && (
+                                                    <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'transfer/request', 'Transfer requested.')} className="staff-row-action">
+                                                        Request transfer
+                                                    </button>
+                                                )}
+                                                {row.can_accept_transfer && (
+                                                    <>
+                                                        <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'transfer/accept', 'Transfer accepted.')} className="staff-row-action">
+                                                            Accept
+                                                        </button>
+                                                        <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'transfer/decline', 'Transfer declined.')} className="staff-row-action">
+                                                            Decline
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {row.transfer_requested_by && Number(row.transfer_requested_by) === Number(auth?.user?.id) && (
+                                                    <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'transfer/cancel', 'Transfer cancelled.')} className="staff-row-action">
+                                                        Cancel request
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                 </UpdatedRowPulse>

@@ -746,7 +746,7 @@ const DashboardAccounting = () => {
     }, [bookings, reconciliationItems.length, accountingSummary]);
 
     const tabMeta = {
-        today: 'Today',
+        today: 'To-Dos',
         payments: 'Payments',
         reconciliation: 'Reconciliation',
         ledger: 'Ledger & Receipts',
@@ -1538,7 +1538,7 @@ const DashboardAccounting = () => {
                 roleLabel="Finance team"
                 label="Preparing accounting workspace"
                 navGroups={[
-                    { label: 'Daily work', items: ['Today', 'Payments', 'Refunds', 'Ledger & Receipts', 'Settings', 'Event History'] },
+                    { label: 'Daily work', items: ['To-Dos', 'Payments', 'Refunds', 'Ledger & Receipts', 'Settings', 'Event History'] },
                 ]}
                 rows={5}
             />
@@ -1643,8 +1643,8 @@ const DashboardAccounting = () => {
             })}
         >
                 <StaffPageHeader
-                    eyebrow={activeTab === 'today' ? 'Today' : 'Finance workflow'}
-                    title={activeTab === 'today' ? 'Payment control desk' : tabMeta[activeTab]}
+                    eyebrow={activeTab === 'today' ? 'To-Dos' : 'Finance workflow'}
+                    title={activeTab === 'today' ? 'Your priority work' : tabMeta[activeTab]}
                     metrics={[
                         { label: 'Bookings', value: dashboardSummary.bookings },
                         { label: 'Pending', value: dashboardSummary.pending },
@@ -1656,124 +1656,14 @@ const DashboardAccounting = () => {
 
                 {activeTab === 'today' && (
                     <div className="staff-ops-workspace">
-                        <StaffOpsMetricStrip
-                            metrics={[
-                                {
-                                    label: 'Collected',
-                                    value: `P${toMoneyNumber(dashboardSummary.collected).toLocaleString()}`,
-                                    description: 'Verified finance records in the current ledger view',
-                                    actionLabel: 'Open ledger',
-                                    onAction: () => setActiveTab('ledger'),
-                                },
-                                {
-                                    label: 'Pending',
-                                    value: dashboardSummary.pending,
-                                    description: 'Payment records still waiting for review',
-                                    actionLabel: 'Verify',
-                                    onAction: () => { setPaymentSegment('needs_verification'); setActiveTab('payments'); },
-                                    tone: dashboardSummary.pending > 0 ? 'warning' : 'neutral',
-                                },
-                                {
-                                    label: 'Overdue',
-                                    value: dashboardSummary.overdue,
-                                    description: 'Balances past their due date',
-                                    actionLabel: 'Follow up',
-                                    onAction: () => { setPaymentSegment('overdue'); setActiveTab('payments'); },
-                                    tone: dashboardSummary.overdue > 0 ? 'danger' : 'neutral',
-                                },
-                                {
-                                    label: 'Exceptions',
-                                    value: dashboardSummary.exceptions + dashboardSummary.refunds,
-                                    description: 'Provider issues and refund cases',
-                                    actionLabel: 'Resolve',
-                                    onAction: () => { setPaymentSegment('exceptions'); setActiveTab('payments'); },
-                                    tone: dashboardSummary.exceptions + dashboardSummary.refunds > 0 ? 'danger' : 'neutral',
-                                },
-                            ]}
-                        />
-                        <StaffDecisionBrief
-                            source="Finance read"
-                            finding={dashboardSummary.overdue + dashboardSummary.exceptions > 0 ? 'Finance has collection or provider risk to clear.' : 'Finance queues are currently stable.'}
-                            signal={dashboardSummary.overdue + dashboardSummary.exceptions > 0 ? `${dashboardSummary.overdue} overdue balance(s) and ${dashboardSummary.exceptions} provider exception(s) need review.` : 'No overdue balances or provider exceptions are currently blocking finance work.'}
-                            nextMove={dashboardSummary.exceptions > 0 ? 'Open exceptions first, then follow up overdue balances.' : dashboardSummary.overdue > 0 ? 'Open overdue payments and send reminders for the oldest balances.' : 'Keep monitoring payment verification and refund queues.'}
-                            tone={dashboardSummary.overdue + dashboardSummary.exceptions > 0 ? 'danger' : 'neutral'}
-                        />
                         <NextActionPanel
+                            eyebrow="To-Dos"
                             title="Finance actions"
-                            actions={financeNextActions}
+                            description="Payment verification, overdue reminders, provider exceptions, and refund cases appear here."
+                            actions={financeNextActions.filter((action) => action.priority !== 'info').slice(0, 8)}
                             emptyTitle="No finance actions waiting"
                             emptyMessage="Payment reviews, overdue balances, refunds, and reconciliation issues will appear here."
                         />
-                        <StaffOpsPanel
-                            eyebrow="Finance priority desk"
-                            title="Work that needs Accounting today"
-                            actionLabel="Open payments"
-                            onAction={() => { setPaymentSegment('exceptions'); setActiveTab('payments'); }}
-                        >
-                            {todayQueues.urgent.length === 0 && todayQueues.pendingBookings.length === 0 && todayQueues.upcomingBookings.length === 0 && todayQueues.refunds.length === 0 ? (
-                                <StaffEmptyState title="No finance work waiting" message="Payment reviews, overdue balances, refund cases, and provider issues will appear here." />
-                            ) : (
-                                <div className="staff-ops-grid-two">
-                                    {[
-                                        ['Urgent', todayQueues.urgent, 'exceptions', 'danger'],
-                                        ['Payment verification', todayQueues.pendingBookings, 'needs_verification', 'warning'],
-                                        ['Due soon', todayQueues.upcomingBookings, 'upcoming', 'neutral'],
-                                        ['Follow-up', todayQueues.refunds, 'refunds', 'warning'],
-                                    ].map(([label, items, target]) => (
-                                        <div key={label} className="staff-ops-queue-group">
-                                            <div className="staff-ops-queue-head">
-                                                <h4>{label}</h4>
-                                                <StaffStatusBadge tone={items.length > 0 ? (label === 'Urgent' ? 'danger' : 'warn') : 'good'}>{items.length}</StaffStatusBadge>
-                                            </div>
-                                            {items.length === 0 ? (
-                                                <p className="staff-ops-muted">Nothing waiting here.</p>
-                                            ) : (
-                                                <div className="staff-ops-workspace">
-                                                    {items.slice(0, 3).map((item) => {
-                                                        const isRefund = target === 'refunds';
-                                                        const isException = Boolean(item.exceptions);
-                                                        const itemKey = `${label}-${item.id || item.booking_id}`;
-                                                        const title = isException ? `Payment #${item.id}` : eventDisplayName(item);
-                                                        const detail = isRefund
-                                                            ? `Booking #${item.booking_id} / ${formatAccountingDate(item.event_date)}`
-                                                            : isException
-                                                                ? `Booking #${item.booking_id} / ${formatAccountingDate(item.event_date)}`
-                                                                : `${formatAccountingDate(item.event_date)} / ${(item.payments || []).length} payment terms`;
-
-                                                        return (
-                                                            <StaffOpsListRow
-                                                                key={itemKey}
-                                                                onClick={() => {
-                                                                    if (isRefund) {
-                                                                        setActiveTab('refunds');
-                                                                    } else {
-                                                                        setPaymentSegment(target);
-                                                                        setActiveTab('payments');
-                                                                    }
-                                                                }}
-                                                                eyebrow={label}
-                                                                title={title}
-                                                                detail={detail}
-                                                                tone={label === 'Urgent' ? 'danger' : 'warning'}
-                                                                actionLabel={isRefund ? 'Open refunds' : 'Open payments'}
-                                                            >
-                                                                {isException && (item.exceptions || []).length > 0 && (
-                                                                    <div className="staff-provider-tags mt-2 justify-start">
-                                                                        {(item.exceptions || []).slice(0, 2).map((exception) => (
-                                                                            <span key={exception}>{exceptionLabels[exception] || exception}</span>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </StaffOpsListRow>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </StaffOpsPanel>
                     </div>
                 )}
 

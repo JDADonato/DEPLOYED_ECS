@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Support\CustomerIdentity;
+use App\Services\BookingJourneyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,6 +12,7 @@ class BookingSummaryResource extends JsonResource
     public function toArray(Request $request): array
     {
         $identity = CustomerIdentity::forBooking($this->resource);
+        $journey = app(BookingJourneyService::class)->summarize($this->resource);
 
         return [
             'id' => $this->id,
@@ -68,7 +70,10 @@ class BookingSummaryResource extends JsonResource
             'can_accept_transfer' => $this->canAcceptTransfer($request),
             'can_claim' => $this->canClaim($request),
             'can_edit' => $this->canEdit($request),
+            'can_request_transfer' => $this->canRequestTransfer($request),
             'ownership_label' => $this->ownershipLabel($request),
+            'journey_summary' => $journey,
+            'next_action' => $journey['next_action'] ?? null,
             'clarification_request' => $this->clarification_request,
             'clarification_response' => $this->clarification_response,
             'clarification_requested_at' => $this->clarification_requested_at,
@@ -148,6 +153,17 @@ class BookingSummaryResource extends JsonResource
             && $user->role === 'Marketing'
             && ! is_null($this->transfer_requested_to)
             && (int) $this->transfer_requested_to === (int) $user->id;
+    }
+
+    private function canRequestTransfer(Request $request): bool
+    {
+        $user = $request->user();
+
+        return $user
+            && $user->role === 'Marketing'
+            && ! is_null($this->assigned_to)
+            && (int) $this->assigned_to !== (int) $user->id
+            && is_null($this->transfer_requested_to);
     }
 
     private function ownershipLabel(Request $request): string
