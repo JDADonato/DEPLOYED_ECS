@@ -115,14 +115,13 @@ const EventDetailDrawer = ({
     const LIVE_STATUS_OPTIONS = ['Not Started', 'On the Way', 'Preparing', 'Serving', 'Completed'];
 
     const drawerFooter = (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-2">
             {showLiveStatus && (
-                <div className="border-b border-slate-100 pb-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div className="pb-1 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">
                         Live Status Tracking
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {LIVE_STATUS_OPTIONS.map((status) => {
                             const isActive = booking.live_status === status || (!booking.live_status && status === 'Not Started');
                             return (
@@ -131,7 +130,7 @@ const EventDetailDrawer = ({
                                     type="button"
                                     disabled={!canEdit}
                                     onClick={() => onUpdateLiveStatus(booking.id, status)}
-                                    className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${
+                                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition ${
                                         isActive
                                             ? 'border-[#720101] bg-[#720101] text-white'
                                             : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -144,9 +143,11 @@ const EventDetailDrawer = ({
                     </div>
                 </div>
             )}
-            <div className="flex w-full items-center justify-between">
-                {footer}
-            </div>
+            {footer && (
+                <div className="flex w-full items-center justify-between pt-1">
+                    {footer}
+                </div>
+            )}
         </div>
     );
 
@@ -184,24 +185,26 @@ const EventDetailDrawer = ({
                 </section>
 
                 {/* Tabs Navigation */}
-                <div className="flex border-b border-slate-200 bg-white sticky top-0 z-10">
-                    {tabs.map((tab) => {
-                        const isActive = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => handleTabChange(tab.id)}
-                                className={`flex-1 border-b-2 py-2.5 text-center text-xs font-black uppercase tracking-wider transition-colors ${
-                                    isActive
-                                        ? 'border-[#720101] text-[#720101]'
-                                        : 'border-transparent text-slate-400 hover:text-slate-700'
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        );
-                    })}
+                <div className="sticky top-0 z-10 bg-white py-2 border-b border-slate-100">
+                    <div className="flex p-1 bg-slate-100 rounded-xl space-x-1">
+                        {tabs.map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => handleTabChange(tab.id)}
+                                    className={`flex-1 py-1.5 text-center text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                        isActive
+                                            ? 'bg-white text-[#720101] shadow-sm'
+                                            : 'text-slate-400 hover:text-slate-700'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Tab Content */}
