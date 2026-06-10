@@ -6073,7 +6073,12 @@ const DashboardAdmin = () => {
     };
 
     const renderMarketingCalendar = () => {
-        const adminCalendarEventsFiltered = adminCalendarEvents.filter(booking => {
+        const adminCalendarEventsFiltered = bookings.filter(booking => {
+            if (!booking.event_date) return false;
+            const bStatus = String(booking.status || '').toLowerCase();
+            if (bStatus !== 'pending' && bStatus !== 'confirmed') return false;
+            if (String(booking.event_date).substring(0, 7) !== adminCalendarMonthKey) return false;
+
             const status = String(booking.status || '').toLowerCase();
             const reviewStatus = String(booking.review_status || '').toLowerCase();
             const filterStatus = String(marketingCalendarFilters.status || '').toLowerCase();
