@@ -1519,11 +1519,12 @@ const DashboardAdmin = () => {
         canceled: 'bg-rose-100 text-rose-800 border-rose-200',
         rejected: 'bg-rose-100 text-rose-800 border-rose-200',
     };
+    const filterOutSettings = (groups) => groups.map(g => ({ ...g, items: g.items.filter(i => i.id !== 'settings') }));
     const workspaceNavSource = {
         admin: ADMIN_WORKSPACE_NAV_GROUPS,
         customer: CUSTOMER_WORKSPACE_NAV_GROUPS,
-        marketing: MARKETING_WORKSPACE_NAV_GROUPS,
-        accounting: ACCOUNTING_WORKSPACE_NAV_GROUPS,
+        marketing: filterOutSettings(MARKETING_WORKSPACE_NAV_GROUPS),
+        accounting: filterOutSettings(ACCOUNTING_WORKSPACE_NAV_GROUPS),
     };
     const workspaceNavCounts = useMemo(() => {
         const pendingBookings = bookings.filter((booking) => normalizeStatus(booking.status) === 'pending').length;
