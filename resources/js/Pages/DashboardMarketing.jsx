@@ -2856,44 +2856,39 @@ const DashboardMarketing = () => {
                 )}
 
                 {activeConfigTab === 'packages' && (
-                    <div className="divide-y divide-amber-100/70">
-                        {packages.map(pkg => {
-                            const labels = packageEventTypeLabels(pkg);
-                            return (
-                                <article key={pkg.id} className="grid gap-4 px-6 py-5 transition-colors hover:bg-[#fffaf3] lg:grid-cols-[minmax(220px,1.1fr)_minmax(260px,1.25fr)_minmax(160px,0.75fr)_auto] lg:items-center">
-                                    <div>
-                                        <p className="text-base font-black text-slate-950">{pkg.name}</p>
-                                        <p className="mt-1 text-sm font-semibold text-slate-500">{pkg.description || 'No description yet.'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Shown for</p>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            {labels.map(label => (
-                                                <span key={label} className="rounded-full border border-amber-100 bg-white px-3 py-1 text-xs font-black text-slate-600">
-                                                    {label}
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <p className="mt-2 text-xs font-semibold text-slate-400">
-                                            Catalog group: {getCategoryLabel(pkg.package_category)}
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 rounded-xl border border-amber-100 bg-white px-4 py-3 lg:grid-cols-1">
-                                        <div>
-                                            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Per guest</p>
-                                            <p className="text-lg font-black text-slate-950">PHP {Number(pkg.base_price_per_head || 0).toLocaleString()}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Minimum</p>
-                                            <p className="text-lg font-black text-slate-950">{pkg.minimum_pax || 1} guest{Number(pkg.minimum_pax || 1) === 1 ? '' : 's'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button type="button" onClick={() => openPackageDrawer(pkg)} className="staff-row-action">Edit</button>
-                                    </div>
-                                </article>
-                            );
-                        })}
+                    <div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 text-xs font-black uppercase tracking-wider text-gray-500">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left">Package</th>
+                                        <th className="px-6 py-4 text-left">Event Type</th>
+                                        <th className="px-6 py-4 text-left">Category</th>
+                                        <th className="px-6 py-4 text-left">Connected To</th>
+                                        <th className="px-6 py-4 text-left">Price / Head</th>
+                                        <th className="px-6 py-4 text-right">Minimum Guests</th>
+                                        <th className="px-6 py-4 text-left">Description</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {packages.map(pkg => (
+                                        <tr key={pkg.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 font-bold text-gray-900">{pkg.name}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-gray-700">{eventTypes.find(type => type.slug === pkg.type)?.label || pkg.type}</td>
+                                            <td className="px-6 py-4 text-gray-600">{getCategoryLabel(pkg.package_category)}</td>
+                                            <td className="px-6 py-4 text-gray-600">{(pkg.event_type_slugs || [pkg.type]).map(slug => eventTypes.find(type => type.slug === slug)?.label || slug).join(', ')}</td>
+                                            <td className="px-6 py-4 text-left font-bold text-gray-900">PHP {Number(pkg.base_price_per_head || 0).toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right text-gray-600">{pkg.minimum_pax}</td>
+                                            <td className="px-6 py-4 text-gray-600">{pkg.description || 'No description'}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button type="button" onClick={() => openPackageDrawer(pkg)} className="staff-row-action">Edit</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                         {packages.length === 0 && (
                             <div className="p-8 text-center text-sm font-semibold text-slate-500">No packages have been created yet.</div>
                         )}
@@ -2901,31 +2896,45 @@ const DashboardMarketing = () => {
                 )}
 
                 {activeConfigTab === 'eventTypes' && (
-                    <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-                        {eventTypes.map(type => (
-                            <article key={type.id} className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p className="text-lg font-black text-slate-950">{type.label}</p>
-                                        <p className="mt-1 text-xs font-black uppercase tracking-widest text-slate-400">{type.slug}</p>
-                                    </div>
-                                    <span className="rounded-full bg-[#fff7e8] px-3 py-1 text-xs font-black text-[#9f6500]">
-                                        {getCategoryLabel(type.package_category)}
-                                    </span>
-                                </div>
-                                <p className="mt-4 min-h-12 text-sm font-semibold leading-relaxed text-slate-500">{type.description || 'No customer-facing description yet.'}</p>
-                                <div className="mt-4 rounded-xl bg-[#fbf8f2] px-4 py-3">
-                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Security term</p>
-                                    <p className="mt-1 text-sm font-black text-slate-700">{type.security_label || getSecurityLabel(type.security_type)}</p>
-                                </div>
-                                <div className="mt-5 flex justify-end gap-2">
-                                    <button type="button" onClick={() => openEventTypeDrawer(type)} className="staff-row-action">Edit</button>
-                                    <button type="button" onClick={() => handleDeleteEventType(type)} className="staff-row-action staff-row-action-danger">Archive</button>
-                                </div>
-                            </article>
-                        ))}
+                    <div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 text-xs font-black uppercase tracking-wider text-gray-500">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left">Event Type</th>
+                                        <th className="px-6 py-4 text-left">Short Name</th>
+                                        <th className="px-6 py-4 text-left">Category</th>
+                                        <th className="px-6 py-4 text-left">Security</th>
+                                        <th className="px-6 py-4 text-left">Icon</th>
+                                        <th className="px-6 py-4 text-left">Description</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {eventTypes.map(type => (
+                                        <tr key={type.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 font-bold text-gray-900">
+                                                {type.label}
+                                                {type.is_active === false && <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-500">Inactive</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm font-semibold text-gray-600">{type.slug}</td>
+                                            <td className="px-6 py-4 text-gray-600">{getCategoryLabel(type.package_category)}</td>
+                                            <td className="px-6 py-4 text-gray-600">{type.security_label || getSecurityLabel(type.security_type)}</td>
+                                            <td className="px-6 py-4 text-gray-600">{type.icon}</td>
+                                            <td className="px-6 py-4 text-gray-600">{type.description || 'No description'}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="inline-flex flex-wrap justify-end gap-2">
+                                                    <button type="button" onClick={() => openEventTypeDrawer(type)} className="staff-row-action">Edit</button>
+                                                    <button type="button" onClick={() => handleDeleteEventType(type)} className="staff-row-action staff-row-action-danger">Archive</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                         {eventTypes.length === 0 && (
-                            <div className="rounded-xl border border-amber-100 bg-white p-8 text-center text-sm font-semibold text-slate-500 md:col-span-2 xl:col-span-3">No event types have been created yet.</div>
+                            <div className="p-8 text-center text-sm font-semibold text-slate-500">No event types have been created yet.</div>
                         )}
                     </div>
                 )}
