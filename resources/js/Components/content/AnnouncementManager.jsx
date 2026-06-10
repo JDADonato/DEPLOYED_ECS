@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     Archive,
     ChevronDown,
@@ -278,7 +279,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
             return;
         }
 
-        window.open(`/preview/announcements/${item.id}`, '_blank', 'noopener,noreferrer');
+        router.visit(`/preview/announcements/${item.id}`);
     };
 
     const payloadFromForm = () => ({
