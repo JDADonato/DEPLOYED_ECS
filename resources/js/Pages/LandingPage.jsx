@@ -600,7 +600,7 @@ const HomepageAnnouncements = ({ announcements }) => {
                         {featuredImage ? (
                             featured.image_fit === 'fit_image' ? (
                                 <div className="relative overflow-hidden rounded-none w-full" style={{ background: '#1a1a1a' }}>
-                                    <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10 md:py-14">
+                                    <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                         <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
                                             <img
                                                 src={featuredImage}
@@ -643,7 +643,7 @@ const HomepageAnnouncements = ({ announcements }) => {
                                         containerClassName="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.03]"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                                    <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 w-full py-10 md:py-14">
+                                    <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 w-full py-6 md:py-8">
                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                             <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
                                                 {announcementTypeLabels[featured.type] || 'Announcement'}
@@ -671,7 +671,7 @@ const HomepageAnnouncements = ({ announcements }) => {
                             )
                         ) : (
                             <div className="relative overflow-hidden rounded-none w-full" style={{ background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
-                                <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10 md:py-14">
+                                <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                     <div className="flex flex-col justify-end h-full">
                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                             <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
