@@ -40,6 +40,8 @@ class ProfileController extends Controller
         app(AccountLifecycleService::class)->archiveCustomerConversations($user, $user->id);
 
         $user->forceFill([
+            'username' => $user->username ? sprintf('deactivated_%d_%s', $user->id, now()->format('YmdHis')) : null,
+            'email' => $user->email ? sprintf('deactivated+%d+%s@eloquente.invalid', $user->id, now()->format('YmdHis')) : null,
             'account_status' => 'deactivated',
             'deactivated_at' => now(),
             'deactivated_by' => $user->id,
