@@ -322,7 +322,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::delete('/api/settings/event-types/{id}', [SettingsController::class, 'deleteEventType']);
     Route::get('/api/settings/menu-items', [SettingsController::class, 'menuItems']);
     Route::post('/api/settings/menu-items', [SettingsController::class, 'createMenuItem']);
-    Route::put('/api/settings/menu-items/{id}', [SettingsController::class, 'updateMenuItem']);
+    Route::post('/api/settings/menu-items/{id}', [SettingsController::class, 'updateMenuItem']);
     Route::patch('/api/settings/menu-items/{id}/archive', [SettingsController::class, 'archiveMenuItem']);
     Route::patch('/api/settings/menu-items/{id}/unarchive', [SettingsController::class, 'unarchiveMenuItem']);
     Route::delete('/api/settings/menu-items/{id}', [SettingsController::class, 'deleteMenuItem']);
@@ -409,7 +409,7 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     // Menu items CRUD
     Route::get('/api/admin/menu-items', [AdminController::class, 'getMenuItems']);
     Route::post('/api/admin/menu-items', [AdminController::class, 'createMenuItem']);
-    Route::put('/api/admin/menu-items/{id}', [AdminController::class, 'updateMenuItem']);
+    Route::post('/api/admin/menu-items/{id}', [AdminController::class, 'updateMenuItem']);
     Route::patch('/api/admin/menu-items/{id}/archive', [AdminController::class, 'archiveMenuItem']);
     Route::patch('/api/admin/menu-items/{id}/unarchive', [AdminController::class, 'unarchiveMenuItem']);
     Route::delete('/api/admin/menu-items/{id}', [AdminController::class, 'deleteMenuItem']);

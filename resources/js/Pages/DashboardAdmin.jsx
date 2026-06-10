@@ -3072,9 +3072,7 @@ const DashboardAdmin = () => {
         if (menuItemForm.description) formData.append('description', menuItemForm.description);
         formData.append('is_best_seller', menuItemForm.is_best_seller ? 1 : 0);
 
-        if (isEditing) {
-            formData.append('_method', 'PUT');
-        }
+
 
         try {
             const res = await csrfFetch(isEditing ? `/api/admin/menu-items/${menuItemId}` : '/api/admin/menu-items', {

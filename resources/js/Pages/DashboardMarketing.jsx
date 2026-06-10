@@ -1174,9 +1174,7 @@ const DashboardMarketing = () => {
         if (menuItemForm.description) formData.append('description', menuItemForm.description);
         formData.append('is_best_seller', menuItemForm.is_best_seller ? 1 : 0);
 
-        if (isEditing) {
-            formData.append('_method', 'PUT');
-        }
+
 
         try {
             const response = await csrfFetch(isEditing ? `/api/settings/menu-items/${itemId}` : '/api/settings/menu-items', {
