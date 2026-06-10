@@ -14,8 +14,8 @@ const typeOptions = [
 ];
 
 const fitOptions = [
-    { value: 'fit_text', label: 'Text Focus — Cover background' },
-    { value: 'fit_image', label: 'Image Focus — Show full image' },
+    { value: 'fit_text', label: 'Cover Background' },
+    { value: 'fit_image', label: 'Show Full Image' },
 ];
 
 const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
@@ -90,7 +90,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         setImagePreview(URL.createObjectURL(file));
         setErrors((prev) => {
             const copy = { ...prev };
-            delete copy[image_file];
+            delete copy.image_file;
             return copy;
         });
     };

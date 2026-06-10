@@ -586,8 +586,8 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                                 onChange={(e) => updateField('image_fit', e.target.value)}
                                                 className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none focus:border-[#720101]"
                                             >
-                                                <option value="fit_text">Text Focus — Cover image background (Sized by text)</option>
-                                                <option value="fit_image">Image Focus — Show full image (Text below)</option>
+                                                <option value="fit_text">Cover Background</option>
+                                                <option value="fit_image">Show Full Image</option>
                                             </select>
                                         </label>
                                     )}
