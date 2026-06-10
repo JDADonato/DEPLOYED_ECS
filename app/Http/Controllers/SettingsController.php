@@ -348,6 +348,7 @@ class SettingsController extends Controller
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|string|max:2048',
+            'image_file' => 'nullable|image|max:2048',
             'package_category' => 'nullable|string|max:255',
             'applicable_setups' => 'nullable',
             'security_type' => 'nullable|string|max:255',
@@ -355,6 +356,11 @@ class SettingsController extends Controller
             'security_description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('event-type-images', 'public');
+            $data['image'] = '/storage/' . $path;
+        }
 
         $data['slug'] = $data['slug'] ?? Str::slug($data['label']);
         $data['icon'] = $data['icon'] ?? 'sparkles';
@@ -386,6 +392,7 @@ class SettingsController extends Controller
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|string|max:2048',
+            'image_file' => 'nullable|image|max:2048',
             'package_category' => 'nullable|string|max:255',
             'applicable_setups' => 'nullable',
             'security_type' => 'nullable|string|max:255',
@@ -393,6 +400,11 @@ class SettingsController extends Controller
             'security_description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('event-type-images', 'public');
+            $data['image'] = '/storage/' . $path;
+        }
 
         if (array_key_exists('slug', $data)) {
             Package::where('type', $eventType->slug)->update(['type' => $data['slug']]);

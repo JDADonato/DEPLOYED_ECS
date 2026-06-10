@@ -2936,10 +2936,19 @@ const DashboardAdmin = () => {
         setPackageSaving(true);
         try {
             const url = editingEventTypeId ? `/api/admin/event-types/${editingEventTypeId}` : '/api/admin/event-types';
+            
+            const formData = new FormData();
+            if (editingEventTypeId) formData.append('_method', 'PUT');
+            
+            for (const key in eventTypeForm) {
+                if (eventTypeForm[key] !== null && eventTypeForm[key] !== undefined && eventTypeForm[key] !== '') {
+                    formData.append(key, eventTypeForm[key]);
+                }
+            }
+
             const res = await fetch(url, {
-                method: editingEventTypeId ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(eventTypeForm),
+                method: 'POST',
+                body: formData,
             });
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
@@ -7303,7 +7312,10 @@ const DashboardAdmin = () => {
                                                 <input required value={eventTypeForm.label} onChange={e => setEventTypeForm({ ...eventTypeForm, label: e.target.value })} placeholder="Event type name" className="md:col-span-2 rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
                                                 <input value={eventTypeForm.slug} onChange={e => setEventTypeForm({ ...eventTypeForm, slug: e.target.value })} placeholder="Short name (optional)" className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
                                                 <input value={eventTypeForm.icon} onChange={e => setEventTypeForm({ ...eventTypeForm, icon: e.target.value })} placeholder="Icon name" className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
-                                                <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="Image link" className="md:col-span-2 rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
+                                                <div className="md:col-span-2 flex items-center gap-2">
+                                                    <input type="file" accept="image/*" onChange={e => setEventTypeForm({ ...eventTypeForm, image_file: e.target.files[0] })} className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#720101]/10 file:text-[#720101] hover:file:bg-[#720101]/20 cursor-pointer" />
+                                                </div>
+                                                <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="Image URL (optional if uploading file)" className="md:col-span-4 rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
                                                 <textarea value={eventTypeForm.description} onChange={e => setEventTypeForm({ ...eventTypeForm, description: e.target.value })} placeholder="Description" className="md:col-span-4 rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#720101]/10" />
                                                 <div className="md:col-span-2 flex gap-2">
                                                     {editingEventTypeId && <button type="button" onClick={resetEventTypeForm} className="flex-1 rounded-lg border border-gray-200 px-4 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50">Cancel</button>}
