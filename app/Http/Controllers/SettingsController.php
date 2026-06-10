@@ -238,10 +238,17 @@ class SettingsController extends Controller
             'cost_per_head' => 'required|numeric|min:0',
             'price_adj' => 'nullable|numeric|min:0',
             'image' => 'nullable|string',
+            'image_file' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'is_best_seller' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
         ]);
+
+        $imageUrl = $data['image'] ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('menu-images', 'public');
+            $imageUrl = '/storage/' . $path;
+        }
 
         $item = MenuItem::create([
             'dish_id' => 'custom_'.strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $data['name'])).'_'.time(),
@@ -249,7 +256,7 @@ class SettingsController extends Controller
             'category' => $data['category'],
             'cost_per_head' => $data['cost_per_head'],
             'price_adj' => $data['price_adj'] ?? 0,
-            'image' => $data['image'] ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+            'image' => $imageUrl,
             'description' => $data['description'] ?? '',
             'is_best_seller' => $data['is_best_seller'] ?? false,
             'is_active' => $data['is_active'] ?? true,
@@ -272,10 +279,16 @@ class SettingsController extends Controller
             'cost_per_head' => 'nullable|numeric|min:0',
             'price_adj' => 'nullable|numeric|min:0',
             'image' => 'nullable|string',
+            'image_file' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'is_best_seller' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('menu-images', 'public');
+            $data['image'] = '/storage/' . $path;
+        }
 
         $item->update($data);
         $this->bumpCatalogVersion();

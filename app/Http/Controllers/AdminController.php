@@ -1019,6 +1019,7 @@ class AdminController extends Controller
             'cost_per_head' => 'required|numeric|min:0',
             'price_adj' => 'nullable|numeric|min:0',
             'image' => 'nullable|string',
+            'image_file' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'is_best_seller' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
@@ -1026,13 +1027,19 @@ class AdminController extends Controller
 
         $dishId = 'custom_'.strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->name)).'_'.time();
 
+        $imageUrl = $request->image ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('menu-images', 'public');
+            $imageUrl = '/storage/' . $path;
+        }
+
         $item = MenuItem::create([
             'dish_id' => $dishId,
             'name' => $request->name,
             'category' => $request->category,
             'cost_per_head' => $request->cost_per_head,
             'price_adj' => $request->price_adj ?? 0,
-            'image' => $request->image ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+            'image' => $imageUrl,
             'description' => $request->description ?? '',
             'is_best_seller' => $request->is_best_seller ?? false,
             'is_active' => $request->input('is_active', true),
@@ -1058,15 +1065,23 @@ class AdminController extends Controller
             'cost_per_head' => 'nullable|numeric|min:0',
             'price_adj' => 'nullable|numeric|min:0',
             'image' => 'nullable|string',
+            'image_file' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'is_best_seller' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
         ]);
 
-        $item->update($request->only([
+        $updates = $request->only([
             'name', 'category', 'cost_per_head', 'price_adj',
             'image', 'description', 'is_best_seller', 'is_active',
-        ]));
+        ]);
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('menu-images', 'public');
+            $updates['image'] = '/storage/' . $path;
+        }
+
+        $item->update($updates);
         $this->bumpCatalogVersion();
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
         app(OperationalBroadcastService::class)

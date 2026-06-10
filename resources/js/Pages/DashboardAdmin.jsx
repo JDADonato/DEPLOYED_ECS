@@ -3053,16 +3053,24 @@ const DashboardAdmin = () => {
             return showToast('Unable to find menu item to edit', 'error');
         }
 
+        const formData = new FormData();
+        formData.append('name', menuItemForm.name);
+        formData.append('category', menuItemForm.category);
+        formData.append('cost_per_head', parseFloat(menuItemForm.cost_per_head) || 0);
+        formData.append('price_adj', 0);
+        if (menuItemForm.image) formData.append('image', menuItemForm.image);
+        if (menuItemForm.image_file) formData.append('image_file', menuItemForm.image_file);
+        if (menuItemForm.description) formData.append('description', menuItemForm.description);
+        formData.append('is_best_seller', menuItemForm.is_best_seller ? 1 : 0);
+
+        if (isEditing) {
+            formData.append('_method', 'PUT');
+        }
+
         try {
             const res = await csrfFetch(isEditing ? `/api/admin/menu-items/${menuItemId}` : '/api/admin/menu-items', {
-                method: isEditing ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...menuItemForm,
-                    cost_per_head: parseFloat(menuItemForm.cost_per_head) || 0,
-                    price_adj: 0,
-                    image: menuItemForm.image || null,
-                })
+                method: 'POST',
+                body: formData
             });
 
             if (res.ok) {
@@ -9429,15 +9437,21 @@ const DashboardAdmin = () => {
 
                             {/* Image Link */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Image Link</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Image</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => setMenuItemForm({ ...menuItemForm, image_file: e.target.files[0] })}
+                                    className="mb-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#720101]/10 focus:border-[#720101] outline-none transition-all file:mr-4 file:rounded-full file:border-0 file:bg-[#720101] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#5a0101] text-sm"
+                                />
                                 <input
                                     type="url"
                                     value={menuItemForm.image}
                                     onChange={e => setMenuItemForm({ ...menuItemForm, image: e.target.value })}
-                                    placeholder="https://images.unsplash.com/..."
+                                    placeholder="Or paste an image URL (https://...)"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#720101]/10 focus:border-[#720101] outline-none transition-all text-sm"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Leave blank to use a standard menu image.</p>
+                                <p className="text-xs text-gray-400 mt-1">Upload a file or provide a link. Leave both blank to use a standard menu image.</p>
                             </div>
 
                             {/* Description */}
