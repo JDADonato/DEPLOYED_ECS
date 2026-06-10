@@ -1544,8 +1544,8 @@ const DashboardAdmin = () => {
                 history: customerBookingCount,
             },
             marketing: {
-                today: pendingBookings,
-                bookings: pendingBookings,
+                today: marketingRemoteSummary ? (marketingRemoteSummary.pending + (marketingRemoteSummary.needs_details || 0)) : pendingBookings,
+                bookings: marketingRemoteSummary ? marketingRemoteSummary.pending : pendingBookings,
                 tastings: 0,
                 calendar: confirmedBookings,
                 handoff: confirmedBookings,
@@ -1557,7 +1557,7 @@ const DashboardAdmin = () => {
                 refunds: refundQueue.length,
             },
         };
-    }, [bookings, customers.length, employees.length, refundQueue.length, reportTemplates.length, selectedCustomerId]);
+    }, [bookings, customers.length, employees.length, refundQueue.length, reportTemplates.length, selectedCustomerId, marketingRemoteSummary]);
 
     const adminActiveNavId = activeWorkspaceTab;
     const handleAdminNavigate = (nextId) => {
@@ -8668,7 +8668,12 @@ const DashboardAdmin = () => {
                             <AdminPageSurface>
                                 <StaffMetricStrip
                                     className="admin-booking-command"
-                                    metrics={[
+                                    metrics={activeWorkspace === 'marketing' ? [
+                                        { label: 'Upcoming', value: marketingRemoteSummary?.upcoming ?? bookingStats.total, helpText: 'Upcoming pending or confirmed bookings that still need Marketing visibility.' },
+                                        { label: 'Pending', value: marketingRemoteSummary?.pending ?? bookingStats.pending, helpText: 'Booking requests that have not yet been approved or rejected.' },
+                                        { label: 'This Month', value: marketingRemoteSummary?.monthEvents ?? bookingStats.active, helpText: 'Events scheduled in the currently selected calendar month.' },
+                                        { label: 'Pending booking amount', value: formatCurrency(marketingRemoteSummary?.pipeline ?? bookingStats.value), helpText: 'Estimated peso amount from bookings that are still pending.' },
+                                    ] : [
                                         { label: 'Current', value: bookingStats.total },
                                         { label: 'Pending', value: bookingStats.pending, tone: bookingStats.pending > 0 ? 'attention' : 'neutral' },
                                         { label: 'Active', value: bookingStats.active, tone: 'success' },
