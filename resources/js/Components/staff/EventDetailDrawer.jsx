@@ -75,6 +75,14 @@ const EventDetailDrawer = ({
 }) => {
     if (!booking) return null;
 
+    const [activeTab, setActiveTab] = React.useState('overview');
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setActiveTab('overview');
+        }
+    }, [isOpen, booking?.id]);
+
     const bookingStatus = bookingStatusLabel(booking.status);
     const reviewStatus = reviewStatusLabel(booking.review_status || (booking.status === 'Pending' ? 'Submitted' : booking.status));
     const ownershipStatus = ownershipStatusLabel(booking, currentUser);
@@ -85,23 +93,40 @@ const EventDetailDrawer = ({
     const historyNotes = booking.history_notes || [];
     const showCustomerAccount = hasDifferentBookingContact(booking);
 
+    const displayTitle = title === 'Event brief' || title === 'Event details'
+        ? `Booking #${String(booking.id || '').padStart(4, '0')}`
+        : title;
+
+    const displayEyebrow = eyebrow === 'Event brief'
+        ? 'Event Details'
+        : eyebrow;
+
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'menu', label: 'Menu & Package' },
+        { id: 'finances', label: 'Finances' },
+        { id: 'prep', label: 'Prep & Notes' },
+    ];
+
     return (
         <StaffDrawer
             isOpen={isOpen}
-            eyebrow={eyebrow}
-            title={title || `Booking #${booking.id}`}
+            eyebrow={displayEyebrow}
+            title={displayTitle}
             onClose={onClose}
             footer={footer}
         >
             <div className="space-y-4">
+                {/* Header Card */}
                 <section className="rounded-lg border border-[#720101]/10 bg-[#fffaf3] p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <p className="marketing-kicker">Booking #{String(booking.id || '').padStart(4, '0')}</p>
-                            <h3 className="mt-1 text-xl font-black text-slate-950">{booking.event_display_name || booking.event_name || booking.event_type || booking.package_name || `Booking #${booking.id}`}</h3>
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <h3 className="text-xl font-black text-slate-950">{booking.event_display_name || booking.event_name || booking.event_type || booking.package_name || `Booking #${booking.id}`}</h3>
+                            <div className="mt-2.5 flex flex-wrap gap-2">
                                 <StaffStatusBadge tone={bookingStatus.tone === 'success' ? 'good' : bookingStatus.tone === 'danger' ? 'danger' : bookingStatus.tone === 'warning' ? 'warn' : 'muted'}>{bookingStatus.label}</StaffStatusBadge>
-                                <StaffStatusBadge tone={reviewStatus.tone === 'success' ? 'good' : reviewStatus.tone === 'danger' ? 'danger' : reviewStatus.tone === 'warning' ? 'warn' : 'muted'}>{reviewStatus.label}</StaffStatusBadge>
+                                {booking.status === 'Pending' && (
+                                    <StaffStatusBadge tone={reviewStatus.tone === 'success' ? 'good' : reviewStatus.tone === 'danger' ? 'danger' : reviewStatus.tone === 'warning' ? 'warn' : 'muted'}>{reviewStatus.label}</StaffStatusBadge>
+                                )}
                                 <StaffStatusBadge tone={ownershipStatus.tone === 'success' ? 'good' : ownershipStatus.tone === 'warning' ? 'warn' : 'muted'}>{ownershipStatus.label}</StaffStatusBadge>
                             </div>
                             <p className="mt-2 text-sm font-semibold text-slate-500">Owner: {booking.owner_name || booking.assigned_name || booking.owner || 'Unassigned'}</p>
@@ -110,106 +135,147 @@ const EventDetailDrawer = ({
                     </div>
                 </section>
 
-                <div className="staff-detail-grid">
-                    <DetailCard label="Booking contact" value={bookingContactName(booking)}>
-                        <p className="mt-2 text-sm font-semibold text-slate-500">{bookingContactEmail(booking) || 'No email recorded'}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-500">{bookingContactPhone(booking) || 'No phone recorded'}</p>
-                    </DetailCard>
-                    {showCustomerAccount && (
-                        <DetailCard label="Customer account" value={customerAccountName(booking)}>
-                            {customerAccountHandle(booking) && <p className="mt-2 text-sm font-semibold text-slate-500">{customerAccountHandle(booking)}</p>}
-                            <p className="mt-1 text-sm font-semibold text-slate-500">{customerAccountEmail(booking) || 'No account email'}</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-500">{customerAccountPhone(booking) || 'No account phone'}</p>
+                {/* Tabs Navigation */}
+                <div className="flex border-b border-slate-200 bg-white sticky top-0 z-10">
+                    {tabs.map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex-1 border-b-2 py-2.5 text-center text-xs font-black uppercase tracking-wider transition-colors ${
+                                    isActive
+                                        ? 'border-[#720101] text-[#720101]'
+                                        : 'border-transparent text-slate-400 hover:text-slate-700'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Tab Content */}
+                <div className="mt-4 space-y-4">
+                    {activeTab === 'overview' && (
+                        <>
+                            <div className="staff-detail-grid">
+                                <DetailCard label="Booking contact" value={bookingContactName(booking)}>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">{bookingContactEmail(booking) || 'No email recorded'}</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-500">{bookingContactPhone(booking) || 'No phone recorded'}</p>
+                                </DetailCard>
+                                {showCustomerAccount && (
+                                    <DetailCard label="Customer account" value={customerAccountName(booking)}>
+                                        {customerAccountHandle(booking) && <p className="mt-2 text-sm font-semibold text-slate-500">{customerAccountHandle(booking)}</p>}
+                                        <p className="mt-1 text-sm font-semibold text-slate-500">{customerAccountEmail(booking) || 'No account email'}</p>
+                                        <p className="mt-1 text-sm font-semibold text-slate-500">{customerAccountPhone(booking) || 'No account phone'}</p>
+                                    </DetailCard>
+                                )}
+                                <DetailCard label="Schedule" value={`${formatDate(booking.event_date)} / ${formatTime(booking.event_time)}`}>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">{booking.pax || 0} guests</p>
+                                </DetailCard>
+                                <DetailCard label="Venue" value={fullAddress(booking)}>
+                                    {booking.venue_building_details && <p className="mt-2 text-sm font-semibold text-slate-500">{booking.venue_building_details}</p>}
+                                </DetailCard>
+                            </div>
+                            {role !== 'accounting' && children}
+                        </>
+                    )}
+
+                    {activeTab === 'menu' && (
+                        <DetailCard label="Menu and package">
+                            <p className="mt-2 text-sm font-black text-slate-900">{booking.package_name || booking.package || booking.event_type || 'Package pending'}</p>
+                            {dishes.length === 0 ? (
+                                <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No dishes selected yet.</p>
+                            ) : (
+                                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                    {dishes.slice(0, 12).map((dish, index) => (
+                                        <div key={`${dish.category}-${dish.name}-${index}`} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{dish.category}</p>
+                                            <p className="text-sm font-bold text-slate-800">{dish.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </DetailCard>
                     )}
-                    <DetailCard label="Schedule" value={`${formatDate(booking.event_date)} / ${formatTime(booking.event_time)}`}>
-                        <p className="mt-2 text-sm font-semibold text-slate-500">{booking.pax || 0} guests</p>
-                    </DetailCard>
-                    <DetailCard label="Venue" value={fullAddress(booking)}>
-                        {booking.venue_building_details && <p className="mt-2 text-sm font-semibold text-slate-500">{booking.venue_building_details}</p>}
-                    </DetailCard>
-                </div>
 
-                <div className="grid gap-3 lg:grid-cols-3">
-                    <DetailCard label="Event total" value={formatMoney(booking.totalCost ?? booking.total_cost ?? booking.budget)} />
-                    <DetailCard label="Travel fee" value={formatMoney(booking.transport_fee)} />
-                    <DetailCard label="Live status">
-                        <div className="mt-2"><StaffStatusBadge tone={liveStatus.tone === 'success' ? 'good' : liveStatus.tone === 'warning' ? 'warn' : 'muted'}>{liveStatus.label}</StaffStatusBadge></div>
-                    </DetailCard>
-                </div>
+                    {activeTab === 'finances' && (
+                        <>
+                            <div className="grid gap-3 lg:grid-cols-3">
+                                <DetailCard label="Event total" value={formatMoney(booking.totalCost ?? booking.total_cost ?? booking.budget)} />
+                                <DetailCard label="Travel fee" value={formatMoney(booking.transport_fee)} />
+                                <DetailCard label="Live status">
+                                    <div className="mt-2"><StaffStatusBadge tone={liveStatus.tone === 'success' ? 'good' : liveStatus.tone === 'warning' ? 'warn' : 'muted'}>{liveStatus.label}</StaffStatusBadge></div>
+                                </DetailCard>
+                            </div>
 
-                <DetailCard label="Menu and package">
-                    <p className="mt-2 text-sm font-black text-slate-900">{booking.package_name || booking.package || booking.event_type || 'Package pending'}</p>
-                    {dishes.length === 0 ? (
-                        <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No dishes selected yet.</p>
-                    ) : (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            {dishes.slice(0, 12).map((dish, index) => (
-                                <div key={`${dish.category}-${dish.name}-${index}`} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{dish.category}</p>
-                                    <p className="text-sm font-bold text-slate-800">{dish.name}</p>
-                                </div>
-                            ))}
-                        </div>
+                            {role !== 'accounting' && (
+                                <DetailCard label="Payments and refunds">
+                                    {payments.length === 0 ? (
+                                        <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No payment records yet.</p>
+                                    ) : (
+                                        <div className="mt-3 grid gap-2">
+                                            {payments.slice(0, 5).map((payment) => (
+                                                <div key={payment.id} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-900">{payment.payment_type || 'Payment'} / {paymentMethodLabel(payment.method || payment.payment_method)}</p>
+                                                        <p className="text-xs font-bold text-slate-400">{formatDate(payment.due_date || payment.paid_at || payment.created_at)}</p>
+                                                    </div>
+                                                    <p className="text-sm font-black text-slate-950">{formatMoney(payment.amount)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </DetailCard>
+                            )}
+
+                            {role === 'accounting' && children}
+                        </>
                     )}
-                </DetailCard>
 
-                <DetailCard label="Payments and refunds">
-                    {payments.length === 0 ? (
-                        <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No payment records yet.</p>
-                    ) : (
-                        <div className="mt-3 grid gap-2">
-                            {payments.slice(0, 5).map((payment) => (
-                                <div key={payment.id} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-sm font-black text-slate-900">{payment.payment_type || 'Payment'} / {paymentMethodLabel(payment.method || payment.payment_method)}</p>
-                                        <p className="text-xs font-bold text-slate-400">{formatDate(payment.due_date || payment.paid_at || payment.created_at)}</p>
+                    {activeTab === 'prep' && (
+                        <>
+                            <DetailCard label="Preparation">
+                                {tasks.length === 0 ? (
+                                    <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No preparation tasks yet.</p>
+                                ) : (
+                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                        {tasks.map((task) => {
+                                            const taskStatus = preparationStatusLabel(task.status);
+                                            return (
+                                                <div key={task.id} className="rounded-lg border border-slate-100 bg-white p-3">
+                                                    <p className="text-sm font-black text-slate-900">{task.label}</p>
+                                                    <p className="mt-1 text-xs font-bold text-slate-400">{responsibleArea(task)} / {taskStatus.label}</p>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <p className="text-sm font-black text-slate-950">{formatMoney(payment.amount)}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </DetailCard>
+                                )}
+                            </DetailCard>
 
-                <DetailCard label="Preparation">
-                    {tasks.length === 0 ? (
-                        <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-500">No preparation tasks yet.</p>
-                    ) : (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            {tasks.map((task) => {
-                                const taskStatus = preparationStatusLabel(task.status);
-                                return (
-                                    <div key={task.id} className="rounded-lg border border-slate-100 bg-white p-3">
-                                        <p className="text-sm font-black text-slate-900">{task.label}</p>
-                                        <p className="mt-1 text-xs font-bold text-slate-400">{responsibleArea(task)} / {taskStatus.label}</p>
+                            {historyNotes.length > 0 && (
+                                <DetailCard label="Staff notes and activity">
+                                    <div className="mt-3 grid gap-2">
+                                        {historyNotes.map((note) => (
+                                            <div key={note.id} className="rounded-lg border border-amber-100 bg-[#fffaf3] px-3 py-2">
+                                                <p className="text-sm font-semibold text-slate-700">{note.body}</p>
+                                                {note.created_at && <p className="mt-1 text-[11px] font-bold text-slate-400">{formatDate(note.created_at)}</p>}
+                                            </div>
+                                        ))}
                                     </div>
-                                );
-                            })}
-                        </div>
+                                </DetailCard>
+                            )}
+
+                            {role === 'history' && (
+                                <p className="rounded-lg border border-amber-100 bg-[#fffaf3] p-4 text-sm font-bold text-slate-600">
+                                    Completed event details are archived. Add a note or use the available post-event follow-up actions.
+                                </p>
+                            )}
+                        </>
                     )}
-                </DetailCard>
-
-                {historyNotes.length > 0 && (
-                    <DetailCard label="Staff notes and activity">
-                        <div className="mt-3 grid gap-2">
-                            {historyNotes.map((note) => (
-                                <div key={note.id} className="rounded-lg border border-amber-100 bg-[#fffaf3] px-3 py-2">
-                                    <p className="text-sm font-semibold text-slate-700">{note.body}</p>
-                                    {note.created_at && <p className="mt-1 text-[11px] font-bold text-slate-400">{formatDate(note.created_at)}</p>}
-                                </div>
-                            ))}
-                        </div>
-                    </DetailCard>
-                )}
-
-                {children}
-
-                {role === 'history' && (
-                    <p className="rounded-lg border border-amber-100 bg-[#fffaf3] p-4 text-sm font-bold text-slate-600">
-                        Completed event details are archived. Add a note or use the available post-event follow-up actions.
-                    </p>
-                )}
+                </div>
             </div>
         </StaffDrawer>
     );

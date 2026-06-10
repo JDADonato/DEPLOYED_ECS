@@ -1,6 +1,6 @@
 {
-  "_AssistedBookingWizard-Do9U6Ctp.js": {
-    "file": "assets/AssistedBookingWizard-Do9U6Ctp.js",
+  "_AssistedBookingWizard-CEq1cc3D.js": {
+    "file": "assets/AssistedBookingWizard-CEq1cc3D.js",
     "name": "AssistedBookingWizard",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
@@ -13,8 +13,8 @@
       "resources/js/app.jsx"
     ]
   },
-  "_AuthContext-B1lubzlT.js": {
-    "file": "assets/AuthContext-B1lubzlT.js",
+  "_AuthContext-CalEnG1s.js": {
+    "file": "assets/AuthContext-CalEnG1s.js",
     "name": "AuthContext",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
@@ -32,12 +32,12 @@
       "assets/ECS_LOGO_AUTH-bZQjzOiI.png"
     ]
   },
-  "_ClientNavbar-Dg_SfxWY.js": {
-    "file": "assets/ClientNavbar-Dg_SfxWY.js",
+  "_ClientNavbar-DyZtpQ1S.js": {
+    "file": "assets/ClientNavbar-DyZtpQ1S.js",
     "name": "ClientNavbar",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_ECS_LOGO-P7eydQEe.js",
       "resources/js/app.jsx"
     ]
@@ -56,12 +56,12 @@
       "assets/ECS_LOGO-CN3y9uxS.png"
     ]
   },
-  "_EventDetailDrawer-Ct1HlCHH.js": {
-    "file": "assets/EventDetailDrawer-Ct1HlCHH.js",
+  "_EventDetailDrawer-C61lIdNY.js": {
+    "file": "assets/EventDetailDrawer-C61lIdNY.js",
     "name": "EventDetailDrawer",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_statusLabels-D9WfEOGP.js",
       "_customerIdentity-B4WtblIr.js"
     ]
@@ -74,8 +74,8 @@
       "_ECS_LOGO-P7eydQEe.js"
     ]
   },
-  "_NotificationBell-edQhLVBs.js": {
-    "file": "assets/NotificationBell-edQhLVBs.js",
+  "_NotificationBell-cYcHwj9J.js": {
+    "file": "assets/NotificationBell-cYcHwj9J.js",
     "name": "NotificationBell",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
@@ -120,8 +120,8 @@
       "_vendor-framework-CkIG79vl.js"
     ]
   },
-  "_StaffPreviewBanner-BTD-FtpK.js": {
-    "file": "assets/StaffPreviewBanner-BTD-FtpK.js",
+  "_StaffPreviewBanner-C_F7G3SP.js": {
+    "file": "assets/StaffPreviewBanner-C_F7G3SP.js",
     "name": "StaffPreviewBanner",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
@@ -163,14 +163,14 @@
     "file": "assets/menuUtils-XVM_xlss.js",
     "name": "menuUtils"
   },
-  "_staffWorkspaceNav-CRxaGtlP.js": {
-    "file": "assets/staffWorkspaceNav-CRxaGtlP.js",
+  "_staffWorkspaceNav-DQ9-3gCV.js": {
+    "file": "assets/staffWorkspaceNav-DQ9-3gCV.js",
     "name": "staffWorkspaceNav",
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "_useRealtimeStatus-B4ezxysJ.js",
       "_liveChannels-BmvQqnXZ.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_vendor-ui-DWGglrUA.js",
       "_statusLabels-D9WfEOGP.js",
       "resources/js/app.jsx",
@@ -311,7 +311,7 @@
     ]
   },
   "resources/js/Components/common/ChatBubble.jsx": {
-    "file": "assets/ChatBubble-D10IOdE8.js",
+    "file": "assets/ChatBubble-CCa0PRNq.js",
     "name": "ChatBubble",
     "src": "resources/js/Components/common/ChatBubble.jsx",
     "isDynamicEntry": true,
@@ -344,18 +344,18 @@
     ]
   },
   "resources/js/Components/common/StaffMessaging.jsx": {
-    "file": "assets/StaffMessaging-Cr8zwsem.js",
+    "file": "assets/StaffMessaging-Cn6TEg42.js",
     "name": "StaffMessaging",
     "src": "resources/js/Components/common/StaffMessaging.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_AuthContext-CalEnG1s.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_ConfirmModal-CXL3eROF.js",
       "_dashboardUtils-3sLjJE_B.js",
       "_PromptModal-CY8vJ--o.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "resources/js/app.jsx",
       "_liveChannels-BmvQqnXZ.js",
       "_chatMessageStore-B3elhOj2.js",
@@ -372,17 +372,17 @@
     ]
   },
   "resources/js/Components/content/AnnouncementManager.jsx": {
-    "file": "assets/AnnouncementManager-DwwYjnUY.js",
+    "file": "assets/AnnouncementManager-DrHRNmEJ.js",
     "name": "AnnouncementManager",
     "src": "resources/js/Components/content/AnnouncementManager.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_vendor-ui-DWGglrUA.js",
       "_useRealtimeStatus-B4ezxysJ.js",
       "_liveChannels-BmvQqnXZ.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "resources/js/app.jsx",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
@@ -403,16 +403,16 @@
     ]
   },
   "resources/js/Components/operations/FoodTastingQueue.jsx": {
-    "file": "assets/FoodTastingQueue-C42lXzdS.js",
+    "file": "assets/FoodTastingQueue-DvKTb820.js",
     "name": "FoodTastingQueue",
     "src": "resources/js/Components/operations/FoodTastingQueue.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "resources/js/app.jsx",
       "_liveChannels-BmvQqnXZ.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_vendor-ui-DWGglrUA.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
@@ -425,20 +425,20 @@
     ]
   },
   "resources/js/Components/operations/PreparationBoard.jsx": {
-    "file": "assets/PreparationBoard-Yu5GQkqj.js",
+    "file": "assets/PreparationBoard-BOlf4_xa.js",
     "name": "PreparationBoard",
     "src": "resources/js/Components/operations/PreparationBoard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_useDebouncedValue-DU3sOl7j.js",
       "resources/js/app.jsx",
       "_customerIdentity-B4WtblIr.js",
       "_vendor-ui-DWGglrUA.js",
       "_useRealtimeStatus-B4ezxysJ.js",
       "_liveChannels-BmvQqnXZ.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_statusLabels-D9WfEOGP.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js"
@@ -448,21 +448,21 @@
     ]
   },
   "resources/js/Pages/About.jsx": {
-    "file": "assets/About-CbZ2Ojj9.js",
+    "file": "assets/About-V0w-Os_3.js",
     "name": "About",
     "src": "resources/js/Pages/About.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_AuthContext-CalEnG1s.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_Footer-Be1dUxAK.js",
       "_RevealOnScroll-Pi0347sT.js",
       "resources/js/app.jsx",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
       "_vendor-ui-DWGglrUA.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js"
     ],
@@ -471,21 +471,21 @@
     ]
   },
   "resources/js/Pages/Amenities.jsx": {
-    "file": "assets/Amenities-CbDhjK5k.js",
+    "file": "assets/Amenities-tMp4qjEK.js",
     "name": "Amenities",
     "src": "resources/js/Pages/Amenities.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_AuthContext-CalEnG1s.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_Footer-Be1dUxAK.js",
       "_RevealOnScroll-Pi0347sT.js",
       "resources/js/app.jsx",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
       "_vendor-ui-DWGglrUA.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js"
     ],
@@ -494,7 +494,7 @@
     ]
   },
   "resources/js/Pages/Auth/ChangeRequiredPassword.jsx": {
-    "file": "assets/ChangeRequiredPassword-FPdp3KQ_.js",
+    "file": "assets/ChangeRequiredPassword-DShr6S0I.js",
     "name": "ChangeRequiredPassword",
     "src": "resources/js/Pages/Auth/ChangeRequiredPassword.jsx",
     "isDynamicEntry": true,
@@ -535,23 +535,23 @@
     ]
   },
   "resources/js/Pages/Contact.jsx": {
-    "file": "assets/Contact-AHcSAF7W.js",
+    "file": "assets/Contact-EACYRL32.js",
     "name": "Contact",
     "src": "resources/js/Pages/Contact.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "resources/js/app.jsx",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_Footer-Be1dUxAK.js",
-      "_StaffPreviewBanner-BTD-FtpK.js",
+      "_StaffPreviewBanner-C_F7G3SP.js",
       "_RevealOnScroll-Pi0347sT.js",
       "_validation-BBwcMQdB.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
       "_vendor-ui-DWGglrUA.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js"
     ],
@@ -560,29 +560,29 @@
     ]
   },
   "resources/js/Pages/DashboardAccounting.jsx": {
-    "file": "assets/DashboardAccounting-0SasRY3Z.js",
+    "file": "assets/DashboardAccounting-DIW1Hu_L.js",
     "name": "DashboardAccounting",
     "src": "resources/js/Pages/DashboardAccounting.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "_ECS_LOGO-P7eydQEe.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "resources/js/Components/common/ReceiptModal.jsx",
       "_ConfirmModal-CXL3eROF.js",
       "_PromptModal-CY8vJ--o.js",
       "resources/js/Components/finance/PaymentTermEditorModal.jsx",
       "_useDebouncedValue-DU3sOl7j.js",
       "_useRealtimeStatus-B4ezxysJ.js",
-      "_EventDetailDrawer-Ct1HlCHH.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_EventDetailDrawer-C61lIdNY.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_statusLabels-D9WfEOGP.js",
       "resources/js/app.jsx",
       "_liveChannels-BmvQqnXZ.js",
       "_customerIdentity-B4WtblIr.js",
       "_StaffV2-BEsVIGb-.js",
       "_vendor-ui-DWGglrUA.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js"
     ],
@@ -591,22 +591,22 @@
     ]
   },
   "resources/js/Pages/DashboardAdmin.jsx": {
-    "file": "assets/DashboardAdmin-jHN2cXqs.js",
+    "file": "assets/DashboardAdmin-CjCi8DMn.js",
     "name": "DashboardAdmin",
     "src": "resources/js/Pages/DashboardAdmin.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "_ECS_LOGO-P7eydQEe.js",
       "resources/js/app.jsx",
       "_useRealtimeStatus-B4ezxysJ.js",
       "_ConfirmModal-CXL3eROF.js",
       "_SmartImage-BsE2PEfa.js",
       "_RevealOnScroll-Pi0347sT.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
       "_StaffV2-BEsVIGb-.js",
-      "_AssistedBookingWizard-Do9U6Ctp.js",
+      "_AssistedBookingWizard-CEq1cc3D.js",
       "_PasswordStrengthField-DQTCznr-.js",
       "_PasswordUpgradeBanner-S1gSLubI.js",
       "_liveChannels-BmvQqnXZ.js",
@@ -617,7 +617,7 @@
       "_vendor-charts-CI9avv4B.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "resources/js/Components/client/CalendarView.jsx",
       "resources/js/Components/client/GuestLogistics.jsx",
       "resources/js/Components/client/MenuBuilder.jsx",
@@ -639,30 +639,30 @@
     ]
   },
   "resources/js/Pages/DashboardMarketing.jsx": {
-    "file": "assets/DashboardMarketing-DRchO2VR.js",
+    "file": "assets/DashboardMarketing-BXsH9cni.js",
     "name": "DashboardMarketing",
     "src": "resources/js/Pages/DashboardMarketing.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "_ECS_LOGO-P7eydQEe.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "resources/js/app.jsx",
       "_ConfirmModal-CXL3eROF.js",
       "_PromptModal-CY8vJ--o.js",
       "_SmartImage-BsE2PEfa.js",
-      "_staffWorkspaceNav-CRxaGtlP.js",
-      "_EventDetailDrawer-Ct1HlCHH.js",
+      "_staffWorkspaceNav-DQ9-3gCV.js",
+      "_EventDetailDrawer-C61lIdNY.js",
       "_statusLabels-D9WfEOGP.js",
       "_useRealtimeStatus-B4ezxysJ.js",
-      "_AssistedBookingWizard-Do9U6Ctp.js",
+      "_AssistedBookingWizard-CEq1cc3D.js",
       "_dashboardUtils-3sLjJE_B.js",
       "_customerIdentity-B4WtblIr.js",
       "_liveChannels-BmvQqnXZ.js",
       "_vendor-ui-DWGglrUA.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "resources/js/Components/client/CalendarView.jsx",
       "resources/js/Components/client/GuestLogistics.jsx",
       "resources/js/Components/client/MenuBuilder.jsx",
@@ -681,7 +681,7 @@
     ]
   },
   "resources/js/Pages/Error.jsx": {
-    "file": "assets/Error-DfXSi5yz.js",
+    "file": "assets/Error-m72smEau.js",
     "name": "Error",
     "src": "resources/js/Pages/Error.jsx",
     "isDynamicEntry": true,
@@ -697,20 +697,20 @@
     ]
   },
   "resources/js/Pages/LandingPage.jsx": {
-    "file": "assets/LandingPage-x44IZFvr.js",
+    "file": "assets/LandingPage-CkZEA_Up.js",
     "name": "LandingPage",
     "src": "resources/js/Pages/LandingPage.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_AuthContext-CalEnG1s.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_Footer-Be1dUxAK.js",
       "_SmartImage-BsE2PEfa.js",
-      "_StaffPreviewBanner-BTD-FtpK.js",
+      "_StaffPreviewBanner-C_F7G3SP.js",
       "_RevealOnScroll-Pi0347sT.js",
       "resources/js/app.jsx",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js",
       "_vendor-ui-DWGglrUA.js",
@@ -722,14 +722,14 @@
     ]
   },
   "resources/js/Pages/Login.jsx": {
-    "file": "assets/Login-BlP_CwkI.js",
+    "file": "assets/Login-C9s-V2Ht.js",
     "name": "Login",
     "src": "resources/js/Pages/Login.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "_AuthShell-DYZHOa-R.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "_vendor-ui-DWGglrUA.js",
       "resources/js/app.jsx",
       "_vendor-http-B8_nURbH.js",
@@ -740,19 +740,19 @@
     ]
   },
   "resources/js/Pages/Profile/Edit.jsx": {
-    "file": "assets/Edit-DnyBJ_vi.js",
+    "file": "assets/Edit-D82GoL92.js",
     "name": "Edit",
     "src": "resources/js/Pages/Profile/Edit.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "resources/js/app.jsx",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_PasswordStrengthField-DQTCznr-.js",
       "_vendor-ui-DWGglrUA.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js"
     ],
@@ -773,23 +773,23 @@
     ]
   },
   "resources/js/Pages/client/BookingWizard.jsx": {
-    "file": "assets/BookingWizard-qXG94jhl.js",
+    "file": "assets/BookingWizard-BTGe7Dum.js",
     "name": "BookingWizard",
     "src": "resources/js/Pages/client/BookingWizard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
       "_vendor-http-B8_nURbH.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "resources/js/app.jsx",
       "_dashboardUtils-3sLjJE_B.js",
-      "_ClientNavbar-Dg_SfxWY.js",
-      "_StaffPreviewBanner-BTD-FtpK.js",
+      "_ClientNavbar-DyZtpQ1S.js",
+      "_StaffPreviewBanner-C_F7G3SP.js",
       "_RevealOnScroll-Pi0347sT.js",
       "_vendor-realtime-6HroY-cm.js",
       "_vendor-ui-DWGglrUA.js",
       "_menuUtils-XVM_xlss.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_liveChannels-BmvQqnXZ.js",
       "_ECS_LOGO-P7eydQEe.js"
     ],
@@ -811,15 +811,15 @@
     ]
   },
   "resources/js/Pages/client/ClientDashboard.jsx": {
-    "file": "assets/ClientDashboard-D6FkRsJJ.js",
+    "file": "assets/ClientDashboard-CYWvO8YV.js",
     "name": "ClientDashboard",
     "src": "resources/js/Pages/client/ClientDashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "_menuUtils-XVM_xlss.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_ConfirmModal-CXL3eROF.js",
       "_SmartImage-BsE2PEfa.js",
       "_PasswordUpgradeBanner-S1gSLubI.js",
@@ -827,7 +827,7 @@
       "resources/js/app.jsx",
       "_useRealtimeStatus-B4ezxysJ.js",
       "_liveChannels-BmvQqnXZ.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_ECS_LOGO-P7eydQEe.js",
       "_vendor-ui-DWGglrUA.js",
       "_vendor-http-B8_nURbH.js",
@@ -841,16 +841,16 @@
     ]
   },
   "resources/js/Pages/client/FoodTasting.jsx": {
-    "file": "assets/FoodTasting-CdibsTiR.js",
+    "file": "assets/FoodTasting-Dya6NXOe.js",
     "name": "FoodTasting",
     "src": "resources/js/Pages/client/FoodTasting.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_AuthContext-B1lubzlT.js",
+      "_AuthContext-CalEnG1s.js",
       "resources/js/app.jsx",
       "_validation-BBwcMQdB.js",
-      "_StaffPreviewBanner-BTD-FtpK.js",
+      "_StaffPreviewBanner-C_F7G3SP.js",
       "_RevealOnScroll-Pi0347sT.js",
       "_vendor-ui-DWGglrUA.js",
       "_vendor-http-B8_nURbH.js",
@@ -861,7 +861,7 @@
     ]
   },
   "resources/js/Pages/client/MenuGallery.jsx": {
-    "file": "assets/MenuGallery-DXlYZcIe.js",
+    "file": "assets/MenuGallery-DFrJqTQM.js",
     "name": "MenuGallery",
     "src": "resources/js/Pages/client/MenuGallery.jsx",
     "isDynamicEntry": true,
@@ -869,12 +869,12 @@
       "_vendor-framework-CkIG79vl.js",
       "_menuUtils-XVM_xlss.js",
       "resources/js/app.jsx",
-      "_NotificationBell-edQhLVBs.js",
+      "_NotificationBell-cYcHwj9J.js",
       "_ECS_LOGO-P7eydQEe.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_ConfirmModal-CXL3eROF.js",
       "_SmartImage-BsE2PEfa.js",
-      "_StaffPreviewBanner-BTD-FtpK.js",
+      "_StaffPreviewBanner-C_F7G3SP.js",
       "_RevealOnScroll-Pi0347sT.js",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
@@ -909,17 +909,17 @@
     ]
   },
   "resources/js/Pages/preview/AnnouncementPreview.jsx": {
-    "file": "assets/AnnouncementPreview-Pr58bxxe.js",
+    "file": "assets/AnnouncementPreview-WNv8B0Oj.js",
     "name": "AnnouncementPreview",
     "src": "resources/js/Pages/preview/AnnouncementPreview.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-framework-CkIG79vl.js",
-      "_ClientNavbar-Dg_SfxWY.js",
+      "_ClientNavbar-DyZtpQ1S.js",
       "_Footer-Be1dUxAK.js",
       "_SmartImage-BsE2PEfa.js",
-      "_AuthContext-B1lubzlT.js",
-      "_NotificationBell-edQhLVBs.js",
+      "_AuthContext-CalEnG1s.js",
+      "_NotificationBell-cYcHwj9J.js",
       "resources/js/app.jsx",
       "_vendor-http-B8_nURbH.js",
       "_vendor-realtime-6HroY-cm.js",
@@ -932,7 +932,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-Dz8Olgr8.js",
+    "file": "assets/app-B6YE_boM.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
