@@ -37,7 +37,6 @@ import {
 } from '../utils/dashboardUtils';
 import { bookingContactEmail, bookingContactName, bookingContactPhone, customerAccountEmail, customerAccountName, customerAccountPhone } from '../utils/customerIdentity';
 import { createStaffContext, hasStaffContext } from '../utils/staffContext';
-import { StaffCommandBar } from '../Components/staff/StaffV2';
 
 const StaffMessaging = lazy(() => import('../Components/common/StaffMessaging'));
 const AnnouncementManager = lazy(() => import('../Components/content/AnnouncementManager'));
@@ -507,7 +506,7 @@ const DashboardMarketing = () => {
     useEffect(() => {
         if (activeTab !== 'bookings') return;
         fetchBookings({ scope: 'all', force: true });
-    }, [activeTab, bookingOwnershipFilter, inquirySort]);
+    }, [activeTab, bookingReviewView, bookingOwnershipFilter, inquirySort]);
 
     useEffect(() => {
         if (activeTab !== 'leads') return;
@@ -549,9 +548,12 @@ const DashboardMarketing = () => {
                 active_only: '1',
                 sort: inquirySort === 'oldest' ? 'bookingOldest' : inquirySort === 'eventDateAsc' ? 'eventDateSoonest' : inquirySort === 'eventDateDesc' ? 'eventDateLatest' : 'bookingNewest',
             });
-            if (scope === 'all' && bookingOwnershipFilter !== 'all') query.set('ownership', bookingOwnershipFilter === 'mine' ? 'mine' : bookingOwnershipFilter);
+            const effectiveOwnershipFilter = scope === 'all' && activeTab === 'bookings' && bookingReviewView === 'needs-action'
+                ? bookingOwnershipFilter
+                : 'all';
+            if (effectiveOwnershipFilter !== 'all') query.set('ownership', effectiveOwnershipFilter === 'mine' ? 'mine' : effectiveOwnershipFilter);
             const params = `?${query.toString()}`;
-            const cacheKey = smartCacheKey(`marketing:bookings:${scope}:${bookingOwnershipFilter}:${inquirySort}`);
+            const cacheKey = smartCacheKey(`marketing:bookings:${scope}:${bookingReviewView}:${effectiveOwnershipFilter}:${inquirySort}`);
             const cached = readSmartCache(cacheKey);
             if (cached?.data && bookings.length === 0) {
                 setBookings(getListData(cached.data));
@@ -2384,12 +2386,16 @@ const DashboardMarketing = () => {
     );
 
     const renderBookings = () => {
-        const activeBookings = bookings.filter(b => !['Completed', 'completed', 'Cancelled', 'cancelled'].includes(b.status));
+        const activeBookings = bookings.filter((booking) => {
+            const status = String(booking.status || '').toLowerCase();
+            const reviewStatus = String(booking.review_status || '').toLowerCase();
+            return !['completed', 'cancelled'].includes(status) && !['completed', 'not available'].includes(reviewStatus);
+        });
         const reviewCounts = activeBookings.reduce((counts, booking) => {
             const ownedByMe = Number(booking.owner_id ?? booking.assigned_to) === Number(user?.id);
             const waitingOnCustomer = String(booking.review_status || '').toLowerCase() === 'needs customer details' || Boolean(booking.clarification_request && !booking.clarification_response);
             if (ownedByMe) counts.mine += 1;
-            if (waitingOnCustomer) counts.waiting += 1;
+            if (ownedByMe && waitingOnCustomer) counts.waiting += 1;
             counts['needs-action'] += 1;
             return counts;
         }, { 'needs-action': 0, mine: 0, waiting: 0 });
@@ -2415,10 +2421,11 @@ const DashboardMarketing = () => {
                     if (bookingOwnershipFilter === 'claimed' && !booking.assigned_to) return false;
                     if (bookingOwnershipFilter === 'mine' && !ownedByMe) return false;
                 }
-                if (inquiryStatusFilter !== 'all') {
-                    if (inquiryStatusFilter === 'approved' && !(statusText === 'confirmed' || reviewStatus === 'approved for reservation')) return false;
-                    else if (inquiryStatusFilter === 'cancelled' && !(statusText === 'cancelled' || reviewStatus === 'not available')) return false;
-                    else if (!['approved', 'cancelled'].includes(inquiryStatusFilter) && reviewStatus !== inquiryStatusFilter) return false;
+                if (bookingReviewView !== 'waiting' && inquiryStatusFilter !== 'all') {
+                    if (inquiryStatusFilter === 'waiting-approval' && !['submitted', 'under review'].includes(reviewStatus)) return false;
+                    else if (inquiryStatusFilter === 'approved' && !(statusText === 'confirmed' || reviewStatus === 'approved for reservation')) return false;
+                    else if (inquiryStatusFilter === 'clarification received' && !(reviewStatus === 'clarification received' || Boolean(booking.clarification_response))) return false;
+                    else if (!['waiting-approval', 'approved', 'clarification received'].includes(inquiryStatusFilter) && reviewStatus !== inquiryStatusFilter) return false;
                 }
                 if (inquiryMonth && eventMonth !== inquiryMonth) return false;
                 if (!query) return true;
@@ -2456,26 +2463,6 @@ const DashboardMarketing = () => {
         }[bookingReviewView] || 'No bookings match this view.';
         return (
             <div className="staff-ops-workspace">
-                <StaffCommandBar className="marketing-booking-command-bar">
-                    <div className="staff-v2-segmented marketing-booking-view-tabs" role="tablist" aria-label="Booking review views">
-                        {BOOKING_WORK_VIEWS.map(option => (
-                            <button
-                                key={option.id}
-                                type="button"
-                                onClick={() => setBookingReviewView(option.id)}
-                                className={bookingReviewView === option.id ? 'is-active' : ''}
-                            >
-                                {option.label}
-                                <span>{reviewCounts[option.id]}</span>
-                            </button>
-                        ))}
-                    </div>
-                    {hasMarketingStaffContext && (
-                        <button type="button" className="staff-v2-link-action" onClick={() => setMarketingContextPanelOpen(true)}>
-                            Context applied
-                        </button>
-                    )}
-                </StaffCommandBar>
                 {pendingTransferBookings.length > 0 && (
                     <div className="marketing-panel border border-[#f0aa0b]/30 bg-[#fff7e8] p-4">
                         <p className="text-xs font-black uppercase tracking-widest text-[#9f6500]">Transfer request</p>
@@ -2501,36 +2488,60 @@ const DashboardMarketing = () => {
                         </div>
                     </div>
                 )}
-                <StaffOpsSearchBar
-                    className="marketing-booking-search-row"
-                    value={inquirySearch}
-                    onChange={handleInquirySearchChange}
-                    placeholder="Search booking, customer, phone, or city"
-                >
-                    {bookingReviewView === 'needs-action' && (
-                        <select value={bookingOwnershipFilter} onChange={(event) => setBookingOwnershipFilter(event.target.value)} className="staff-control" aria-label="Booking ownership filter">
-                            <option value="all">All ownership</option>
-                            <option value="unclaimed">Unclaimed</option>
-                            <option value="claimed">Claimed</option>
-                            <option value="mine">Assigned to me</option>
-                        </select>
-                    )}
-                    <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
-                        <option value="all">All active statuses</option>
-                        <option value="needs customer details">Waiting on customer</option>
-                        <option value="approved">Approved</option>
-                        <option value="cancelled">Cancelled / Rejected</option>
-                    </select>
-                    <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                        <option value="eventDateAsc">Event date</option>
-                    </select>
-                    <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
-                </StaffOpsSearchBar>
-
-                {(
-                    <div className="marketing-panel overflow-hidden">
+                <div className="marketing-panel marketing-booking-board overflow-hidden">
+                    <div className="marketing-booking-board-toolbar">
+                        <div className="marketing-booking-board-tabs">
+                            <div className="staff-v2-segmented marketing-booking-view-tabs" role="tablist" aria-label="Booking review views">
+                                {BOOKING_WORK_VIEWS.map(option => (
+                                    <button
+                                        key={option.id}
+                                        type="button"
+                                        onClick={() => setBookingReviewView(option.id)}
+                                        className={bookingReviewView === option.id ? 'is-active' : ''}
+                                    >
+                                        {option.label}
+                                        <span>{reviewCounts[option.id]}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            {hasMarketingStaffContext && (
+                                <button type="button" className="staff-v2-link-action" onClick={() => setMarketingContextPanelOpen(true)}>
+                                    Context applied
+                                </button>
+                            )}
+                        </div>
+                        <StaffOpsSearchBar
+                            className="marketing-booking-search-row"
+                            value={inquirySearch}
+                            onChange={handleInquirySearchChange}
+                            placeholder="Search booking, customer, phone, or city"
+                        >
+                            {bookingReviewView === 'needs-action' && (
+                                <select value={bookingOwnershipFilter} onChange={(event) => setBookingOwnershipFilter(event.target.value)} className="staff-control" aria-label="Booking ownership filter">
+                                    <option value="all">All ownership</option>
+                                    <option value="unclaimed">Unclaimed</option>
+                                    <option value="claimed">Claimed</option>
+                                    <option value="mine">Assigned to me</option>
+                                </select>
+                            )}
+                            {bookingReviewView !== 'waiting' && (
+                                <select value={inquiryStatusFilter} onChange={(event) => setInquiryStatusFilter(event.target.value)} className="staff-control" aria-label="Booking status filter">
+                                    <option value="all">All active bookings</option>
+                                    <option value="waiting-approval">Waiting for approval</option>
+                                    <option value="needs customer details">Waiting on customer</option>
+                                    <option value="clarification received">Customer replied</option>
+                                    <option value="approved">Approved for reservation</option>
+                                </select>
+                            )}
+                            <select value={inquirySort} onChange={(event) => setInquirySort(event.target.value)} className="staff-control" aria-label="Booking sort order">
+                                <option value="newest">Newest</option>
+                                <option value="oldest">Oldest</option>
+                                <option value="eventDateAsc">Event date</option>
+                            </select>
+                            <input type="month" value={inquiryMonth} onChange={(event) => setInquiryMonth(event.target.value)} className="staff-control" aria-label="Event month filter" />
+                        </StaffOpsSearchBar>
+                    </div>
+                    <div className="marketing-booking-board-list">
                         <ul className="divide-y divide-amber-100/70">
                             {pendingBookings.length === 0 ? <li className="p-8 text-gray-500 text-center">{emptyBookingMessage}</li> : null}
                             {pagedPendingBookings.map(booking => {
@@ -2696,7 +2707,7 @@ const DashboardMarketing = () => {
                         </ul>
                         <StaffPagination page={inquiryPage} perPage={inquiryPerPage} total={pendingBookings.length} onPageChange={setInquiryPage} onPerPageChange={setInquiryPerPage} />
                     </div>
-                )}
+                </div>
             </div>
         );
     };
