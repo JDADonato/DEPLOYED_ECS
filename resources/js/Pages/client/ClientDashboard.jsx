@@ -686,6 +686,7 @@ const ClientDashboard = () => {
     const [feedbackRequests, setFeedbackRequests] = useState([]);
     const [feedbackForm, setFeedbackForm] = useState({ rating: 5, food_rating: 5, service_rating: 5, communication_rating: 5, value_rating: 5, comments: '', testimonial_permission: false });
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
+    const isEditingRef = React.useRef(false);
     const liveChannels = React.useMemo(() => operationalChannelsForUser(user), [user?.id, user?.role]);
 
     const closeConfirmModal = () => setConfirmModal({ isOpen: false, title: '', message: '', confirmText: 'Confirm', onConfirm: null });
@@ -696,6 +697,11 @@ const ClientDashboard = () => {
     const [corePricePreview, setCorePricePreview] = useState(null);
     const [pendingScrollTarget, setPendingScrollTarget] = useState(null);
     const autoSelectedInitialSection = React.useRef(false);
+
+    // Keep the editing ref in sync so the focus handler can read it without re-subscribing
+    useEffect(() => {
+        isEditingRef.current = detailsEditMode || menuEditMode;
+    }, [detailsEditMode, menuEditMode]);
 
     // Modal states
     const [editCoreModalOpen, setEditCoreModalOpen] = useState(false);
@@ -774,7 +780,7 @@ const ClientDashboard = () => {
 
     useEffect(() => {
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && !isEditingRef.current) {
                 fetchData({ silent: true, force: true });
             }
         };
