@@ -1371,7 +1371,7 @@ const ClientDashboard = () => {
             const formData = new FormData();
             formData.append('image', file);
             formData.append('purpose', 'theme_upload');
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const res = await csrfFetch('/api/upload', { method: 'POST', body: formData });
             const result = await res.json();
             if (res.ok) {
                 setDetailsForm(prev => ({ ...prev, theme_uploads: result.url }));
