@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useAuth } from '../context/AuthContext';
 import ClientNavbar from '../Components/common/ClientNavbar';
@@ -8,7 +8,7 @@ import StaffPreviewBanner from '../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../utils/dashboardLinks';
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 const settledStatuses = ['Paid', 'Verified'];
 const isSettled = (status) => settledStatuses.includes(status);
 const sharedSelectedBookingKey = 'ecs_selected_booking_id';
@@ -584,226 +584,146 @@ const formatAnnouncementDate = (announcement) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const typeThemes = {
-    urgent: {
-        bg: 'bg-red-50/60',
-        border: 'border-red-200/80',
-        text: 'text-red-800',
-        accent: 'bg-red-600',
-        badgeBg: 'bg-red-100 text-red-800 border-red-200',
-        shadow: 'shadow-red-50',
-    },
-    promo: {
-        bg: 'bg-amber-50/60',
-        border: 'border-amber-200/80',
-        text: 'text-amber-900',
-        accent: 'bg-amber-500',
-        badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
-        shadow: 'shadow-amber-50',
-    },
-    event_reminder: {
-        bg: 'bg-emerald-50/60',
-        border: 'border-emerald-200/80',
-        text: 'text-emerald-900',
-        accent: 'bg-emerald-600',
-        badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-        shadow: 'shadow-emerald-50',
-    },
-    holiday_advisory: {
-        bg: 'bg-blue-50/60',
-        border: 'border-blue-200/80',
-        text: 'text-blue-900',
-        accent: 'bg-blue-600',
-        badgeBg: 'bg-blue-100 text-blue-900 border-blue-200',
-        shadow: 'shadow-blue-50',
-    },
-    menu_update: {
-        bg: 'bg-purple-50/60',
-        border: 'border-purple-200/80',
-        text: 'text-purple-900',
-        accent: 'bg-purple-600',
-        badgeBg: 'bg-purple-100 text-purple-900 border-purple-200',
-        shadow: 'shadow-purple-50',
-    },
-    service_notice: {
-        bg: 'bg-slate-50/70',
-        border: 'border-slate-200/80',
-        text: 'text-slate-800',
-        accent: 'bg-slate-500',
-        badgeBg: 'bg-slate-100 text-slate-800 border-slate-200',
-        shadow: 'shadow-slate-50',
-    },
-    general: {
-        bg: 'bg-white',
-        border: 'border-[#720101]/10',
-        text: 'text-[#720101]',
-        accent: 'bg-[#720101]',
-        badgeBg: 'bg-[#720101]/10 text-[#720101] border-[#720101]/20',
-        shadow: 'shadow-[#720101]/5',
-    },
+const announcementTypeIcons = {
+    general: 'ðŸ“¢',
+    promo: 'ðŸŽ‰',
+    event_reminder: 'ðŸ“…',
+    holiday_advisory: 'ðŸ–ï¸',
+    menu_update: 'ðŸ½ï¸',
+    service_notice: 'âš™ï¸',
+    urgent: 'ðŸš¨',
 };
 
 const HomepageAnnouncements = ({ announcements }) => {
     if (!announcements.length) return null;
 
-    const [featured, ...rest] = announcements;
-    const image = announcementImage(featured);
-    const theme = typeThemes[featured.type] || typeThemes.general;
-
     return (
-        <section className="relative overflow-hidden bg-[#fffaf3] py-24">
-            <div className="absolute inset-x-0 top-0 h-px bg-[#720101]/10" />
-            <div className="absolute inset-x-0 bottom-0 h-px bg-[#720101]/10" />
-            <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <section className="relative bg-[#15110f] py-20 overflow-hidden">
+            {/* Subtle background texture */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+            <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-[#720101]/8 blur-[120px]" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-[#f0aa0b]/5 blur-[140px]" />
+
+            <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+                {/* Section header â€” compact and elegant */}
                 <Rv>
-                    <div className="mb-12 grid gap-6 lg:grid-cols-[0.74fr_1fr] lg:items-end">
-                        <div>
-                            <p className="text-xs font-black uppercase tracking-[.22em] text-[#720101]">Latest from Eloquente</p>
-                            <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-[#1a1a1a] md:text-5xl">
-                                Important notes for upcoming celebrations.
-                            </h2>
+                    <div className="mb-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#720101]/20 text-lg">
+                                ðŸ“¢
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f0aa0b]">Announcements</p>
+                                <h2 className="mt-1 font-display text-2xl font-bold text-white md:text-3xl">What's New</h2>
+                            </div>
                         </div>
-                        <p className="max-w-2xl text-sm font-medium leading-7 text-gray-600 lg:justify-self-end">
-                            Timely advisories, menu updates, and booking reminders from the team, placed here as part of the planning experience.
+                        <p className="text-sm font-medium text-white/40 max-w-md">
+                            Updates, reminders, and offers from the Eloquente team.
                         </p>
                     </div>
                 </Rv>
 
-                <div className={`grid gap-8 ${rest.length > 0 ? 'lg:grid-cols-[1.35fr_0.65fr]' : 'max-w-4xl mx-auto'}`}>
-                    <Rv>
-                        {image ? (
-                            <div className={`relative overflow-hidden rounded-[2rem] border ${theme.border} ${theme.bg} shadow-lg ${theme.shadow} transition duration-300 hover:shadow-xl h-full`}>
-                                <div className="grid md:grid-cols-[0.8fr_1.2fr] lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch h-full">
-                                    <div className="relative min-h-[18rem] md:min-h-full overflow-hidden bg-[#15110f]">
-                                        <SmartImage src={image} alt="" aspectRatio="4 / 5" containerClassName="h-full w-full object-cover" />
-                                        <div className="absolute inset-y-0 right-0 w-px bg-[#720101]/10" />
-                                    </div>
-                                    <div className="p-8 md:p-10 flex flex-col justify-between relative">
-                                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.accent}`} />
-                                        <div className="pl-3 md:pl-4">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-widest ${theme.badgeBg}`}>
-                                                    {announcementTypeLabels[featured.type] || 'Announcement'}
-                                                </span>
-                                                <span className="text-xs font-semibold text-slate-400">
-                                                    {formatAnnouncementDate(featured)}
-                                                </span>
-                                            </div>
+                {/* Announcement items */}
+                <div className="space-y-0 divide-y divide-white/[0.06]">
+                    {announcements.map((item, idx) => {
+                        const image = announcementImage(item);
+                        const icon = announcementTypeIcons[item.type] || 'ðŸ“¢';
+                        const isFeatured = idx === 0;
 
-                                            <h3 className="mt-5 font-display text-2xl md:text-3xl font-extrabold text-[#1a1a1a] tracking-tight leading-snug">
-                                                {featured.title}
-                                            </h3>
-
-                                            <div className="my-5 h-px bg-[#720101]/10 w-full" />
-
-                                            <div className="text-sm md:text-base font-medium leading-relaxed text-slate-700 space-y-3">
-                                                {featured.summary && (
-                                                    <p className="text-base font-bold text-slate-800 leading-snug">
-                                                        {featured.summary}
+                        return (
+                            <Rv key={item.id}>
+                                <article className={`group relative ${isFeatured ? 'py-10' : 'py-8'} transition-colors duration-300 hover:bg-white/[0.02]`}>
+                                    {isFeatured && image ? (
+                                        /* Featured with image â€” side by side */
+                                        <div className="grid gap-8 lg:grid-cols-[1fr_0.55fr] lg:items-center">
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-3 mb-5">
+                                                    <span className="text-lg">{icon}</span>
+                                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#f0aa0b]">
+                                                        {announcementTypeLabels[item.type] || 'Announcement'}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-white/30">
+                                                        {formatAnnouncementDate(item)}
+                                                    </span>
+                                                </div>
+                                                <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl tracking-tight">
+                                                    {item.title}
+                                                </h3>
+                                                {(item.summary || item.body) && (
+                                                    <p className="mt-5 max-w-2xl text-base font-medium leading-relaxed text-white/55 md:text-lg">
+                                                        {item.summary || item.body}
                                                     </p>
                                                 )}
-                                                {featured.body && (
-                                                    <p className="whitespace-pre-line text-sm text-slate-600 font-medium">
-                                                        {featured.body}
+                                                {item.body && item.summary && item.body !== item.summary && (
+                                                    <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/35">
+                                                        {item.body}
                                                     </p>
+                                                )}
+                                                {item.cta_label && item.cta_url && (
+                                                    <Link href={item.cta_url} className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#f0aa0b]/30 bg-[#f0aa0b]/10 px-6 py-3 text-xs font-black uppercase tracking-wider text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/20 hover:border-[#f0aa0b]/50">
+                                                        {item.cta_label}
+                                                        <span className="transition-transform group-hover:translate-x-0.5">â†’</span>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                            <div className="relative overflow-hidden rounded-2xl bg-white/5">
+                                                <SmartImage src={image} alt="" aspectRatio="4 / 3" containerClassName="h-full min-h-[16rem]" />
+                                                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* Standard row layout â€” no cards */
+                                        <div className={`grid gap-4 ${isFeatured ? 'lg:grid-cols-[auto_1fr]' : 'lg:grid-cols-[auto_1fr_auto]'} lg:items-baseline`}>
+                                            {/* Type + date column */}
+                                            <div className="flex items-center gap-3 lg:min-w-[14rem]">
+                                                <span className={`${isFeatured ? 'text-xl' : 'text-base'}`}>{icon}</span>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#f0aa0b]">
+                                                        {announcementTypeLabels[item.type] || 'Announcement'}
+                                                    </span>
+                                                    <span className="text-[11px] font-semibold text-white/25">
+                                                        {formatAnnouncementDate(item)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Content column */}
+                                            <div className="min-w-0">
+                                                <h3 className={`font-display font-extrabold text-white tracking-tight leading-snug ${isFeatured ? 'text-3xl md:text-4xl lg:text-5xl' : 'text-xl md:text-2xl'}`}>
+                                                    {item.title}
+                                                </h3>
+                                                {(item.summary || item.body) && (
+                                                    <p className={`mt-2 max-w-3xl font-medium leading-relaxed text-white/45 ${isFeatured ? 'text-base md:text-lg mt-4' : 'text-sm line-clamp-2'}`}>
+                                                        {item.summary || item.body}
+                                                    </p>
+                                                )}
+                                                {isFeatured && item.body && item.summary && item.body !== item.summary && (
+                                                    <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/30">
+                                                        {item.body}
+                                                    </p>
+                                                )}
+                                                {isFeatured && item.cta_label && item.cta_url && (
+                                                    <Link href={item.cta_url} className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#f0aa0b]/30 bg-[#f0aa0b]/10 px-6 py-3 text-xs font-black uppercase tracking-wider text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/20 hover:border-[#f0aa0b]/50">
+                                                        {item.cta_label}
+                                                        <span className="transition-transform group-hover:translate-x-0.5">â†’</span>
+                                                    </Link>
                                                 )}
                                             </div>
 
-                                            {featured.cta_label && featured.cta_url && (
-                                                <div className="mt-8">
-                                                    <Link href={featured.cta_url} className={`inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white transition-all shadow-md hover:shadow-lg ${theme.accent === 'bg-[#720101]' ? 'bg-[#720101] hover:bg-[#5a0101]' : `${theme.accent} hover:opacity-90`}`}>
-                                                        {featured.cta_label}
+                                            {/* CTA for non-featured */}
+                                            {!isFeatured && item.cta_label && item.cta_url && (
+                                                <div className="lg:justify-self-end">
+                                                    <Link href={item.cta_url} className="inline-flex items-center gap-1.5 text-xs font-black text-[#f0aa0b] transition-colors hover:text-white">
+                                                        {item.cta_label} <span>â†’</span>
                                                     </Link>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className={`relative overflow-hidden rounded-[2rem] border ${theme.border} ${theme.bg} p-8 md:p-12 shadow-lg ${theme.shadow} transition duration-300 hover:shadow-xl h-full`}>
-                                <div className={`absolute left-0 top-0 bottom-0 w-2 ${theme.accent}`} />
-                                <div className="flex flex-col h-full pl-3 md:pl-6">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-widest ${theme.badgeBg}`}>
-                                            {announcementTypeLabels[featured.type] || 'Announcement'}
-                                        </span>
-                                        <span className="text-xs font-semibold text-slate-400">
-                                            {formatAnnouncementDate(featured)}
-                                        </span>
-                                    </div>
-
-                                    <h3 className="mt-5 font-display text-2xl md:text-4xl font-extrabold text-[#1a1a1a] tracking-tight leading-tight">
-                                        {featured.title}
-                                    </h3>
-
-                                    <div className="my-5 h-px bg-[#720101]/10 w-full" />
-
-                                    <div className="text-sm md:text-base font-medium leading-relaxed text-slate-700 space-y-4">
-                                        {featured.summary && (
-                                            <p className="text-base md:text-lg font-bold text-slate-800 leading-snug">
-                                                {featured.summary}
-                                            </p>
-                                        )}
-                                        {featured.body && (
-                                            <p className="whitespace-pre-line text-sm md:text-base text-slate-600 font-medium">
-                                                {featured.body}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {featured.cta_label && featured.cta_url && (
-                                        <div className="mt-8">
-                                            <Link href={featured.cta_url} className={`inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white transition-all shadow-md hover:shadow-lg ${theme.accent === 'bg-[#720101]' ? 'bg-[#720101] hover:bg-[#5a0101]' : `${theme.accent} hover:opacity-90`}`}>
-                                                {featured.cta_label}
-                                            </Link>
-                                        </div>
                                     )}
-                                </div>
-                            </div>
-                        )}
-                    </Rv>
-
-                    {rest.length > 0 && (
-                        <Rv>
-                            <div className="flex flex-col gap-6 h-full justify-start">
-                                <h4 className="text-xs font-black uppercase tracking-[.25em] text-[#720101] mb-1">
-                                    More Updates
-                                </h4>
-                                <div className="grid gap-4">
-                                    {rest.slice(0, 3).map((announcement) => {
-                                        const subTheme = typeThemes[announcement.type] || typeThemes.general;
-                                        return (
-                                            <div key={announcement.id} className={`p-5 rounded-2xl border ${subTheme.border} bg-white shadow-sm hover:shadow-md transition duration-200 relative overflow-hidden`}>
-                                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${subTheme.accent}`} />
-                                                <div className="pl-3">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${subTheme.badgeBg}`}>
-                                                            {announcementTypeLabels[announcement.type] || 'Announcement'}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-gray-400">
-                                                            {formatAnnouncementDate(announcement)}
-                                                        </span>
-                                                    </div>
-                                                    <h5 className="mt-2.5 font-display text-base font-bold text-[#1a1a1a] leading-snug">
-                                                        {announcement.title}
-                                                    </h5>
-                                                    <p className="mt-1.5 line-clamp-2 text-xs font-medium text-slate-500 leading-relaxed">
-                                                        {announcement.summary || announcement.body}
-                                                    </p>
-                                                    {announcement.cta_label && announcement.cta_url && (
-                                                        <Link href={announcement.cta_url} className="mt-2.5 inline-flex text-xs font-black text-[#720101] hover:text-[#f0aa0b]">
-                                                            {announcement.cta_label} &rarr;
-                                                        </Link>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </Rv>
-                    )}
+                                </article>
+                            </Rv>
+                        );
+                    })}
                 </div>
             </div>
         </section>
@@ -1400,7 +1320,7 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
             </section>
 
             {/*
-                    <p className="text-white/20 text-xs">© 2026 Eloquente Catering Services</p>
+                    <p className="text-white/20 text-xs">Â© 2026 Eloquente Catering Services</p>
                 </div>
             </footer>}
 
