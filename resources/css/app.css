@@ -14382,6 +14382,8 @@
 }
 
 .marketing-booking-filter-panel .staff-control {
+  flex: 1;
+  width: auto;
   min-width: 10.5rem;
   min-height: 2.6rem;
   border-color: rgba(114, 1, 1, .14);
