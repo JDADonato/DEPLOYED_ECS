@@ -26,11 +26,22 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
-    const totalCost = Number(booking.total_cost || booking.budget);
+    const totalCost = Number(booking.total_cost || booking.budget || 0);
     const transportFee = Number(booking.transport_fee || 0);
     const laborSurcharge = Number(booking.labor_surcharge || 0);
     const discount = Number(booking.discount_value || 0);
     const baseBudget = Number(booking.budget || totalCost - transportFee - laborSurcharge + discount);
+
+    const verifiedStatuses = ['verified', 'completed', 'Paid', 'paid', 'verified_online'];
+    const verifiedPayments = (booking.payments || []).filter(p => verifiedStatuses.includes(p.status));
+    const isCurrentPaymentIncluded = verifiedPayments.some(p => p.id === payment.id);
+    let totalPaid = verifiedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    
+    if (!isCurrentPaymentIncluded) {
+        totalPaid += Number(payment.amount);
+    }
+    
+    const remainingBalance = Math.max(totalCost - totalPaid, 0);
 
     return (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
@@ -71,14 +82,11 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
                             <p className="font-bold text-gray-900 text-lg">{bookingContactName(booking)}</p>
                             <p className="text-sm text-gray-600 mt-1">{bookingContactEmail(booking)}</p>
                             <p className="text-sm text-gray-600">{bookingContactPhone(booking)}</p>
-                            {hasDifferentBookingContact(booking) && (
-                                <p className="mt-2 text-xs font-bold text-amber-700">Customer account: {customerAccountName(booking)}</p>
-                            )}
                         </div>
                         <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Event Details</p>
                             <p className="font-bold text-gray-900">{booking.event_display_name || booking.event_name || booking.event_type || booking.package_name || 'Catering Event'}</p>
-                            <p className="text-sm text-gray-600 mt-1">Date: <span className="font-medium">{new Date(booking.event_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}</span></p>
+                            <p className="text-sm text-gray-600 mt-1">Event Date: <span className="font-medium">{new Date(booking.event_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}</span></p>
                             <p className="text-sm text-gray-600">Guests: <span className="font-medium">{booking.pax} pax</span></p>
                         </div>
                     </div>
@@ -141,6 +149,10 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
                             <div className="flex justify-between items-end pt-4 border-t border-primary-100/50">
                                 <span className="font-bold text-gray-700 uppercase tracking-widest text-sm">Amount Paid</span>
                                 <span className="text-3xl font-black text-primary-700">₱{formatMoney(payment.amount)}</span>
+                            </div>
+                            <div className="flex justify-between items-end pt-3 border-t border-primary-100/50 mt-3">
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Remaining Balance</span>
+                                <span className="text-sm font-bold text-gray-700">₱{formatMoney(remainingBalance)}</span>
                             </div>
                         </div>
                     </div>
