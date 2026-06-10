@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, RotateCcw } from 'lucide-react';
 import AuthShell from '../Components/auth/AuthShell';
 import { useAuth } from '../context/AuthContext';
 
@@ -147,33 +147,39 @@ const Login = () => {
             </form>
 
             {requiresReactivation && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-fadeIn">
-                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-                            <span className="text-xl font-bold text-amber-700">!</span>
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-md animate-fadeIn">
+                    <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5 animate-slideUpAndFade scale-95 transition-transform duration-300 transform-gpu opacity-0" style={{ animationFillMode: 'forwards' }}>
+                        <div className="relative h-24 bg-gradient-to-r from-amber-500 to-orange-500">
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl ring-4 ring-white">
+                                <RotateCcw className="h-8 w-8 text-amber-600" strokeWidth={2.5} />
+                            </div>
                         </div>
-                        <h3 className="mb-2 text-xl font-black text-slate-900">Reactivate Account?</h3>
-                        <p className="mb-6 text-sm text-slate-600 font-medium">
-                            You previously deactivated this account. Do you want to reactivate it and log in?
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setRequiresReactivation(false)}
-                                disabled={loading}
-                                className="w-full rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleReactivate}
-                                disabled={loading}
-                                className="w-full rounded-xl bg-amber-600 py-3 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                                Reactivate
-                            </button>
+                        
+                        <div className="px-8 pb-8 pt-12 text-center">
+                            <h3 className="mb-3 text-2xl font-black tracking-tight text-slate-900">Reactivate Account?</h3>
+                            <p className="mb-8 text-sm font-medium leading-relaxed text-slate-500">
+                                You previously deactivated this account. By reactivating, you'll regain full access to your bookings, payments, and event history.
+                            </p>
+                            
+                            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                                <button
+                                    type="button"
+                                    onClick={() => setRequiresReactivation(false)}
+                                    disabled={loading}
+                                    className="w-full rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleReactivate}
+                                    disabled={loading}
+                                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3.5 text-sm font-bold text-white shadow-md transition hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50"
+                                >
+                                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <RotateCcw className="h-5 w-5" />}
+                                    Reactivate
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

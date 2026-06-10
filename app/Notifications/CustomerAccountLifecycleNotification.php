@@ -2,14 +2,13 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CustomerAccountLifecycleNotification extends Notification implements ShouldQueue
+class CustomerAccountLifecycleNotification extends Notification
 {
-    use Queueable;
+
 
     public function __construct(private readonly string $event) {}
 

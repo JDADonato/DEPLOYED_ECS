@@ -47,6 +47,9 @@ class ProfileController extends Controller
             'remember_token' => null,
         ])->save();
 
+        app(\App\Services\OperationalBroadcastService::class)
+            ->adminChanged('accounts', 'user', $user->id, 'deactivated', 'Customer account deactivated.');
+
         $this->recordProfileAudit($request, ['account_deactivation']);
 
         auth()->logout();
