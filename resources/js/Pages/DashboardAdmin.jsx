@@ -9512,13 +9512,29 @@ const DashboardAdmin = () => {
                             {/* Image Link */}
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Image</label>
+                                {menuItemForm.image && (
+                                    <div className="mb-3 flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-100">
+                                        <img
+                                            src={menuItemForm.image}
+                                            alt="Current Menu Item"
+                                            className="w-12 h-12 rounded-lg object-cover bg-gray-100 border border-gray-200"
+                                            onError={(e) => {
+                                                e.target.style.opacity = 0.5;
+                                            }}
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Current Image</p>
+                                            <p className="text-xs text-gray-400 truncate">{menuItemForm.image.split('/').pop()}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <input
                                     type="file"
                                     accept="image/*"
                                     onChange={e => setMenuItemForm({ ...menuItemForm, image_file: e.target.files[0] })}
                                     className="mb-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#720101]/10 focus:border-[#720101] outline-none transition-all file:mr-4 file:rounded-full file:border-0 file:bg-[#720101] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#5a0101] text-sm"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Upload an image file. Leave blank to use a standard menu image.</p>
+                                <p className="text-xs text-gray-400 mt-1">Upload an image file. Leave blank to keep current image or use standard menu image.</p>
                             </div>
 
                             {/* Description */}
