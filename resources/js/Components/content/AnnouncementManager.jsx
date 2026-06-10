@@ -154,11 +154,12 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
     }, [audienceSearch, form.visibility]);
 
     const requestJson = async (url, options = {}) => {
+        const isFormData = options.body instanceof FormData;
         const response = await fetch(url, {
             ...options,
             headers: {
                 Accept: 'application/json',
-                ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+                ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
                 'X-CSRF-TOKEN': csrfToken(),
                 ...(options.headers || {}),
             },
@@ -284,8 +285,28 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
 
     const saveAnnouncement = async () => {
         const url = editingId ? `/api/admin/announcements/${editingId}` : '/api/admin/announcements';
-        const method = editingId ? 'PATCH' : 'POST';
-        return requestJson(url, { method, body: JSON.stringify(payloadFromForm()) });
+        
+        const formData = new FormData();
+        if (editingId) formData.append('_method', 'PATCH');
+        
+        const payload = payloadFromForm();
+        for (const key in payload) {
+            if (payload[key] !== null && payload[key] !== undefined && payload[key] !== '') {
+                if (Array.isArray(payload[key])) {
+                    payload[key].forEach(val => formData.append(`${key}[]`, val));
+                } else if (typeof payload[key] === 'boolean') {
+                    formData.append(key, payload[key] ? '1' : '0');
+                } else {
+                    formData.append(key, payload[key]);
+                }
+            }
+        }
+        
+        if (form.image_file) {
+            formData.append('image_file', form.image_file);
+        }
+
+        return requestJson(url, { method: 'POST', body: formData });
     };
 
     const submit = async (event, mode = 'draft') => {
@@ -503,10 +524,26 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                     <input value={form.cta_url} onChange={(event) => updateField('cta_url', event.target.value)} placeholder="/book" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
                                 </label>
 
-                                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 lg:col-span-2">
-                                    Image URL or storage path
-                                    <input value={form.image_path} onChange={(event) => updateField('image_path', event.target.value)} placeholder="Optional" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
-                                </label>
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-xs font-black uppercase text-gray-500">
+                                        Image URL or storage path
+                                    </label>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => updateField('image_file', e.target.files[0])}
+                                            className="staff-control file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#720101]/10 file:text-[#720101] hover:file:bg-[#720101]/20 cursor-pointer"
+                                        />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Optional image link"
+                                        className="staff-control"
+                                        value={form.image_path || ''}
+                                        onChange={(e) => updateField('image_path', e.target.value)}
+                                    />
+                                </div>
 
                                 <label className="flex items-center justify-between rounded-xl border border-[#720101]/10 bg-[#fff7e8] px-4 py-3 lg:col-span-2">
                                     <span className="text-sm font-black text-[#111827]">Send by email when published</span>

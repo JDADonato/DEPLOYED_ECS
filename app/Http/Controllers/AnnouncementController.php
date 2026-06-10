@@ -234,7 +234,13 @@ class AnnouncementController extends Controller
             'cta_label' => 'nullable|string|max:80',
             'cta_url' => 'nullable|string|max:255',
             'image_path' => 'nullable|string|max:255',
+            'image_file' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('announcement-images', 'public');
+            $data['image_path'] = '/storage/' . $path;
+        }
 
         $data['send_email'] = $request->boolean('send_email');
 
