@@ -2850,7 +2850,23 @@ const DashboardMarketing = () => {
                         <p className="staff-section-copy">{activeCatalogMeta.text}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <a href={activeConfigTab === 'announcements' ? '/preview/menu' : activeConfigTab === 'packages' ? '/preview/packages' : '/preview/menu'} target="_blank" rel="noreferrer" className="staff-button-secondary">Preview as customer</a>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                let url = '/';
+                                if (activeConfigTab === 'packages') {
+                                    url = '/preview/packages';
+                                } else if (activeConfigTab === 'eventTypes') {
+                                    url = '/preview/book';
+                                } else if (activeConfigTab === 'menuItems') {
+                                    url = '/preview/menu';
+                                }
+                                router.visit(url);
+                            }}
+                            className="staff-button-secondary"
+                        >
+                            Preview as customer
+                        </button>
                         {activeConfigTab === 'packages' && (
                             <button type="button" onClick={() => openPackageDrawer()} className="staff-button-primary">Create package</button>
                         )}
