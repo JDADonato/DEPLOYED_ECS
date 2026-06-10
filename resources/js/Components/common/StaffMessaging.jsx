@@ -648,7 +648,7 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
                     // Skip our own messages — already added from HTTP response
                     if (e.messageData.sender_id === user?.id) return;
 
-                    if (selectedConvRef.current?.id === e.conversationId) {
+                    if (String(selectedConvRef.current?.id || '') === String(e.conversationId || '')) {
                         setMessages(prev => {
                             shouldScrollToBottomRef.current = true;
                             const next = mergeMessageIntoList(prev, { ...e.messageData, is_mine: false });
@@ -2234,40 +2234,14 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
                                 {!isAdminOversight && isClaimedByMe && (
                                     <div className="flex items-center gap-2">
                                         {canUseStaffContextNavigation && (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openStaffContext({ role: staffContextRole, tab: staffContextDefaultTab })}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg border border-gray-200 hover:border-primary-200 transition-colors"
-                                                >
-                                                    Booking
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openStaffContext({ role: staffContextRole, tab: staffContextDefaultTab })}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg border border-gray-200 hover:border-primary-200 transition-colors"
-                                                >
-                                                    Customer
-                                                </button>
-                                                {(selectedContextPayload?.customerEmail || selectedContextPayload?.bookingContactEmail) && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={copySelectedEmail}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg border border-gray-200 hover:border-amber-200 transition-colors"
-                                                    >
-                                                        {copiedHelper === 'email' ? 'Copied' : 'Email'}
-                                                    </button>
-                                                )}
-                                                {(selectedContextPayload?.customerPhone || selectedContextPayload?.bookingContactPhone) && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={copySelectedPhone}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg border border-gray-200 hover:border-amber-200 transition-colors"
-                                                    >
-                                                        {copiedHelper === 'phone' ? 'Copied' : 'Phone'}
-                                                    </button>
-                                                )}
-                                            </>
+                                            <button
+                                                type="button"
+                                                onClick={() => openStaffContext({ role: staffContextRole, tab: staffContextDefaultTab })}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg border border-gray-200 hover:border-primary-200 transition-colors"
+                                            >
+                                                <UserRound className="w-3.5 h-3.5" />
+                                                Customer Details
+                                            </button>
                                         )}
                                         {(canTransfer || canInvite) && <div className="relative">
                                             <button onClick={() => { setShowTransfer(!showTransfer); if (!showTransfer) fetchAvailableStaff(); }}
