@@ -6115,7 +6115,7 @@ const DashboardAdmin = () => {
         const days = [];
 
         for (let i = 0; i < firstDay; i++) {
-            days.push(<div key={`empty-${i}`} className="marketing-calendar-cell marketing-calendar-cell-empty"></div>);
+            days.push(<div key={`empty-${i}`} className="marketing-calendar-cell marketing-calendar-cell-empty bg-slate-50/50"></div>);
         }
 
         for (let day = 1; day <= daysInMonth; day++) {
@@ -6123,7 +6123,7 @@ const DashboardAdmin = () => {
             const dayBookings = calendarBookingsByDate.get(dateStr) || [];
 
             days.push(
-                <div key={day} className="marketing-calendar-cell custom-scrollbar">
+                <div key={day} className="marketing-calendar-cell custom-scrollbar p-2 bg-white transition-colors hover:bg-slate-50">
                     <div className="mb-2 flex items-center justify-between">
                         <span className="text-xs font-black text-slate-700">{day}</span>
                         {dayBookings.length > 0 && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800">{dayBookings.length}</span>}
@@ -6250,13 +6250,13 @@ const DashboardAdmin = () => {
 
                     <div className="mt-4">
                         {adminCalendarView === 'month' ? (
-                            <div className="marketing-calendar-container rounded-2xl border border-amber-100 bg-white">
-                                <div className="marketing-calendar-header">
+                            <div className="marketing-calendar-container rounded-2xl border border-amber-100 bg-white overflow-hidden">
+                                <div className="grid grid-cols-7 border-b border-amber-100 bg-[#fffaf3]">
                                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                        <div key={day}>{day}</div>
+                                        <div key={day} className="py-2 text-center text-xs font-black uppercase text-slate-500 border-r border-amber-100/50 last:border-r-0">{day}</div>
                                     ))}
                                 </div>
-                                <div className="marketing-calendar-grid">
+                                <div className="grid grid-cols-7 auto-rows-[minmax(120px,auto)] bg-amber-100 gap-[1px] border-b border-amber-100">
                                     {days}
                                 </div>
                             </div>
