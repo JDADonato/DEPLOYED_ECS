@@ -1097,6 +1097,26 @@ class AdminController extends Controller
             return response()->json(['error' => 'Menu item not found'], 404);
         }
 
+        if ($item->bookingItems()->exists()) {
+            return response()->json(['error' => 'Cannot delete menu item because it is used in existing bookings. Please archive it instead.'], 400);
+        }
+
+        $item->delete();
+        $this->bumpCatalogVersion();
+        Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
+        app(OperationalBroadcastService::class)
+            ->adminChanged('catalog', 'menu_item', $item->id, 'deleted', 'Menu item permanently deleted.');
+
+        return response()->json(['message' => 'Menu item permanently deleted']);
+    }
+
+    public function archiveMenuItem(int $id)
+    {
+        $item = MenuItem::find($id);
+        if (! $item) {
+            return response()->json(['error' => 'Menu item not found'], 404);
+        }
+
         $item->update(['is_active' => false]);
         $this->bumpCatalogVersion();
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
@@ -1106,9 +1126,20 @@ class AdminController extends Controller
         return response()->json(['message' => 'Menu item archived successfully', 'item' => $item->fresh()]);
     }
 
-    public function archiveMenuItem(int $id)
+    public function unarchiveMenuItem(int $id)
     {
-        return $this->deleteMenuItem($id);
+        $item = MenuItem::find($id);
+        if (! $item) {
+            return response()->json(['error' => 'Menu item not found'], 404);
+        }
+
+        $item->update(['is_active' => true]);
+        $this->bumpCatalogVersion();
+        Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
+        app(OperationalBroadcastService::class)
+            ->adminChanged('catalog', 'menu_item', $item->id, 'unarchived', 'Menu item unarchived.');
+
+        return response()->json(['message' => 'Menu item unarchived successfully', 'item' => $item->fresh()]);
     }
 
     private function catalogVersion(): int

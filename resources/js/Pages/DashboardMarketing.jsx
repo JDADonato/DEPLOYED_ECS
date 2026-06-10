@@ -1214,6 +1214,41 @@ const DashboardMarketing = () => {
         }
     };
 
+    const handleUnarchiveMenuItem = async (item) => {
+        setSettingsSaving(true);
+        try {
+            const response = await csrfFetch(`/api/settings/menu-items/${item.id}/unarchive`, { method: 'PATCH' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not unarchive menu item.');
+
+            toast.success(data.message || 'Menu item unarchived.');
+            bustMarketingSettingsCache();
+            fetchMarketingSettings();
+        } catch (error) {
+            toast.error(error.message || 'Could not unarchive menu item.');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const handleDeleteMenuItem = async (item) => {
+        if (!confirm('Are you sure you want to permanently delete this menu item?')) return;
+        setSettingsSaving(true);
+        try {
+            const response = await csrfFetch(`/api/settings/menu-items/${item.id}`, { method: 'DELETE' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not delete menu item.');
+
+            toast.success(data.message || 'Menu item deleted.');
+            bustMarketingSettingsCache();
+            fetchMarketingSettings();
+        } catch (error) {
+            toast.error(error.message || 'Could not delete menu item.');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
     const handlePackageSubmit = async (e) => {
         e.preventDefault();
         setSettingsSaving(true);
@@ -2932,7 +2967,12 @@ const DashboardMarketing = () => {
                                             <td className="px-6 py-4 text-left font-bold text-gray-900">PHP {(Number(item.cost_per_head || 0) + Number(item.price_adj || 0)).toLocaleString()}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <button onClick={() => openEditMenuItemModal(item)} className="mr-2 rounded-lg bg-[#720101] px-3 py-2 text-xs font-bold text-white hover:bg-[#5a0101]">Edit</button>
-                                                {item.is_active !== false && <button onClick={() => handleArchiveMenuItem(item)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>}
+                                                {item.is_active !== false ? (
+                                                    <button onClick={() => handleArchiveMenuItem(item)} className="mr-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>
+                                                ) : (
+                                                    <button onClick={() => handleUnarchiveMenuItem(item)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Unarchive</button>
+                                                )}
+                                                <button onClick={() => handleDeleteMenuItem(item)} className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-200">Delete</button>
                                             </td>
                                         </tr>
                                     ))}

@@ -319,9 +319,12 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::post('/api/settings/event-types', [SettingsController::class, 'createEventType']);
     Route::put('/api/settings/event-types/{id}', [SettingsController::class, 'updateEventType']);
     Route::delete('/api/settings/event-types/{id}', [SettingsController::class, 'deleteEventType']);
+    Route::get('/api/settings/menu-items', [SettingsController::class, 'menuItems']);
     Route::post('/api/settings/menu-items', [SettingsController::class, 'createMenuItem']);
     Route::put('/api/settings/menu-items/{id}', [SettingsController::class, 'updateMenuItem']);
     Route::patch('/api/settings/menu-items/{id}/archive', [SettingsController::class, 'archiveMenuItem']);
+    Route::patch('/api/settings/menu-items/{id}/unarchive', [SettingsController::class, 'unarchiveMenuItem']);
+    Route::delete('/api/settings/menu-items/{id}', [SettingsController::class, 'deleteMenuItem']);
     Route::put('/api/settings/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
     Route::get('/api/admin/announcements', [AnnouncementController::class, 'index']);
     Route::post('/api/admin/announcements', [AnnouncementController::class, 'store'])->middleware('throttle:announcement-action');
@@ -403,17 +406,19 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('/api/admin/refund/{bookingId}/{action}', [AccountingController::class, 'refundAction'])->middleware('throttle:refund-action');
 
     // Menu items CRUD
+    Route::get('/api/admin/menu-items', [AdminController::class, 'getMenuItems']);
     Route::post('/api/admin/menu-items', [AdminController::class, 'createMenuItem']);
     Route::put('/api/admin/menu-items/{id}', [AdminController::class, 'updateMenuItem']);
     Route::patch('/api/admin/menu-items/{id}/archive', [AdminController::class, 'archiveMenuItem']);
+    Route::patch('/api/admin/menu-items/{id}/unarchive', [AdminController::class, 'unarchiveMenuItem']);
     Route::delete('/api/admin/menu-items/{id}', [AdminController::class, 'deleteMenuItem']);
+    Route::put('/api/admin/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
     Route::post('/api/admin/packages', [SettingsController::class, 'createPackage']);
     Route::put('/api/admin/packages/{id}', [SettingsController::class, 'updatePackage']);
     Route::post('/api/admin/event-types', [SettingsController::class, 'createEventType']);
     Route::put('/api/admin/event-types/{id}', [SettingsController::class, 'updateEventType']);
     Route::patch('/api/admin/event-types/{id}/archive', [SettingsController::class, 'archiveEventType']);
     Route::delete('/api/admin/event-types/{id}', [SettingsController::class, 'deleteEventType']);
-    Route::put('/api/admin/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
 });
 
 Route::get('/fix-images', function () {

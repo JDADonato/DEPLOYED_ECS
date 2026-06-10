@@ -311,6 +311,35 @@ class SettingsController extends Controller
         return response()->json(['message' => 'Menu item archived successfully.', 'item' => $item->fresh()]);
     }
 
+    public function unarchiveMenuItem(int $id)
+    {
+        $item = MenuItem::findOrFail($id);
+        $item->update(['is_active' => true]);
+        $this->bumpCatalogVersion();
+
+        app(OperationalBroadcastService::class)
+            ->adminChanged('catalog', 'menu_item', $item->id, 'unarchived', 'Menu item unarchived.');
+
+        return response()->json(['message' => 'Menu item unarchived successfully.', 'item' => $item->fresh()]);
+    }
+
+    public function deleteMenuItem(int $id)
+    {
+        $item = MenuItem::findOrFail($id);
+
+        if ($item->bookingItems()->exists()) {
+            return response()->json(['error' => 'Cannot delete menu item because it is used in existing bookings. Please archive it instead.'], 400);
+        }
+
+        $item->delete();
+        $this->bumpCatalogVersion();
+
+        app(OperationalBroadcastService::class)
+            ->adminChanged('catalog', 'menu_item', $item->id, 'deleted', 'Menu item permanently deleted.');
+
+        return response()->json(['message' => 'Menu item permanently deleted.']);
+    }
+
     public function createEventType(Request $request)
     {
         $data = $request->validate([

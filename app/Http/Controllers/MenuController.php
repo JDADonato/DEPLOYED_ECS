@@ -13,7 +13,7 @@ class MenuController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = min(max((int) $request->get('per_page', 50), 1), 100);
+        $perPage = min(max((int) $request->get('per_page', 50), 1), 500);
         $page = max((int) $request->get('page', 1), 1);
         $category = (string) $request->query('category', 'all');
         $bestSeller = $request->has('best_seller') && $request->boolean('best_seller');

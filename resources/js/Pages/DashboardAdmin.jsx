@@ -3106,15 +3106,71 @@ const DashboardAdmin = () => {
         try {
             const res = await csrfFetch(`/api/admin/menu-items/${id}/archive`, { method: 'PATCH' });
             if (res.ok) {
-                showToast('Menu item archived');
+                showToast('Menu item archived successfully');
                 bustAdminCache('/api/admin/menu-items', '/api/menu-items', '/api/admin/analytics');
                 fetchCustomMenuItems();
             } else {
-                showToast('Could not archive menu item', 'error');
+                const data = await res.json();
+                showToast(data.error || 'Failed to archive menu item', 'error');
             }
-        } catch (error) {
-            console.error(error);
-            showToast('Could not archive menu item. Please try again.', 'error');
+        } catch (e) {
+            showToast('An error occurred', 'error');
+        }
+    };
+
+    const handleUnarchiveMenuItem = async (id) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Unarchive menu item?',
+            message: 'This will make the dish visible on the customer menu again.',
+            confirmText: 'Unarchive',
+            tone: 'success',
+            onConfirm: () => confirmUnarchiveMenuItem(id),
+        });
+    };
+
+    const confirmUnarchiveMenuItem = async (id) => {
+        closeConfirmDialog();
+        try {
+            const res = await csrfFetch(`/api/admin/menu-items/${id}/unarchive`, { method: 'PATCH' });
+            if (res.ok) {
+                showToast('Menu item unarchived successfully');
+                bustAdminCache('/api/admin/menu-items', '/api/menu-items', '/api/admin/analytics');
+                fetchCustomMenuItems();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to unarchive menu item', 'error');
+            }
+        } catch (e) {
+            showToast('An error occurred', 'error');
+        }
+    };
+
+    const handleDeleteMenuItem = async (id) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Permanently delete menu item?',
+            message: 'This will permanently delete the menu item. This action cannot be undone. If it is linked to past bookings, this will fail. You should archive it instead in that case.',
+            confirmText: 'Delete',
+            tone: 'danger',
+            onConfirm: () => confirmDeleteMenuItem(id),
+        });
+    };
+
+    const confirmDeleteMenuItem = async (id) => {
+        closeConfirmDialog();
+        try {
+            const res = await csrfFetch(`/api/admin/menu-items/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('Menu item deleted successfully');
+                bustAdminCache('/api/admin/menu-items', '/api/menu-items', '/api/admin/analytics');
+                fetchCustomMenuItems();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to delete menu item', 'error');
+            }
+        } catch (e) {
+            showToast('An error occurred', 'error');
         }
     };
 
@@ -7188,7 +7244,14 @@ const DashboardAdmin = () => {
                                                                         <td className="px-6 py-4 text-left font-bold text-gray-900">PHP {(Number(item.costPerHead || 0) + Number(item.priceAdj || 0)).toLocaleString()}</td>
                                                                         <td className="px-6 py-4 text-right">
                                                                             <button onClick={() => openEditMenuItemModal(item)} className="admin-menu-item-edit-button mr-2 rounded-lg bg-[#720101] px-3 py-2 text-xs font-bold text-white hover:bg-[#5a0101]">Edit</button>
-                                                                            {item._isCustom && item.isActive && <button onClick={() => handleArchiveMenuItem(item._dbId)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>}
+                                                                            {item._isCustom && item.isActive ? (
+                                                                                <button onClick={() => handleArchiveMenuItem(item._dbId)} className="mr-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>
+                                                                            ) : item._isCustom && !item.isActive ? (
+                                                                                <button onClick={() => handleUnarchiveMenuItem(item._dbId)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Unarchive</button>
+                                                                            ) : null}
+                                                                            {item._isCustom && (
+                                                                                <button onClick={() => handleDeleteMenuItem(item._dbId)} className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-200">Delete</button>
+                                                                            )}
                                                                         </td>
                                                                     </tr>
                                                                 );
