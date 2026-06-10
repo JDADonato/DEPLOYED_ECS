@@ -636,25 +636,23 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
             <div className={isAdminVariant ? 'admin-content-workspace' : 'grid gap-5'}>
                 <section className={`${shellClass} overflow-hidden`}>
                     <div className="border-b border-[#720101]/10 p-5">
-                        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                            <p className="marketing-kicker">Publishing Desk</p>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap gap-2">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setFilters((current) => ({ ...current, tab: tab.id }))}
+                                        className={`rounded-xl border px-4 py-2 text-sm font-black transition ${filters.tab === tab.id ? 'border-[#720101] bg-[#720101] text-white' : 'border-[#720101]/12 bg-white text-[#720101] hover:bg-[#fff7e8]'}`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                             <button onClick={() => setFiltersOpen((open) => !open)} className={secondaryClass}>
                                 <Filter size={16} />
                                 Filters
                             </button>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setFilters((current) => ({ ...current, tab: tab.id }))}
-                                    className={`rounded-xl border px-4 py-2 text-sm font-black transition ${filters.tab === tab.id ? 'border-[#720101] bg-[#720101] text-white' : 'border-[#720101]/12 bg-white text-[#720101] hover:bg-[#fff7e8]'}`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
                         </div>
 
                         {filtersOpen && (
@@ -735,20 +733,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                         </div>
                     )}
 
-                    <div className="border-t border-[#720101]/10 bg-[#fffaf3] p-5">
-                        <div className="grid gap-3 xl:grid-cols-[1fr_280px] xl:items-center">
-                            <details className="group rounded-xl border border-[#720101]/10 bg-white p-4">
-                                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#111827]">
-                                    How publishing works
-                                    <ChevronDown size={16} className="transition group-open:rotate-180" />
-                                </summary>
-                                <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-                                    Save as draft while writing. Choose a future publish date to schedule it. Published homepage announcements appear publicly; targeted announcements appear in customer dashboards.
-                                </p>
-                            </details>
-                            <input value={testEmail} onChange={(event) => setTestEmail(event.target.value)} placeholder="Test email address" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[#720101]" />
-                        </div>
-                    </div>
+
                 </section>
             </div>
         </div>

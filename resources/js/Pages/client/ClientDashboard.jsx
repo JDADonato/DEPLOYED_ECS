@@ -687,6 +687,10 @@ const ClientDashboard = () => {
     const [feedbackForm, setFeedbackForm] = useState({ rating: 5, food_rating: 5, service_rating: 5, communication_rating: 5, value_rating: 5, comments: '', testimonial_permission: false });
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
     const isEditingRef = React.useRef(false);
+    const activeBookingIdRef = React.useRef(activeBookingId);
+    useEffect(() => {
+        activeBookingIdRef.current = activeBookingId;
+    }, [activeBookingId]);
     const liveChannels = React.useMemo(() => operationalChannelsForUser(user), [user?.id, user?.role]);
 
     const closeConfirmModal = () => setConfirmModal({ isOpen: false, title: '', message: '', confirmText: 'Confirm', onConfirm: null });
@@ -778,20 +782,7 @@ const ClientDashboard = () => {
         fetchData({ silent: hasCachedDashboardData });
     }, []);
 
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && !isEditingRef.current) {
-                fetchData({ silent: true, force: true });
-            }
-        };
 
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('focus', handleVisibilityChange);
-        };
-    }, []);
 
     useEffect(() => {
         const handleNavigationQueryChange = (event) => {
@@ -952,7 +943,7 @@ const ClientDashboard = () => {
 
                 const activeBookings = result.bookings || [];
                 const storedBookingId = Number(readStoredDashboardValue(sharedSelectedBookingKey) || readStoredDashboardValue(activeBookingStorageKey));
-                const preferredBookingId = activeBookingId || storedBookingId || null;
+                const preferredBookingId = activeBookingIdRef.current || storedBookingId || null;
 
                 if (activeBookings.length > 0 && (!preferredBookingId || !activeBookings.some((booking) => booking.id === preferredBookingId))) {
                     // Default to the event with the closest upcoming date
@@ -991,7 +982,10 @@ const ClientDashboard = () => {
         enabled: Boolean(user),
         interval: online ? 30000 : 45000,
         idleAfter: 180000,
-        refresh: ({ force = false } = {}) => fetchData({ silent: true, force }),
+        refresh: ({ force = false } = {}) => {
+            if (isEditingRef.current) return;
+            fetchData({ silent: true, force });
+        },
         channels: liveChannels,
         resources: ['bookings', 'finance', 'payments', 'refunds', 'food_tastings', 'feedback', 'announcements', 'catalog'],
     });

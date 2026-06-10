@@ -57,15 +57,24 @@ Route::get('/api/announcements', [AnnouncementController::class, 'publicIndex'])
 Route::post('/api/contact-inquiries', [ContactInquiryController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/storage/{path}', function ($path) {
     if (str_contains($path, '..')) {
+        \Illuminate\Support\Facades\Log::warning("Storage fallback block: Path contains '..' - '$path'");
         abort(404);
     }
+    $path = urldecode(ltrim($path, '/'));
     $disk = \Illuminate\Support\Facades\Storage::disk('public');
     if (!$disk->exists($path)) {
+        $fullPath = storage_path('app/public/' . $path);
+        \Illuminate\Support\Facades\Log::warning("Storage fallback warning: File not found at path '$path' (Expected full path: '$fullPath')");
         abort(404);
     }
-    $file = $disk->get($path);
-    $type = $disk->mimeType($path);
-    return response($file, 200)->header('Content-Type', $type);
+    try {
+        $file = $disk->get($path);
+        $type = $disk->mimeType($path);
+        return response($file, 200)->header('Content-Type', $type);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error("Storage fallback exception for '$path': " . $e->getMessage());
+        abort(404);
+    }
 })->where('path', '.*');
 Route::post('/webhook/paymongo', PayMongoWebhookController::class)->name('webhook.paymongo');
 Route::post('/api/client-errors', [ClientErrorController::class, 'store'])->middleware('throttle:client-errors');
