@@ -8,7 +8,7 @@ import StaffPreviewBanner from '../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../utils/dashboardLinks';
 
-/* â”€â”€ SVG Icons â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ SVG Icons Ã¢â€â‚¬Ã¢â€â‚¬ */
 const settledStatuses = ['Paid', 'Verified'];
 const isSettled = (status) => settledStatuses.includes(status);
 const sharedSelectedBookingKey = 'ecs_selected_booking_id';
@@ -584,151 +584,147 @@ const formatAnnouncementDate = (announcement) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const announcementTypeIcons = {
-    general: 'ðŸ“¢',
-    promo: 'ðŸŽ‰',
-    event_reminder: 'ðŸ“…',
-    holiday_advisory: 'ðŸ–ï¸',
-    menu_update: 'ðŸ½ï¸',
-    service_notice: 'âš™ï¸',
-    urgent: 'ðŸš¨',
-};
 
 const HomepageAnnouncements = ({ announcements }) => {
     if (!announcements.length) return null;
 
-    return (
-        <section className="relative bg-[#15110f] py-20 overflow-hidden">
-            {/* Subtle background texture */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
-            <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-[#720101]/8 blur-[120px]" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-[#f0aa0b]/5 blur-[140px]" />
+    const [featured, ...rest] = announcements;
+    const featuredImage = announcementImage(featured);
 
-            <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-                {/* Section header â€” compact and elegant */}
+    return (
+        <section className="bg-white py-20 sm:py-28">
+            <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                {/* Minimal section label */}
                 <Rv>
-                    <div className="mb-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#720101]/20 text-lg">
-                                ðŸ“¢
-                            </div>
-                            <div>
-                                <p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f0aa0b]">Announcements</p>
-                                <h2 className="mt-1 font-display text-2xl font-bold text-white md:text-3xl">What's New</h2>
-                            </div>
-                        </div>
-                        <p className="text-sm font-medium text-white/40 max-w-md">
-                            Updates, reminders, and offers from the Eloquente team.
-                        </p>
-                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-[.3em] text-[#720101]">Announcements</p>
                 </Rv>
 
-                {/* Announcement items */}
-                <div className="space-y-0 divide-y divide-white/[0.06]">
-                    {announcements.map((item, idx) => {
-                        const image = announcementImage(item);
-                        const icon = announcementTypeIcons[item.type] || 'ðŸ“¢';
-                        const isFeatured = idx === 0;
+                {/* Featured announcement */}
+                <Rv>
+                    <article className="group mt-6 cursor-default">
+                        {featuredImage ? (
+                            <div className="relative overflow-hidden rounded-3xl bg-[#1a1a1a]" style={{ minHeight: '26rem' }}>
+                                <SmartImage
+                                    src={featuredImage}
+                                    alt=""
+                                    aspectRatio="21 / 9"
+                                    containerClassName="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.03]"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                                <div className="absolute inset-x-0 bottom-0 p-8 md:p-12">
+                                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                                        <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                            {announcementTypeLabels[featured.type] || 'Announcement'}
+                                        </span>
+                                        <span className="text-xs font-semibold text-white/50">
+                                            {formatAnnouncementDate(featured)}
+                                        </span>
+                                    </div>
+                                    <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
+                                        {featured.title}
+                                    </h3>
+                                    {(featured.summary || featured.body) && (
+                                        <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/70 md:text-lg">
+                                            {featured.summary || featured.body}
+                                        </p>
+                                    )}
+                                    {featured.cta_label && featured.cta_url && (
+                                        <Link href={featured.cta_url} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#1a1a1a] transition-all hover:bg-[#f0aa0b]">
+                                            {featured.cta_label}
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#720101] to-[#4a0101] p-8 md:p-12" style={{ minHeight: '18rem' }}>
+                                <div className="flex flex-col justify-end h-full">
+                                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                                        <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                                            {announcementTypeLabels[featured.type] || 'Announcement'}
+                                        </span>
+                                        <span className="text-xs font-semibold text-white/40">
+                                            {formatAnnouncementDate(featured)}
+                                        </span>
+                                    </div>
+                                    <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl max-w-3xl">
+                                        {featured.title}
+                                    </h3>
+                                    {(featured.summary || featured.body) && (
+                                        <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/65 md:text-lg">
+                                            {featured.summary || featured.body}
+                                        </p>
+                                    )}
+                                    {featured.body && featured.summary && featured.body !== featured.summary && (
+                                        <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/40">
+                                            {featured.body}
+                                        </p>
+                                    )}
+                                    {featured.cta_label && featured.cta_url && (
+                                        <Link href={featured.cta_url} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-black uppercase tracking-wider text-[#720101] transition-all hover:bg-[#f0aa0b] hover:text-[#1a1a1a]">
+                                            {featured.cta_label}
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </article>
+                </Rv>
 
-                        return (
-                            <Rv key={item.id}>
-                                <article className={`group relative ${isFeatured ? 'py-10' : 'py-8'} transition-colors duration-300 hover:bg-white/[0.02]`}>
-                                    {isFeatured && image ? (
-                                        /* Featured with image â€” side by side */
-                                        <div className="grid gap-8 lg:grid-cols-[1fr_0.55fr] lg:items-center">
-                                            <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-3 mb-5">
-                                                    <span className="text-lg">{icon}</span>
-                                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#f0aa0b]">
-                                                        {announcementTypeLabels[item.type] || 'Announcement'}
-                                                    </span>
-                                                    <span className="text-xs font-semibold text-white/30">
-                                                        {formatAnnouncementDate(item)}
-                                                    </span>
-                                                </div>
-                                                <h3 className="font-display text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl tracking-tight">
-                                                    {item.title}
-                                                </h3>
-                                                {(item.summary || item.body) && (
-                                                    <p className="mt-5 max-w-2xl text-base font-medium leading-relaxed text-white/55 md:text-lg">
-                                                        {item.summary || item.body}
-                                                    </p>
-                                                )}
-                                                {item.body && item.summary && item.body !== item.summary && (
-                                                    <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/35">
-                                                        {item.body}
-                                                    </p>
-                                                )}
-                                                {item.cta_label && item.cta_url && (
-                                                    <Link href={item.cta_url} className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#f0aa0b]/30 bg-[#f0aa0b]/10 px-6 py-3 text-xs font-black uppercase tracking-wider text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/20 hover:border-[#f0aa0b]/50">
-                                                        {item.cta_label}
-                                                        <span className="transition-transform group-hover:translate-x-0.5">â†’</span>
-                                                    </Link>
-                                                )}
+                {/* Secondary announcements */}
+                {rest.length > 0 && (
+                    <div className={`mt-5 grid gap-5 ${rest.length === 1 ? '' : 'md:grid-cols-2'} ${rest.length >= 3 ? 'lg:grid-cols-3' : ''}`}>
+                        {rest.slice(0, 3).map((item) => {
+                            const img = announcementImage(item);
+                            return (
+                                <Rv key={item.id}>
+                                    <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition-all duration-300 hover:shadow-lg hover:border-slate-200 h-full">
+                                        {img && (
+                                            <div className="relative h-44 overflow-hidden bg-slate-100">
+                                                <SmartImage
+                                                    src={img}
+                                                    alt=""
+                                                    aspectRatio="16 / 9"
+                                                    containerClassName="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                                                />
                                             </div>
-                                            <div className="relative overflow-hidden rounded-2xl bg-white/5">
-                                                <SmartImage src={image} alt="" aspectRatio="4 / 3" containerClassName="h-full min-h-[16rem]" />
-                                                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
+                                        )}
+                                        <div className="flex flex-1 flex-col p-5">
+                                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                <span className="rounded-full bg-[#720101]/8 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#720101]">
+                                                    {announcementTypeLabels[item.type] || 'Announcement'}
+                                                </span>
+                                                <span className="text-[11px] font-semibold text-slate-400">
+                                                    {formatAnnouncementDate(item)}
+                                                </span>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        /* Standard row layout â€” no cards */
-                                        <div className={`grid gap-4 ${isFeatured ? 'lg:grid-cols-[auto_1fr]' : 'lg:grid-cols-[auto_1fr_auto]'} lg:items-baseline`}>
-                                            {/* Type + date column */}
-                                            <div className="flex items-center gap-3 lg:min-w-[14rem]">
-                                                <span className={`${isFeatured ? 'text-xl' : 'text-base'}`}>{icon}</span>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#f0aa0b]">
-                                                        {announcementTypeLabels[item.type] || 'Announcement'}
-                                                    </span>
-                                                    <span className="text-[11px] font-semibold text-white/25">
-                                                        {formatAnnouncementDate(item)}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Content column */}
-                                            <div className="min-w-0">
-                                                <h3 className={`font-display font-extrabold text-white tracking-tight leading-snug ${isFeatured ? 'text-3xl md:text-4xl lg:text-5xl' : 'text-xl md:text-2xl'}`}>
-                                                    {item.title}
-                                                </h3>
-                                                {(item.summary || item.body) && (
-                                                    <p className={`mt-2 max-w-3xl font-medium leading-relaxed text-white/45 ${isFeatured ? 'text-base md:text-lg mt-4' : 'text-sm line-clamp-2'}`}>
-                                                        {item.summary || item.body}
-                                                    </p>
-                                                )}
-                                                {isFeatured && item.body && item.summary && item.body !== item.summary && (
-                                                    <p className="mt-3 max-w-2xl whitespace-pre-line text-sm font-medium leading-relaxed text-white/30">
-                                                        {item.body}
-                                                    </p>
-                                                )}
-                                                {isFeatured && item.cta_label && item.cta_url && (
-                                                    <Link href={item.cta_url} className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#f0aa0b]/30 bg-[#f0aa0b]/10 px-6 py-3 text-xs font-black uppercase tracking-wider text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/20 hover:border-[#f0aa0b]/50">
-                                                        {item.cta_label}
-                                                        <span className="transition-transform group-hover:translate-x-0.5">â†’</span>
-                                                    </Link>
-                                                )}
-                                            </div>
-
-                                            {/* CTA for non-featured */}
-                                            {!isFeatured && item.cta_label && item.cta_url && (
-                                                <div className="lg:justify-self-end">
-                                                    <Link href={item.cta_url} className="inline-flex items-center gap-1.5 text-xs font-black text-[#f0aa0b] transition-colors hover:text-white">
-                                                        {item.cta_label} <span>â†’</span>
-                                                    </Link>
-                                                </div>
+                                            <h4 className="font-display text-lg font-bold leading-snug text-[#1a1a1a]">
+                                                {item.title}
+                                            </h4>
+                                            {(item.summary || item.body) && (
+                                                <p className="mt-2 flex-1 text-sm font-medium leading-relaxed text-slate-500 line-clamp-3">
+                                                    {item.summary || item.body}
+                                                </p>
+                                            )}
+                                            {item.cta_label && item.cta_url && (
+                                                <Link href={item.cta_url} className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#720101] transition-colors hover:text-[#f0aa0b]">
+                                                    {item.cta_label}
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                                </Link>
                                             )}
                                         </div>
-                                    )}
-                                </article>
-                            </Rv>
-                        );
-                    })}
-                </div>
+                                    </article>
+                                </Rv>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </section>
     );
 };
+
 
 const homeMarqueeItems = [
     'Staff-reviewed availability',
@@ -1320,7 +1316,7 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
             </section>
 
             {/*
-                    <p className="text-white/20 text-xs">Â© 2026 Eloquente Catering Services</p>
+                    <p className="text-white/20 text-xs">Ã‚Â© 2026 Eloquente Catering Services</p>
                 </div>
             </footer>}
 
