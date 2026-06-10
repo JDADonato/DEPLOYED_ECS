@@ -44,7 +44,7 @@ const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTasting
 import { getListData } from '../utils/apiResponses';
 import csrfFetch from '../utils/csrf';
 import logoutWithCleanup from '../utils/logout';
-import { bustSmartCache, fetchSmartResource, getUserScopedCacheKey, readSmartCache } from '../utils/smartResource';
+import { bustSmartCache, clearSmartCacheForPrefix, fetchSmartResource, getUserScopedCacheKey, readSmartCache } from '../utils/smartResource';
 import { operationalChannelsForUser } from '../utils/liveChannels';
 
 const PACKAGE_CATEGORY_OPTIONS = [
@@ -329,6 +329,9 @@ const DashboardMarketing = () => {
         `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}`
     ), [selectedMonth]);
     const smartCacheKey = (resourceKey) => getUserScopedCacheKey(user, resourceKey);
+    const bustMarketingBookingCaches = () => {
+        clearSmartCacheForPrefix(smartCacheKey('marketing:bookings:'));
+    };
     const liveChannels = useMemo(() => operationalChannelsForUser(user), [user?.id, user?.role]);
     const [marketingNavbarSearch, setMarketingNavbarSearch] = useState('');
     const [marketingNavbarSearchOpen, setMarketingNavbarSearchOpen] = useState(false);
@@ -554,7 +557,7 @@ const DashboardMarketing = () => {
                 : 'all';
             if (effectiveOwnershipFilter !== 'all') query.set('ownership', effectiveOwnershipFilter === 'mine' ? 'mine' : effectiveOwnershipFilter);
             const params = `?${query.toString()}`;
-            const cacheKey = smartCacheKey(`marketing:bookings:${scope}:${bookingReviewView}:${effectiveOwnershipFilter}:${inquirySort}`);
+            const cacheKey = smartCacheKey(`marketing:bookings:v2:${scope}:${bookingReviewView}:${effectiveOwnershipFilter}:${inquirySort}`);
             const cached = readSmartCache(cacheKey);
             if (cached?.data && bookings.length === 0) {
                 setBookings(getListData(cached.data));
@@ -795,6 +798,7 @@ const DashboardMarketing = () => {
     const updateStatus = async (id, newStatus) => {
         if (updatingBookingIds[id]) return; // prevent double-click
         setUpdatingBookingIds(prev => ({ ...prev, [id]: newStatus }));
+        const originalBooking = bookings.find(b => b.id === id);
 
         // Optimistic update: remove from pending list immediately
         setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
@@ -808,21 +812,30 @@ const DashboardMarketing = () => {
 
             if (response.ok) {
                 const data = await response.json().catch(() => ({}));
+                bustMarketingBookingCaches();
                 if (data.booking) mergeUpdatedBooking(data.booking);
                 const label = newStatus === 'Confirmed' ? 'approved' : 'declined';
                 toast.success(`Booking #${id} has been ${label} successfully.`);
                 fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true }); // sync with server in background
             } else {
                 const data = await response.json().catch(() => ({}));
+                bustMarketingBookingCaches();
                 if (data.booking) mergeUpdatedBooking(data.booking);
                 // Revert on failure
-                setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Pending' } : b));
+                if (!data.booking && originalBooking) {
+                    setBookings(prev => prev.map(b => b.id === id ? originalBooking : b));
+                }
                 toast.error(data.error || 'Failed to update booking status. Please try again.');
+                fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true });
             }
         } catch (error) {
             console.error('Error updating status:', error);
-            setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Pending' } : b));
+            bustMarketingBookingCaches();
+            if (originalBooking) {
+                setBookings(prev => prev.map(b => b.id === id ? originalBooking : b));
+            }
             toast.error('We could not update the booking. Please check your connection.');
+            fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true });
         } finally {
             setUpdatingBookingIds(prev => { const n = { ...prev }; delete n[id]; return n; });
         }
@@ -830,7 +843,7 @@ const DashboardMarketing = () => {
 
     const mergeUpdatedBooking = (updatedBooking) => {
         if (!updatedBooking?.id) return;
-        bustSmartCache(smartCacheKey('marketing:bookings:page'), smartCacheKey('marketing:bookings:all'));
+        bustMarketingBookingCaches();
         setBookings(prev => prev.map(item => item.id === updatedBooking.id ? { ...item, ...updatedBooking } : item));
         setCalendarBookings(prev => prev.map(item => item.id === updatedBooking.id ? { ...item, ...updatedBooking } : item));
         setSelectedBooking(prev => prev?.id === updatedBooking.id ? { ...prev, ...updatedBooking } : prev);
@@ -838,7 +851,7 @@ const DashboardMarketing = () => {
 
     const addCreatedBooking = (createdBooking) => {
         if (!createdBooking?.id) return;
-        bustSmartCache(smartCacheKey('marketing:bookings:page'), smartCacheKey('marketing:bookings:all'));
+        bustMarketingBookingCaches();
         setBookings(prev => [createdBooking, ...prev.filter(item => item.id !== createdBooking.id)]);
         setCalendarBookings(prev => isActiveCalendarBooking(createdBooking)
             ? [createdBooking, ...prev.filter(item => item.id !== createdBooking.id)]
