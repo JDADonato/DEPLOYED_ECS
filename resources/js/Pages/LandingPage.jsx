@@ -932,7 +932,7 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
                             <p className="text-xs font-semibold text-slate-500">This is how the announcement reads in customer-facing surfaces. It does not publish or send anything.</p>
                         </div>
                         <Link href={dashboardHrefForUser(user) + '?tab=announcements'} className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#5a0101]">
-                            Back to Admin
+                            Back to {user?.role || 'Admin'}
                         </Link>
                     </div>
                 </div>
