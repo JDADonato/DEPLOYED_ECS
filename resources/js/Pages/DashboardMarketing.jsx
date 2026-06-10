@@ -298,6 +298,15 @@ const DashboardMarketing = () => {
     useEffect(() => {
         try {
             localStorage.setItem('ecs_marketing_active_config_tab', activeConfigTab);
+            
+            if (typeof window !== 'undefined') {
+                const url = new URL(window.location.href);
+                const currentTab = url.searchParams.get('tab');
+                if (currentTab === 'public-content' || ['announcements', 'packages', 'eventTypes', 'menuItems'].includes(currentTab)) {
+                    url.searchParams.set('configTab', activeConfigTab);
+                    window.history.replaceState(window.history.state, '', url.toString());
+                }
+            }
         } catch (e) {
             // Ignore
         }

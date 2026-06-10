@@ -830,6 +830,15 @@ const DashboardAdmin = () => {
     useEffect(() => {
         try {
             localStorage.setItem('ecs_admin_active_config_tab', activeConfigTab);
+
+            if (typeof window !== 'undefined') {
+                const url = new URL(window.location.href);
+                const currentTab = url.searchParams.get('tab');
+                if (currentTab === 'public-content' || ['announcements', 'packages', 'eventTypes', 'menuItems'].includes(currentTab)) {
+                    url.searchParams.set('configTab', activeConfigTab);
+                    window.history.replaceState(window.history.state, '', url.toString());
+                }
+            }
         } catch (e) {
             // Ignore
         }
@@ -1331,6 +1340,11 @@ const DashboardAdmin = () => {
         const url = new URL(window.location.href);
         url.searchParams.set('workspace', activeWorkspace);
         url.searchParams.set('tab', activeWorkspaceTab);
+        if (activeWorkspaceTab === 'public-content') {
+            url.searchParams.set('configTab', activeConfigTab);
+        } else {
+            url.searchParams.delete('configTab');
+        }
         if (activeWorkspace === 'customer' && selectedCustomerId) {
             url.searchParams.set('customer', selectedCustomerId);
         } else if (notificationNavigationContext.customerId) {
@@ -1354,7 +1368,7 @@ const DashboardAdmin = () => {
             url.searchParams.delete('conversation');
         }
         window.history.replaceState(window.history.state, '', url.toString());
-    }, [activeWorkspace, activeWorkspaceTab, notificationNavigationContext, selectedCustomerId, workspaceTabs]);
+    }, [activeWorkspace, activeWorkspaceTab, activeConfigTab, notificationNavigationContext, selectedCustomerId, workspaceTabs]);
 
     useEffect(() => {
         setProfileForm(prev => ({

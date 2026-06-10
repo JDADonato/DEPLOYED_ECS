@@ -13,6 +13,9 @@ const replaceUrlTab = (tab) => {
 
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
+    if (tab !== 'public-content') {
+        url.searchParams.delete('configTab');
+    }
     window.history.replaceState(window.history.state, '', url.toString());
 };
 
