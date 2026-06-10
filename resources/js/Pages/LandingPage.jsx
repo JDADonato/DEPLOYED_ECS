@@ -584,11 +584,71 @@ const formatAnnouncementDate = (announcement) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const typeThemes = {
+    urgent: {
+        bg: 'bg-red-50/60',
+        border: 'border-red-200/80',
+        text: 'text-red-800',
+        accent: 'bg-red-600',
+        badgeBg: 'bg-red-100 text-red-800 border-red-200',
+        shadow: 'shadow-red-50',
+    },
+    promo: {
+        bg: 'bg-amber-50/60',
+        border: 'border-amber-200/80',
+        text: 'text-amber-900',
+        accent: 'bg-amber-500',
+        badgeBg: 'bg-amber-100 text-amber-900 border-amber-200',
+        shadow: 'shadow-amber-50',
+    },
+    event_reminder: {
+        bg: 'bg-emerald-50/60',
+        border: 'border-emerald-200/80',
+        text: 'text-emerald-900',
+        accent: 'bg-emerald-600',
+        badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+        shadow: 'shadow-emerald-50',
+    },
+    holiday_advisory: {
+        bg: 'bg-blue-50/60',
+        border: 'border-blue-200/80',
+        text: 'text-blue-900',
+        accent: 'bg-blue-600',
+        badgeBg: 'bg-blue-100 text-blue-900 border-blue-200',
+        shadow: 'shadow-blue-50',
+    },
+    menu_update: {
+        bg: 'bg-purple-50/60',
+        border: 'border-purple-200/80',
+        text: 'text-purple-900',
+        accent: 'bg-purple-600',
+        badgeBg: 'bg-purple-100 text-purple-900 border-purple-200',
+        shadow: 'shadow-purple-50',
+    },
+    service_notice: {
+        bg: 'bg-slate-50/70',
+        border: 'border-slate-200/80',
+        text: 'text-slate-800',
+        accent: 'bg-slate-500',
+        badgeBg: 'bg-slate-100 text-slate-800 border-slate-200',
+        shadow: 'shadow-slate-50',
+    },
+    general: {
+        bg: 'bg-white',
+        border: 'border-[#720101]/10',
+        text: 'text-[#720101]',
+        accent: 'bg-[#720101]',
+        badgeBg: 'bg-[#720101]/10 text-[#720101] border-[#720101]/20',
+        shadow: 'shadow-[#720101]/5',
+    },
+};
+
 const HomepageAnnouncements = ({ announcements }) => {
     if (!announcements.length) return null;
 
     const [featured, ...rest] = announcements;
     const image = announcementImage(featured);
+    const theme = typeThemes[featured.type] || typeThemes.general;
 
     return (
         <section className="relative overflow-hidden bg-[#fffaf3] py-24">
@@ -609,94 +669,138 @@ const HomepageAnnouncements = ({ announcements }) => {
                     </div>
                 </Rv>
 
-                <div className={`grid gap-10 ${image ? 'lg:grid-cols-[0.9fr_1.1fr]' : 'lg:grid-cols-[0.72fr_1fr]'} lg:items-stretch`}>
-                    {image && (
-                        <Rv>
-                            <div className="relative min-h-[22rem] overflow-hidden rounded-[2rem] bg-[#15110f] lg:min-h-[34rem]">
-                                <SmartImage src={image} alt="" aspectRatio="4 / 5" containerClassName="h-full min-h-[22rem] lg:min-h-[34rem]" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#15110f]/62 via-transparent to-transparent" />
-                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#f0aa0b]" />
-                            </div>
-                        </Rv>
-                    )}
-
+                <div className={`grid gap-8 ${rest.length > 0 ? 'lg:grid-cols-[1.35fr_0.65fr]' : 'max-w-4xl mx-auto'}`}>
                     <Rv>
-                        <div className="flex h-full flex-col justify-center">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="rounded-full bg-[#720101]/10 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">
-                                    {announcementTypeLabels[featured.type] || 'Announcement'}
-                                </span>
-                                <span className="text-xs font-bold uppercase tracking-[.16em] text-gray-400">
-                                    {formatAnnouncementDate(featured)}
-                                </span>
-                            </div>
-
-                            <h3 className="mt-6 max-w-4xl font-display text-4xl font-bold leading-tight text-[#1a1a1a] md:text-6xl">
-                                {featured.title}
-                            </h3>
-                            <p className="mt-6 max-w-3xl text-base font-medium leading-8 text-gray-600 md:text-lg">
-                                {featured.summary || featured.body}
-                            </p>
-                            {featured.cta_label && featured.cta_url && (
-                                <Link href={featured.cta_url} className="mt-8 inline-flex w-fit items-center rounded-full bg-[#720101] px-7 py-3.5 text-sm font-black uppercase tracking-wider text-white transition-colors hover:bg-[#5a0101]">
-                                    {featured.cta_label}
-                                </Link>
-                            )}
-
-                            {rest.length > 0 && (
-                                <div className="mt-12 grid gap-0 border-y border-[#720101]/10">
-                                    {rest.slice(0, 3).map((announcement, index) => (
-                                        <div key={announcement.id} className="grid gap-3 border-b border-[#720101]/10 py-5 last:border-b-0 sm:grid-cols-[10rem_1fr]">
-                                            <div>
-                                                <p className="text-[11px] font-black uppercase tracking-widest text-[#720101]">
-                                                    {announcementTypeLabels[announcement.type] || 'Announcement'}
-                                                </p>
-                                                <p className="mt-1 text-[11px] font-bold uppercase tracking-[.14em] text-gray-400">
-                                                    {formatAnnouncementDate(announcement)}
-                                                </p>
+                        {image ? (
+                            <div className={`relative overflow-hidden rounded-[2rem] border ${theme.border} ${theme.bg} shadow-lg ${theme.shadow} transition duration-300 hover:shadow-xl h-full`}>
+                                <div className="grid md:grid-cols-[0.8fr_1.2fr] lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch h-full">
+                                    <div className="relative min-h-[18rem] md:min-h-full overflow-hidden bg-[#15110f]">
+                                        <SmartImage src={image} alt="" aspectRatio="4 / 5" containerClassName="h-full w-full object-cover" />
+                                        <div className="absolute inset-y-0 right-0 w-px bg-[#720101]/10" />
+                                    </div>
+                                    <div className="p-8 md:p-10 flex flex-col justify-between relative">
+                                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.accent}`} />
+                                        <div className="pl-3 md:pl-4">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-widest ${theme.badgeBg}`}>
+                                                    {announcementTypeLabels[featured.type] || 'Announcement'}
+                                                </span>
+                                                <span className="text-xs font-semibold text-slate-400">
+                                                    {formatAnnouncementDate(featured)}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <h4 className="font-display text-xl font-bold leading-tight text-[#1a1a1a]">{announcement.title}</h4>
-                                                <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-600">
-                                                    {announcement.summary || announcement.body}
-                                                </p>
-                                                {announcement.cta_label && announcement.cta_url && (
-                                                    <Link href={announcement.cta_url} className="mt-3 inline-flex text-sm font-black text-[#720101] hover:text-[#f0aa0b]">
-                                                        {announcement.cta_label}
-                                                    </Link>
+
+                                            <h3 className="mt-5 font-display text-2xl md:text-3xl font-extrabold text-[#1a1a1a] tracking-tight leading-snug">
+                                                {featured.title}
+                                            </h3>
+
+                                            <div className="my-5 h-px bg-[#720101]/10 w-full" />
+
+                                            <div className="text-sm md:text-base font-medium leading-relaxed text-slate-700 space-y-3">
+                                                {featured.summary && (
+                                                    <p className="text-base font-bold text-slate-800 leading-snug">
+                                                        {featured.summary}
+                                                    </p>
+                                                )}
+                                                {featured.body && (
+                                                    <p className="whitespace-pre-line text-sm text-slate-600 font-medium">
+                                                        {featured.body}
+                                                    </p>
                                                 )}
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </Rv>
 
-                    {!image && rest.length > 0 && (
-                        <Rv d="rv-d1">
-                            <div className="grid content-center gap-0 border-y border-[#720101]/10">
-                                {rest.slice(0, 3).map((announcement) => (
-                                    <div key={announcement.id} className="border-b border-[#720101]/10 py-5 last:border-b-0">
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">
-                                                {announcementTypeLabels[announcement.type] || 'Announcement'}
-                                            </span>
-                                            <span className="text-[11px] font-bold uppercase tracking-[.14em] text-gray-400">
-                                                {formatAnnouncementDate(announcement)}
-                                            </span>
+                                            {featured.cta_label && featured.cta_url && (
+                                                <div className="mt-8">
+                                                    <Link href={featured.cta_url} className={`inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white transition-all shadow-md hover:shadow-lg ${theme.accent === 'bg-[#720101]' ? 'bg-[#720101] hover:bg-[#5a0101]' : `${theme.accent} hover:opacity-90`}`}>
+                                                        {featured.cta_label}
+                                                    </Link>
+                                                </div>
+                                            )}
                                         </div>
-                                        <h4 className="mt-3 font-display text-xl font-bold leading-tight text-[#1a1a1a]">{announcement.title}</h4>
-                                        <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-600">
-                                            {announcement.summary || announcement.body}
-                                        </p>
-                                        {announcement.cta_label && announcement.cta_url && (
-                                            <Link href={announcement.cta_url} className="mt-3 inline-flex text-sm font-black text-[#720101] hover:text-[#f0aa0b]">
-                                                {announcement.cta_label}
-                                            </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className={`relative overflow-hidden rounded-[2rem] border ${theme.border} ${theme.bg} p-8 md:p-12 shadow-lg ${theme.shadow} transition duration-300 hover:shadow-xl h-full`}>
+                                <div className={`absolute left-0 top-0 bottom-0 w-2 ${theme.accent}`} />
+                                <div className="flex flex-col h-full pl-3 md:pl-6">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-[10px] font-black uppercase tracking-widest ${theme.badgeBg}`}>
+                                            {announcementTypeLabels[featured.type] || 'Announcement'}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-400">
+                                            {formatAnnouncementDate(featured)}
+                                        </span>
+                                    </div>
+
+                                    <h3 className="mt-5 font-display text-2xl md:text-4xl font-extrabold text-[#1a1a1a] tracking-tight leading-tight">
+                                        {featured.title}
+                                    </h3>
+
+                                    <div className="my-5 h-px bg-[#720101]/10 w-full" />
+
+                                    <div className="text-sm md:text-base font-medium leading-relaxed text-slate-700 space-y-4">
+                                        {featured.summary && (
+                                            <p className="text-base md:text-lg font-bold text-slate-800 leading-snug">
+                                                {featured.summary}
+                                            </p>
+                                        )}
+                                        {featured.body && (
+                                            <p className="whitespace-pre-line text-sm md:text-base text-slate-600 font-medium">
+                                                {featured.body}
+                                            </p>
                                         )}
                                     </div>
-                                ))}
+
+                                    {featured.cta_label && featured.cta_url && (
+                                        <div className="mt-8">
+                                            <Link href={featured.cta_url} className={`inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white transition-all shadow-md hover:shadow-lg ${theme.accent === 'bg-[#720101]' ? 'bg-[#720101] hover:bg-[#5a0101]' : `${theme.accent} hover:opacity-90`}`}>
+                                                {featured.cta_label}
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </Rv>
+
+                    {rest.length > 0 && (
+                        <Rv>
+                            <div className="flex flex-col gap-6 h-full justify-start">
+                                <h4 className="text-xs font-black uppercase tracking-[.25em] text-[#720101] mb-1">
+                                    More Updates
+                                </h4>
+                                <div className="grid gap-4">
+                                    {rest.slice(0, 3).map((announcement) => {
+                                        const subTheme = typeThemes[announcement.type] || typeThemes.general;
+                                        return (
+                                            <div key={announcement.id} className={`p-5 rounded-2xl border ${subTheme.border} bg-white shadow-sm hover:shadow-md transition duration-200 relative overflow-hidden`}>
+                                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${subTheme.accent}`} />
+                                                <div className="pl-3">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${subTheme.badgeBg}`}>
+                                                            {announcementTypeLabels[announcement.type] || 'Announcement'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-gray-400">
+                                                            {formatAnnouncementDate(announcement)}
+                                                        </span>
+                                                    </div>
+                                                    <h5 className="mt-2.5 font-display text-base font-bold text-[#1a1a1a] leading-snug">
+                                                        {announcement.title}
+                                                    </h5>
+                                                    <p className="mt-1.5 line-clamp-2 text-xs font-medium text-slate-500 leading-relaxed">
+                                                        {announcement.summary || announcement.body}
+                                                    </p>
+                                                    {announcement.cta_label && announcement.cta_url && (
+                                                        <Link href={announcement.cta_url} className="mt-2.5 inline-flex text-xs font-black text-[#720101] hover:text-[#f0aa0b]">
+                                                            {announcement.cta_label} &rarr;
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </Rv>
                     )}
