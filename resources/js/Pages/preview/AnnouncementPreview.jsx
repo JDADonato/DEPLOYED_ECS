@@ -115,7 +115,7 @@ const AnnouncementPreview = ({ announcement }) => {
                                 <div className="p-6 sm:p-8">
                                     <article className="group cursor-default">
                                         {image ? (
-                                            <div className="relative overflow-hidden rounded-3xl bg-[#1a1a1a]" style={{ minHeight: '26rem' }}>
+                                            <div className="relative overflow-hidden rounded-3xl" style={{ minHeight: '26rem', background: '#1a1a1a' }}>
                                                 <SmartImage
                                                     src={image}
                                                     alt=""
@@ -149,7 +149,7 @@ const AnnouncementPreview = ({ announcement }) => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#720101] to-[#4a0101] p-8 md:p-12" style={{ minHeight: '18rem' }}>
+                                            <div className="relative overflow-hidden rounded-3xl p-8 md:p-12" style={{ minHeight: '18rem', background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
                                                 <div className="flex flex-col justify-end h-full">
                                                     <div className="flex flex-wrap items-center gap-3 mb-4">
                                                         <span className="rounded-full bg-white/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">
