@@ -148,7 +148,7 @@ const Login = () => {
 
             {requiresReactivation && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-md animate-fadeIn">
-                    <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5 animate-slideUpAndFade scale-95 transition-transform duration-300 transform-gpu opacity-0" style={{ animationFillMode: 'forwards' }}>
+                    <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5 transition-all">
                         <div className="relative h-24 bg-gradient-to-r from-amber-500 to-orange-500">
                             <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl ring-4 ring-white">
                                 <RotateCcw className="h-8 w-8 text-amber-600" strokeWidth={2.5} />
