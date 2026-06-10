@@ -848,45 +848,57 @@ const ClientDashboard = () => {
         writeStoredDashboardValue(activeSectionStorageKey, activeSection);
     }, [activeSection, activeSectionStorageKey]);
 
+    const prevSyncedBookingIdRef = React.useRef(null);
+    const forceFormResyncRef = React.useRef(false);
+
     useEffect(() => {
         const booking = data.bookings.find(b => b.id === activeBookingId);
         if (!booking) return;
 
-        setDetailsForm({
-            reservation_time: booking.reservation_time || '',
-            serving_time: booking.serving_time || '',
-            venue_address_line: booking.venue_address_line || '',
-            venue_building_details: booking.venue_building_details || '',
-            color_motif: booking.color_motif || '',
-            event_timeline: booking.event_timeline || '',
-            special_instructions: booking.special_instructions || '',
-            theme_uploads: booking.theme_uploads || '',
-        });
-        setTimelineRows(parseTimelineRows(booking.event_timeline));
-        setSpecialInstructionSections(parseSpecialInstructions(booking.special_instructions));
+        const bookingChanged = prevSyncedBookingIdRef.current !== activeBookingId;
+        const forceResync = forceFormResyncRef.current;
+        prevSyncedBookingIdRef.current = activeBookingId;
+        forceFormResyncRef.current = false;
 
-        try {
-            const parsed = typeof booking.selected_menu === 'string'
-                ? JSON.parse(booking.selected_menu || '{}')
-                : (booking.selected_menu || {});
-            setMenuSelections({
-                starter: parsed.starter || [],
-                main: parsed.main || [],
-                side: parsed.side || [],
-                dessert: parsed.dessert || [],
-                drink: parsed.drink || [],
+        // Only reset form state and edit mode when switching to a different booking,
+        // NOT on background data refreshes (which would discard unsaved edits).
+        if (bookingChanged || forceResync) {
+            setDetailsForm({
+                reservation_time: booking.reservation_time || '',
+                serving_time: booking.serving_time || '',
+                venue_address_line: booking.venue_address_line || '',
+                venue_building_details: booking.venue_building_details || '',
+                color_motif: booking.color_motif || '',
+                event_timeline: booking.event_timeline || '',
+                special_instructions: booking.special_instructions || '',
+                theme_uploads: booking.theme_uploads || '',
             });
-        } catch (e) {
-            setMenuSelections({ starter: [], main: [], side: [], dessert: [], drink: [] });
+            setTimelineRows(parseTimelineRows(booking.event_timeline));
+            setSpecialInstructionSections(parseSpecialInstructions(booking.special_instructions));
+
+            try {
+                const parsed = typeof booking.selected_menu === 'string'
+                    ? JSON.parse(booking.selected_menu || '{}')
+                    : (booking.selected_menu || {});
+                setMenuSelections({
+                    starter: parsed.starter || [],
+                    main: parsed.main || [],
+                    side: parsed.side || [],
+                    dessert: parsed.dessert || [],
+                    drink: parsed.drink || [],
+                });
+            } catch (e) {
+                setMenuSelections({ starter: [], main: [], side: [], dessert: [], drink: [] });
+            }
+            setMenuEditMode(false);
+            setDetailsEditMode(false);
+            setActiveDetailRow(null);
+            setClarificationResponse(booking.clarification_response || '');
+            setCoreForm({
+                event_date: toDateInputValue(booking.event_date),
+                pax: booking.pax || '',
+            });
         }
-        setMenuEditMode(false);
-        setDetailsEditMode(false);
-        setActiveDetailRow(null);
-        setClarificationResponse(booking.clarification_response || '');
-        setCoreForm({
-            event_date: toDateInputValue(booking.event_date),
-            pax: booking.pax || '',
-        });
     }, [activeBookingId, data.bookings]);
 
     useEffect(() => {
@@ -1292,6 +1304,7 @@ const ClientDashboard = () => {
                 setCancelModalOpen(false);
                 setCancelReason('');
                 setCancelReasonDetails('');
+                forceFormResyncRef.current = true;
                 await fetchData({ silent: true, force: true });
             } else {
                 const firstValidationError = result.errors ? Object.values(result.errors).flat()[0] : null;
@@ -1323,6 +1336,7 @@ const ClientDashboard = () => {
                 setToast({ message: 'Event details saved.', type: 'success' });
                 setDetailsEditMode(false);
                 setActiveDetailRow(null);
+                forceFormResyncRef.current = true;
                 fetchData({ silent: true, force: true });
             } else {
                 setToast({ message: result.error || 'Unable to save event details.', type: 'error' });
@@ -1472,6 +1486,7 @@ const ClientDashboard = () => {
             mergeDashboardBooking(result.booking, result.payments);
             setToast({ message: 'Menu selection updated. Pricing and unpaid balances were recalculated.', type: 'success' });
             setMenuEditMode(false);
+            forceFormResyncRef.current = true;
             fetchData({ silent: true, force: true });
         } catch (error) {
             setToast({ message: error.message || 'Unable to update menu.', type: 'error' });
@@ -1532,6 +1547,7 @@ const ClientDashboard = () => {
             setToast({ message: `${result.message || 'Date and guest count updated.'}${pricingMessage}`, type: 'success' });
             setEditCoreModalOpen(false);
             setCorePricePreview(null);
+            forceFormResyncRef.current = true;
             fetchData({ silent: true, force: true });
         } catch (error) {
             setToast({ message: error.message || 'Unable to update date and guest count.', type: 'error' });
