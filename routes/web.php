@@ -416,10 +416,44 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::put('/api/admin/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
 });
 
-Route::fallback(function (Request $request) {
+});
+
+Route::get('/fix-images', function () {
+    $items = \App\Models\MenuItem::all();
+    $count = 0;
+    foreach ($items as $item) {
+        if (str_starts_with($item->image, 'http')) {
+            $url = $item->image;
+            $filename = basename(parse_url($url, PHP_URL_PATH));
+            $path = public_path('images/menu/' . $filename);
+            if (!file_exists(public_path('images/menu'))) {
+                mkdir(public_path('images/menu'), 0755, true);
+            }
+            if (!file_exists($path)) {
+                try {
+                    $opts = [
+                        "http" => [
+                            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
+                        ]
+                    ];
+                    $context = stream_context_create($opts);
+                    $content = file_get_contents($url, false, $context);
+                    if ($content) {
+                        file_put_contents($path, $content);
+                    }
+                } catch (\Exception $e) {}
+            }
+            $item->image = '/images/menu/' . $filename;
+            $item->save();
+            $count++;
+        }
+    }
+    return "Fixed $count images!";
+});
+
+Route::fallback(function (Illuminate\Http\Request $request) {
     if ($request->is('api/*')) {
         return response()->json(['error' => 'API endpoint not found.'], 404);
     }
-
     abort(404);
 });
