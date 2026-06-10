@@ -416,8 +416,6 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::put('/api/admin/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
 });
 
-});
-
 Route::get('/fix-images', function () {
     $items = \App\Models\MenuItem::all();
     $count = 0;
