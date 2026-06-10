@@ -205,6 +205,28 @@ class ChatController extends Controller
             return $response;
         }
 
+        if ($user->role === 'Client' && $conversation->status === 'resolved') {
+            $conversation->update([
+                'status' => 'active',
+                'staff_id' => null,
+                'reopened_at' => now(),
+            ]);
+
+            $this->softRemoveParticipants(
+                ConversationParticipant::where('conversation_id', $conversation->id)->where('role', 'owner'),
+                'reopened_by_client',
+                $user->id
+            );
+
+            $this->addSystemMessage($conversation, "Customer sent a new message. Conversation was reopened and returned to unassigned.", [
+                'actor_id' => $user->id,
+                'actor_role' => $user->role,
+            ]);
+
+            app(OperationalBroadcastService::class)
+                ->staffQueueChanged('chat', 'conversation', $conversation->id, 'unassigned', 'Conversation returned to unassigned.');
+        }
+
         [$message, $wasCreated] = $this->createChatMessage($conversation, $user, $request->message, $clientTempId);
 
         $message->load('sender:id,username,role');
