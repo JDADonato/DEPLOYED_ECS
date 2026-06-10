@@ -512,6 +512,7 @@ const formatMonthLabel = (value) => {
     return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 };
 const toMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+const getMonthGridDays = (date) => {
     const firstWeekday = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
     const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
     return [
@@ -2022,6 +2023,8 @@ const DashboardAdmin = () => {
             return Number(b.booking_id || 0) - Number(a.booking_id || 0);
         });
     }, [refundQueue, refundSearch, refundSort, refundStatusFilter]);
+
+    const upcomingConfirmedEvents = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -2057,6 +2060,8 @@ const DashboardAdmin = () => {
             })
             .sort((a, b) => `${a.event_date || ''} ${a.event_time || ''}`.localeCompare(`${b.event_date || ''} ${b.event_time || ''}`));
     }, [bookings, adminCalendarMonthKey, adminCalendarSearch]);
+
+    const adminCalendarEventsByDate = useMemo(() => {
         return adminCalendarEvents.reduce((map, booking) => {
             const dateKey = String(booking.event_date || '').substring(0, 10);
             if (!map.has(dateKey)) map.set(dateKey, []);
@@ -9958,6 +9963,7 @@ const DashboardAdmin = () => {
 };
 
 export default DashboardAdmin;
+
 
 
 
