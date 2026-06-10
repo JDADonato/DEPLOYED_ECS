@@ -6,7 +6,7 @@ import Footer from '../Components/common/Footer';
 import SmartImage from '../Components/common/SmartImage';
 import StaffPreviewBanner from '../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../Components/common/RevealOnScroll';
-import { isStaffUser } from '../utils/dashboardLinks';
+import { dashboardHrefForUser, isStaffUser } from '../utils/dashboardLinks';
 
 /* ── SVG Icons ── */
 const settledStatuses = ['Paid', 'Verified'];
@@ -807,7 +807,7 @@ const HomeMarquee = () => {
     );
 };
 
-const LandingPage = () => {
+const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
     const { user, logout } = useAuth();
     const cachedJourneyData = useMemo(() => readJourneyTrackerCache(), []);
     const [journeyData, setJourneyData] = useState(cachedJourneyData);
@@ -842,17 +842,24 @@ const LandingPage = () => {
             .then(r => r.ok ? r.json() : [])
             .then(data => {
                 if (mounted) {
-                    setAnnouncements(Array.isArray(data) ? data : []);
+                    let list = Array.isArray(data) ? data : [];
+                    if (previewMode && previewAnnouncement) {
+                        list = list.filter(item => item.id !== previewAnnouncement.id);
+                        list = [previewAnnouncement, ...list];
+                    }
+                    setAnnouncements(list);
                 }
             })
             .catch(() => {
-                if (mounted) setAnnouncements([]);
+                if (mounted) {
+                    setAnnouncements(previewMode && previewAnnouncement ? [previewAnnouncement] : []);
+                }
             });
 
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [previewMode, previewAnnouncement]);
 
     if (user?.account_status === 'deactivated') {
         const handleReactivate = () => {
@@ -915,10 +922,27 @@ const LandingPage = () => {
             </Head>
 
             <ClientNavbar user={user} logout={logout} />
-            <StaffPreviewBanner user={user} label="customer-facing home page" />
+            {!previewMode && <StaffPreviewBanner user={user} label="customer-facing home page" />}
+            {previewMode && (
+                <div className="fixed inset-x-0 top-[68px] z-40 border-b border-[#ead8d8] bg-[#fff8e7]/95 px-5 py-3 shadow-md backdrop-blur">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#9f6500]">Preview mode</p>
+                            <h2 className="font-display text-base font-bold text-[#1a1a1a]">Customer-facing announcement preview</h2>
+                            <p className="text-xs font-semibold text-slate-500">This is how the announcement reads in customer-facing surfaces. It does not publish or send anything.</p>
+                        </div>
+                        <Link href={dashboardHrefForUser(user) + '?tab=announcements'} className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#5a0101]">
+                            Back to Admin
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {/* HERO */}
-            <section className="relative flex items-center overflow-hidden bg-[#15110f]" style={{ minHeight: '100vh', paddingTop: isStaffUser(user) ? 104 : 68 }}>
+            <section className="relative flex items-center overflow-hidden bg-[#15110f]" style={{ 
+                minHeight: '100vh', 
+                paddingTop: previewMode ? 152 : (isStaffUser(user) ? 104 : 68) 
+            }}>
                 <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=85&w=1800" alt="Elegant catered reception service" className="absolute inset-0 w-full h-full object-cover opacity-55" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#15110f] via-[#15110f]/88 to-[#720101]/42" />
                 <div className="relative z-10 w-full max-w-7xl mx-auto grid gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1.05fr_0.72fr] lg:items-end">

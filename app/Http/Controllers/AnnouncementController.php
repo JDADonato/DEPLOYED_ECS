@@ -168,13 +168,14 @@ class AnnouncementController extends Controller
 
     public function preview(Announcement $announcement)
     {
-        return Inertia::render('preview/AnnouncementPreview', [
-            'announcement' => array_merge($this->publicPayload($announcement), [
+        return Inertia::render('LandingPage', [
+            'previewAnnouncement' => array_merge($this->publicPayload($announcement), [
                 'status' => $announcement->status,
                 'visibility' => $announcement->visibility,
                 'visibility_roles' => $announcement->visibility_roles,
                 'send_email' => $announcement->send_email,
             ]),
+            'previewMode' => true,
         ]);
     }
 
