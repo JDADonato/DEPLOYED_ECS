@@ -119,19 +119,28 @@ const EventDetailDrawer = ({
             <div className="space-y-4">
                 {/* Header Card */}
                 <section className="rounded-lg border border-[#720101]/10 bg-[#fffaf3] p-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-950">{booking.event_display_name || booking.event_name || booking.event_type || booking.package_name || `Booking #${booking.id}`}</h3>
-                            <div className="mt-2.5 flex flex-wrap gap-2">
-                                <StaffStatusBadge tone={bookingStatus.tone === 'success' ? 'good' : bookingStatus.tone === 'danger' ? 'danger' : bookingStatus.tone === 'warning' ? 'warn' : 'muted'}>{bookingStatus.label}</StaffStatusBadge>
-                                {booking.status === 'Pending' && (
-                                    <StaffStatusBadge tone={reviewStatus.tone === 'success' ? 'good' : reviewStatus.tone === 'danger' ? 'danger' : reviewStatus.tone === 'warning' ? 'warn' : 'muted'}>{reviewStatus.label}</StaffStatusBadge>
-                                )}
-                                <StaffStatusBadge tone={ownershipStatus.tone === 'success' ? 'good' : ownershipStatus.tone === 'warning' ? 'warn' : 'muted'}>{ownershipStatus.label}</StaffStatusBadge>
-                            </div>
-                            <p className="mt-2 text-sm font-semibold text-slate-500">Owner: {booking.owner_name || booking.assigned_name || booking.owner || 'Unassigned'}</p>
+                    <div className="flex flex-col">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 className="text-lg font-black text-slate-950">{booking.event_display_name || booking.event_name || booking.event_type || booking.package_name || `Booking #${booking.id}`}</h3>
                         </div>
-                        {actionSlot && <div className="flex flex-wrap justify-start gap-2 sm:justify-end">{actionSlot}</div>}
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                            <StaffStatusBadge tone={bookingStatus.tone === 'success' ? 'good' : bookingStatus.tone === 'danger' ? 'danger' : bookingStatus.tone === 'warning' ? 'warn' : 'muted'}>{bookingStatus.label}</StaffStatusBadge>
+                            {booking.status === 'Pending' && (
+                                <StaffStatusBadge tone={reviewStatus.tone === 'success' ? 'good' : reviewStatus.tone === 'danger' ? 'danger' : reviewStatus.tone === 'warning' ? 'warn' : 'muted'}>{reviewStatus.label}</StaffStatusBadge>
+                            )}
+                            {ownershipStatus.label !== 'Owned by another staff member' && (
+                                <StaffStatusBadge tone={ownershipStatus.tone === 'success' ? 'good' : ownershipStatus.tone === 'warning' ? 'warn' : 'muted'}>{ownershipStatus.label}</StaffStatusBadge>
+                            )}
+                            <span className="text-slate-300">|</span>
+                            <span className="text-slate-600">
+                                Owner: <strong className="text-slate-800">{booking.owner_name || booking.assigned_name || booking.owner || 'Unassigned'}</strong>
+                            </span>
+                        </div>
+                        {actionSlot && (
+                            <div className="mt-3 flex flex-wrap gap-2 border-t border-[#720101]/5 pt-3">
+                                {actionSlot}
+                            </div>
+                        )}
                     </div>
                 </section>
 
