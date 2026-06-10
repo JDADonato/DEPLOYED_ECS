@@ -93,9 +93,15 @@ const AnnouncementPreview = ({ announcement }) => {
                         <h1 className="mt-1 font-display text-2xl font-bold text-[#1a1a1a]">Customer-facing announcement preview</h1>
                         <p className="mt-1 text-sm font-semibold text-slate-500">This is how the announcement reads in customer-facing surfaces. It does not publish or send anything.</p>
                     </div>
-                    <Link href={dashboardHrefForUser(user)} className="inline-flex shrink-0 rounded-full bg-[#720101] px-5 py-3 text-sm font-black text-white hover:bg-[#5a0101] transition-colors">
-                        {dashboardLabelForUser(user)}
-                    </Link>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                        <Link href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${announcement.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-[#f0aa0b] px-5 py-3 text-sm font-black uppercase tracking-wider text-[#1a1a1a] hover:bg-[#d4950a] transition-colors">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            Edit Announcement
+                        </Link>
+                        <Link href={dashboardHrefForUser(user)} className="inline-flex items-center justify-center rounded-full bg-[#720101] px-5 py-3 text-sm font-black text-white hover:bg-[#5a0101] transition-colors">
+                            {dashboardLabelForUser(user)}
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -117,6 +123,17 @@ const AnnouncementPreview = ({ announcement }) => {
                                         {image ? (
                                             announcement.image_fit === 'fit_image' ? (
                                                 <div className="relative overflow-hidden rounded-none w-full" style={{ background: '#1a1a1a' }}>
+                                                    {user && (
+                                                        <div className="absolute top-4 right-4 z-30">
+                                                            <Link
+                                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${announcement.id}`}
+                                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                                                title="Edit announcement"
+                                                            >
+                                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                                            </Link>
+                                                        </div>
+                                                    )}
                                                     <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                                         <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
                                                             <img
@@ -153,6 +170,17 @@ const AnnouncementPreview = ({ announcement }) => {
                                                 </div>
                                             ) : (
                                                 <div className="relative overflow-hidden rounded-none w-full flex flex-col justify-end" style={{ minHeight: '22rem', background: '#1a1a1a' }}>
+                                                    {user && (
+                                                        <div className="absolute top-4 right-4 z-30">
+                                                            <Link
+                                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${announcement.id}`}
+                                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                                                title="Edit announcement"
+                                                            >
+                                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                                            </Link>
+                                                        </div>
+                                                    )}
                                                     <SmartImage
                                                         src={image}
                                                         alt=""
@@ -188,6 +216,17 @@ const AnnouncementPreview = ({ announcement }) => {
                                             )
                                         ) : (
                                             <div className="relative overflow-hidden rounded-none w-full" style={{ background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
+                                                {user && (
+                                                    <div className="absolute top-4 right-4 z-30">
+                                                        <Link
+                                                            href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${announcement.id}`}
+                                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                                            title="Edit announcement"
+                                                        >
+                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                                        </Link>
+                                                    </div>
+                                                )}
                                                 <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                                     <div className="flex flex-col justify-end h-full">
                                                         <div className="flex flex-wrap items-center gap-3 mb-4">

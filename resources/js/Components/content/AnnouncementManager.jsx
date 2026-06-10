@@ -160,6 +160,22 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
     }, []);
 
     useEffect(() => {
+        if (!loading && announcements.length > 0) {
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('edit');
+            if (editId) {
+                const item = announcements.find((a) => a.id === parseInt(editId, 10));
+                if (item) {
+                    startEdit(item);
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('edit');
+                    window.history.replaceState({}, '', url.pathname + url.search);
+                }
+            }
+        }
+    }, [announcements, loading]);
+
+    useEffect(() => {
         if (form.visibility !== 'specific_users') return;
 
         const timer = window.setTimeout(() => {

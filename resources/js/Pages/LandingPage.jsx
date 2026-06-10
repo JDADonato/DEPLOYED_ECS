@@ -585,7 +585,7 @@ const formatAnnouncementDate = (announcement) => {
 };
 
 
-const HomepageAnnouncements = ({ announcements }) => {
+const HomepageAnnouncements = ({ announcements, previewMode = false, user = null }) => {
     if (!announcements.length) return null;
 
     const [featured, ...rest] = announcements;
@@ -600,6 +600,17 @@ const HomepageAnnouncements = ({ announcements }) => {
                         {featuredImage ? (
                             featured.image_fit === 'fit_image' ? (
                                 <div className="relative overflow-hidden rounded-none w-full" style={{ background: '#1a1a1a' }}>
+                                    {previewMode && user && (
+                                        <div className="absolute top-4 right-4 z-30">
+                                            <Link
+                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                                title="Edit announcement"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            </Link>
+                                        </div>
+                                    )}
                                     <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                         <div className="relative w-full overflow-hidden rounded-2xl bg-black/40 mb-6 flex justify-center items-center">
                                             <img
@@ -636,6 +647,17 @@ const HomepageAnnouncements = ({ announcements }) => {
                                 </div>
                             ) : (
                                 <div className="relative overflow-hidden rounded-none w-full flex flex-col justify-end" style={{ minHeight: '22rem', background: '#1a1a1a' }}>
+                                    {previewMode && user && (
+                                        <div className="absolute top-4 right-4 z-30">
+                                            <Link
+                                                href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                                title="Edit announcement"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            </Link>
+                                        </div>
+                                    )}
                                     <SmartImage
                                         src={featuredImage}
                                         alt=""
@@ -671,6 +693,17 @@ const HomepageAnnouncements = ({ announcements }) => {
                             )
                         ) : (
                             <div className="relative overflow-hidden rounded-none w-full" style={{ background: 'linear-gradient(135deg, #720101, #4a0101)' }}>
+                                {previewMode && user && (
+                                    <div className="absolute top-4 right-4 z-30">
+                                        <Link
+                                            href={`${dashboardHrefForUser(user)}?tab=announcements&edit=${featured.id}`}
+                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md text-[#720101] hover:bg-[#f0aa0b] hover:text-[#1a1a1a] transition-all"
+                                            title="Edit announcement"
+                                        >
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                        </Link>
+                                    </div>
+                                )}
                                 <div className="mx-auto max-w-7xl px-5 sm:px-8 py-6 md:py-8">
                                     <div className="flex flex-col justify-end h-full">
                                         <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -1049,7 +1082,7 @@ const LandingPage = ({ previewAnnouncement = null, previewMode = false }) => {
 
             <FloatingJourneyTracker bookings={journeyData.bookings} payments={journeyData.payments} loading={journeyLoading} />
 
-            <HomepageAnnouncements announcements={announcements} />
+            <HomepageAnnouncements announcements={announcements} previewMode={previewMode} user={user} />
 
             <section className="bg-[#fffaf3] px-5 py-14 sm:px-8">
                 <div className="mx-auto max-w-7xl">
