@@ -66,7 +66,7 @@ class ProfileController extends Controller
         abort_unless($user && $user->role === 'Client', 403);
 
         if (($user->account_status ?? 'active') === 'active') {
-            return redirect('/dashboard');
+            return redirect('/dashboard/client');
         }
 
         if ($user->deactivated_by !== $user->id) {
@@ -85,7 +85,7 @@ class ProfileController extends Controller
 
         $this->recordProfileAudit($request, ['account_reactivation']);
 
-        return redirect('/dashboard')->with('message', 'Welcome back, '.$user->username.'! Your account has been reactivated.');
+        return redirect('/dashboard/client')->with('message', 'Welcome back, '.$user->username.'! Your account has been reactivated.');
     }
 
     public function update(Request $request)

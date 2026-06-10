@@ -134,7 +134,7 @@ class AdminController extends Controller
 
         $this->recordAccountAudit('Staff account created', $user, 'Succeeded', [
             'target_role' => $user->role,
-            'email_delivery' => $emailDelivery['status'],
+            'email_delivery' => $emailDelivery['message'] ?? null,
         ]);
 
         return response()->json([
@@ -248,7 +248,7 @@ class AdminController extends Controller
         $emailDelivery = app(EmailDeliveryService::class)
             ->sendToAddress($originalEmail, new StaffAccountLifecycleNotification('deactivated'), 'staff_deactivated');
         $this->recordAccountAudit('Staff account deactivated', $user, 'Succeeded', [
-            'email_delivery' => $emailDelivery['status'],
+            'email_delivery' => $emailDelivery['message'] ?? null,
             'released_work' => $releaseSummary,
         ]);
         app(OperationalBroadcastService::class)
@@ -282,7 +282,7 @@ class AdminController extends Controller
         $emailDelivery = app(EmailDeliveryService::class)
             ->sendToNotifiable($user, new StaffAccountAccessNotification($temporaryPassword, 'reset'), 'staff_password_reset');
         $this->recordAccountAudit('Staff password reset', $user, 'Succeeded', [
-            'email_delivery' => $emailDelivery['status'],
+            'email_delivery' => $emailDelivery['message'] ?? null,
         ]);
 
         return response()->json([
@@ -366,7 +366,7 @@ class AdminController extends Controller
         $emailDelivery = app(EmailDeliveryService::class)
             ->sendToNotifiable($user, new StaffAccountLifecycleNotification('force_password_change'), 'staff_force_password_change');
         $this->recordAccountAudit('Required staff password change', $user, 'Succeeded', [
-            'email_delivery' => $emailDelivery['status'],
+            'email_delivery' => $emailDelivery['message'] ?? null,
         ]);
 
         return response()->json([
@@ -394,7 +394,7 @@ class AdminController extends Controller
         $emailDelivery = app(EmailDeliveryService::class)
             ->sendToNotifiable($user, new StaffAccountLifecycleNotification('reactivated'), 'staff_reactivated');
         $this->recordAccountAudit('Staff account reactivated', $user, 'Succeeded', [
-            'email_delivery' => $emailDelivery['status'],
+            'email_delivery' => $emailDelivery['message'] ?? null,
         ]);
         app(OperationalBroadcastService::class)
             ->adminChanged('accounts', 'user', $user->id, 'reactivated', 'Staff account reactivated.');
