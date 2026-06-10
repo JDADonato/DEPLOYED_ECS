@@ -6138,8 +6138,14 @@ const DashboardAdmin = () => {
                             title={eventDisplayName(booking)}
                             onClick={() => { setEventDetailsModal({ open: true, data: booking }); }}
                         >
-                            <span className="marketing-event-primary">{formatTime(booking.event_time)}</span>
-                            <span className="marketing-event-secondary">{eventDisplayName(booking)}</span>
+                            <span className="marketing-event-primary capitalize">{booking.event_type || booking.package_type || booking.type || `Booking #${booking.id}`}</span>
+                            <span className="marketing-event-secondary">
+                                {`${formatTime(booking.event_time)} · ${(() => {
+                                    const name = bookingContactName(booking) || 'Booking contact';
+                                    const parts = String(name).trim().split(/\s+/);
+                                    return parts.length > 1 ? parts[parts.length - 1] : name;
+                                })()}${booking.pax ? ` · ${booking.pax} guests` : ''}`}
+                            </span>
                         </div>
                     ))}
                 </div>
