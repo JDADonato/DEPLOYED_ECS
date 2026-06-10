@@ -3200,14 +3200,7 @@ const DashboardMarketing = () => {
                                     onChange={e => setMenuItemForm({ ...menuItemForm, image_file: e.target.files[0] })}
                                     className="mb-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition-all file:mr-4 file:rounded-full file:border-0 file:bg-[#720101] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#5a0101] focus:border-[#720101] focus:ring-2 focus:ring-[#720101]/10"
                                 />
-                                <input
-                                    type="url"
-                                    value={menuItemForm.image}
-                                    onChange={e => setMenuItemForm({ ...menuItemForm, image: e.target.value })}
-                                    placeholder="Or paste an image URL (https://...)"
-                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition-all focus:border-[#720101] focus:ring-2 focus:ring-[#720101]/10"
-                                />
-                                <p className="mt-1 text-xs text-gray-400">Upload a file or provide a link. Leave both blank to use a standard menu image.</p>
+                                <p className="mt-1 text-xs text-gray-400">Upload an image file. Leave blank to use a standard menu image.</p>
                             </div>
 
                             <div>
