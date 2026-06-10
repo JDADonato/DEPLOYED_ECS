@@ -18,7 +18,7 @@ const SmartImage = ({
     aspectRatio = '4 / 3',
     containerClassName = '',
     className = '',
-    loading = 'lazy',
+    loading = 'eager',
     decoding = 'async',
     onClick,
     sizes,
