@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Loader2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-react';
 
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
@@ -11,6 +11,11 @@ const typeOptions = [
     { value: 'menu_update', label: '🍽️ Menu Update' },
     { value: 'service_notice', label: '⚙️ Service Notice' },
     { value: 'urgent', label: '🚨 Urgent / Important Notice' },
+];
+
+const fitOptions = [
+    { value: 'fit_text', label: 'Text Focus — Cover background' },
+    { value: 'fit_image', label: 'Image Focus — Show full image' },
 ];
 
 const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
@@ -30,6 +35,8 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [statusMessage, setStatusMessage] = useState('');
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const [imageFitOpen, setImageFitOpen] = useState(false);
 
     useEffect(() => {
         if (announcement) {
@@ -197,18 +204,37 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                         </div>
 
                         {/* Category */}
-                        <div className="flex flex-col gap-1">
+                        <div className="relative flex flex-col gap-1">
                             <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Category <span className="text-red-500">*</span></label>
-                            <select
-                                name="type"
-                                value={form.type}
-                                onChange={handleTextChange}
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101]"
+                            <button
+                                type="button"
+                                onClick={() => setCategoryOpen(!categoryOpen)}
+                                className="flex items-center justify-between w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:border-slate-300 focus:outline-none focus:border-[#720101] focus:ring-1 focus:ring-[#720101] transition text-left"
                             >
-                                {typeOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
+                                <span>{typeOptions.find(o => o.value === form.type)?.label || 'Select Category'}</span>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${categoryOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            {categoryOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setCategoryOpen(false)} />
+                                    <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg max-h-60 overflow-y-auto animate-scaleIn">
+                                        {typeOptions.map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setForm(prev => ({ ...prev, type: opt.value }));
+                                                    setCategoryOpen(false);
+                                                }}
+                                                className={`flex items-center w-full text-left px-3 py-1.5 text-sm transition-colors ${form.type === opt.value ? 'bg-[#720101]/8 text-[#720101] font-bold' : 'text-[#1a1a1a] hover:bg-slate-50'}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -265,17 +291,37 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                         </div>
 
                         {/* Image fit */}
-                        <div className="flex flex-col gap-1">
+                        <div className="relative flex flex-col gap-1">
                             <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Image Fit Behavior</label>
-                            <select
-                                name="image_fit"
-                                value={form.image_fit}
-                                onChange={handleTextChange}
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101]"
+                            <button
+                                type="button"
+                                onClick={() => setImageFitOpen(!imageFitOpen)}
+                                className="flex items-center justify-between w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm hover:border-slate-300 focus:outline-none focus:border-[#720101] focus:ring-1 focus:ring-[#720101] transition text-left"
                             >
-                                <option value="fit_text">Text Focus — Cover background</option>
-                                <option value="fit_image">Image Focus — Show full image</option>
-                            </select>
+                                <span>{fitOptions.find(o => o.value === form.image_fit)?.label || 'Select fit behavior'}</span>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${imageFitOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            {imageFitOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setImageFitOpen(false)} />
+                                    <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg animate-scaleIn">
+                                        {fitOptions.map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setForm(prev => ({ ...prev, image_fit: opt.value }));
+                                                    setImageFitOpen(false);
+                                                }}
+                                                className={`flex items-center w-full text-left px-3 py-1.5 text-sm transition-colors ${form.image_fit === opt.value ? 'bg-[#720101]/8 text-[#720101] font-bold' : 'text-[#1a1a1a] hover:bg-slate-50'}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
