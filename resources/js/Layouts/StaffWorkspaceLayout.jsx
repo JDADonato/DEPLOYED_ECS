@@ -270,10 +270,17 @@ const StaffWorkspaceLayout = ({
                                                     <button
                                                         key={child.id}
                                                         type="button"
-                                                        onClick={() => handleNavigate(child.id)}
-                                                        className={`staff-sidebar-subitem ${active === child.id ? 'is-active' : ''}`}
+                                                        onClick={(e) => {
+                                                            if (child.disabled) {
+                                                                e.preventDefault();
+                                                                return;
+                                                            }
+                                                            handleNavigate(child.id);
+                                                        }}
+                                                        className={`staff-sidebar-subitem ${active === child.id ? 'is-active' : ''} ${child.disabled ? 'is-disabled opacity-50 cursor-not-allowed' : ''}`}
                                                         title={sidebarTitleFor(child)}
                                                         tabIndex={shouldHideNavFocus ? -1 : 0}
+                                                        disabled={child.disabled}
                                                     >
                                                         <span>{child.label}</span>
                                                         {child.count > 0 && <em>{child.count}</em>}
@@ -289,10 +296,17 @@ const StaffWorkspaceLayout = ({
                                     <button
                                         key={item.id}
                                         type="button"
-                                        onClick={() => handleNavigate(item.id)}
-                                        className={`staff-sidebar-item ${active === item.id ? 'is-active' : ''}`}
+                                        onClick={(e) => {
+                                            if (item.disabled) {
+                                                e.preventDefault();
+                                                return;
+                                            }
+                                            handleNavigate(item.id);
+                                        }}
+                                        className={`staff-sidebar-item ${active === item.id ? 'is-active' : ''} ${item.disabled ? 'is-disabled opacity-50 cursor-not-allowed' : ''}`}
                                         title={sidebarTitleFor(item)}
                                         tabIndex={shouldHideNavFocus ? -1 : 0}
+                                        disabled={item.disabled}
                                     >
                                         <span className="staff-sidebar-item-main">
                                             <span className="staff-sidebar-item-label">{item.label}</span>
