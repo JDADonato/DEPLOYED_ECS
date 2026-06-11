@@ -8,9 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CustomerAssistedBookingInviteNotification extends Notification implements ShouldQueue
+class CustomerAssistedBookingInviteNotification extends Notification
 {
-    use Queueable;
 
     public function __construct(
         private readonly Booking $booking,
