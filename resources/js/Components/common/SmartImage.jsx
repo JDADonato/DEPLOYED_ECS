@@ -31,14 +31,23 @@ const SmartImage = ({
     const imgRef = useRef(null);
 
     useEffect(() => {
-        setCurrentSrc(normalizeImageSrc(src, fallbackSrc));
-        setLoaded(false);
-        setFailed(false);
+        const newSrc = normalizeImageSrc(src, fallbackSrc);
+        setCurrentSrc((prevSrc) => {
+            if (prevSrc !== newSrc) {
+                setLoaded(false);
+                setFailed(false);
+                return newSrc;
+            }
+            return prevSrc;
+        });
     }, [src, fallbackSrc]);
 
     useEffect(() => {
-        if (imgRef.current && imgRef.current.complete) {
-            if (imgRef.current.naturalWidth > 0) {
+        const img = imgRef.current;
+        if (!img) return;
+
+        if (img.complete) {
+            if (img.naturalWidth > 0) {
                 setLoaded(true);
             }
         }
