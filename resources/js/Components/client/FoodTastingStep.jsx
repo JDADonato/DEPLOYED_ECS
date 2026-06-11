@@ -221,6 +221,8 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                                     value={tastingData.guest_phone}
                                     onChange={handleChange}
                                     disabled={sameAsAbove}
+                                    pattern="^(09|\+639)\d{9}$"
+                                    title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)"
                                     className="booking-input disabled:cursor-not-allowed disabled:bg-gray-100"
                                 />
                             </label>

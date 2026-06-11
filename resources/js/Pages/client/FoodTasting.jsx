@@ -217,6 +217,8 @@ const FoodTasting = () => {
                                                 onChange={handleChange}
                                                 required
                                                 className="booking-input"
+                                                pattern="^(09|\+639)\d{9}$"
+                                                title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)"
                                             />
                                             <FieldError message={errors.guest_phone} />
                                         </label>

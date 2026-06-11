@@ -140,6 +140,8 @@ const Register = () => {
                                     id="phone" name="phone" type="tel" required
                                     className="auth-input"
                                     placeholder="09XX XXX XXXX" value={formData.phone} onChange={handleChange}
+                                    pattern="^(09|\+639)\d{9}$"
+                                    title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)"
                                 />
                             </div>
                         </div>

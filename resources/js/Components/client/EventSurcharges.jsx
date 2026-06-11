@@ -167,7 +167,7 @@ const EventSurcharges = ({ bookingData, updateBooking, onNext, onBack, user, req
                         </label>
                         <label>
                             <span className="booking-field-label">Mobile number</span>
-                            <input type="tel" name="client_phone" placeholder="Mobile number" value={formData.client_phone} onChange={handleChange} className="booking-input" />
+                            <input type="tel" name="client_phone" placeholder="Mobile number" value={formData.client_phone} onChange={handleChange} className="booking-input" pattern="^(09|\+639)\d{9}$" title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)" />
                         </label>
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Venue address</span>
