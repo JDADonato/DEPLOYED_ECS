@@ -689,11 +689,7 @@ const SmartEventDetailsPanel = ({
                                 <p className="text-[11px] font-black uppercase tracking-widest text-gray-500">Event timeline / program</p>
                                 <p className="text-xs font-semibold text-gray-500">Add the moments the kitchen and service team should prepare around.</p>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                {Object.keys(timelineTemplates).map(template => (
-                                    <button key={template} type="button" onClick={() => applyTimelineTemplate(template)} className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-black text-gray-600 hover:bg-gray-50">{template}</button>
-                                ))}
-                            </div>
+
                         </div>
                         <div className="mt-4 space-y-3">
                             {timelineRows.map((row, index) => (
