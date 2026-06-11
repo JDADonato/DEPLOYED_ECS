@@ -406,6 +406,7 @@ const SmartEventDetailsPanel = ({
     addCustomMotifColor,
 }) => {
     const eventStartTime = parseEventStartTime(activeBooking.event_time);
+    const eventEndTime = eventStartTime ? addMinutesToTime(eventStartTime, 4 * 60) : '';
     const readSections = [
         { label: 'Venue address', value: detailsForm.venue_address_line },
         { label: 'Venue notes', value: detailsForm.venue_building_details },
@@ -430,7 +431,7 @@ const SmartEventDetailsPanel = ({
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                     {quickTimes.map(time => {
-                        const isDisabled = fieldKey === 'serving_time' && eventStartTime && time.value < eventStartTime;
+                        const isDisabled = fieldKey === 'serving_time' && eventStartTime && eventEndTime && (time.value < eventStartTime || time.value > eventEndTime);
                         return (
                             <button
                                 key={`${fieldKey}-${time.value}`}
@@ -452,6 +453,7 @@ const SmartEventDetailsPanel = ({
                             value={parseEventStartTime(value)}
                             onChange={(event) => setDetailTime(fieldKey, event.target.value)}
                             min={fieldKey === 'serving_time' && eventStartTime ? eventStartTime : undefined}
+                            max={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : undefined}
                             className="min-w-0 flex-1 bg-transparent text-sm font-bold text-gray-900 outline-none"
                         />
                     </label>
@@ -586,7 +588,7 @@ const SmartEventDetailsPanel = ({
                         <div className="mt-4 space-y-3">
                             {timelineRows.map((row, index) => (
                                 <div key={index} className="grid gap-2 rounded-2xl border border-gray-100 bg-[#faf7f2]/40 p-3 lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                                    <input type="time" min={eventStartTime || undefined} value={parseEventStartTime(row.time)} onChange={(event) => updateTimelineRow(index, 'time', event.target.value)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
+                                    <input type="time" min={eventStartTime || undefined} max={eventEndTime || undefined} value={parseEventStartTime(row.time)} onChange={(event) => updateTimelineRow(index, 'time', event.target.value)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.activity || ''} onChange={(event) => updateTimelineRow(index, 'activity', event.target.value)} placeholder="Activity" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.note || ''} onChange={(event) => updateTimelineRow(index, 'note', event.target.value)} placeholder="Note" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#720101]" />
                                     <button type="button" onClick={() => removeTimelineRow(index)} className="h-11 rounded-xl border border-red-100 bg-red-50 px-3 text-xs font-black text-red-700 hover:bg-red-100">Remove</button>
@@ -1332,6 +1334,29 @@ const ClientDashboard = () => {
     };
 
     const saveEventDetails = async () => {
+        const minTime = parseEventStartTime(activeBooking?.event_time);
+        const maxTime = minTime ? addMinutesToTime(minTime, 4 * 60) : '';
+        if (minTime && maxTime) {
+            const checkTime = (t) => {
+                const parsed = parseEventStartTime(t);
+                // Handle cases crossing midnight if maxTime < minTime
+                if (maxTime < minTime) {
+                    return parsed >= minTime || parsed <= maxTime;
+                }
+                return parsed >= minTime && parsed <= maxTime;
+            };
+
+            if (detailsForm.serving_time && !checkTime(detailsForm.serving_time)) {
+                setToast({ message: `Serving time must be between ${formatTimeLabel(minTime)} and ${formatTimeLabel(maxTime)}.`, type: 'error' });
+                return;
+            }
+            const invalidTimelineRow = timelineRows.find(row => row.time && !checkTime(row.time));
+            if (invalidTimelineRow) {
+                setToast({ message: `Timeline time must be between ${formatTimeLabel(minTime)} and ${formatTimeLabel(maxTime)}.`, type: 'error' });
+                return;
+            }
+        }
+
         setSavingDetails(true);
         try {
             const payload = {
