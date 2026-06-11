@@ -4393,7 +4393,6 @@ const DashboardAdmin = () => {
             { key: 'overview', label: 'Overview', description: 'Decision summary', count: insightCards.length },
             { key: 'thesis', label: 'Core Analytics', description: 'Forecast methods', count: 4 },
             { key: 'supporting', label: 'Supporting Charts', description: 'Descriptive dashboard aids', count: 6 },
-            { key: 'operations', label: 'Operations Signals', description: 'Queues and alerts', count: topAlerts.length + topPackages.length + topDishes.length },
         ];
         const coreAnalyticsShortcuts = [
             { id: 'sales-frequency', label: 'Sales Frequency Distribution', detail: `${dominantBookingCategory} leads at ${dominantBookingPercentage.toFixed(1)}%`, view: 'thesis' },
@@ -4556,110 +4555,7 @@ const DashboardAdmin = () => {
                 </RevealOnScroll>
                 )}
 
-                {activeAnalyticsView === 'operations' && (
-                    <section className="admin-analytics-ops-grid">
-                        <RevealOnScroll className="admin-analytics-feature-card admin-analytics-ops-summary">
-                            <p className="admin-kicker">Operations signals</p>
-                            <h3>Queues, alerts, and seasonal pressure</h3>
-                            <div className="admin-analytics-signal-grid">
-                                {operationSignals.map(([label, value, context]) => {
-                                    const signalClass = String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-                                    return (
-                                        <article key={label} className={`admin-analytics-signal-card is-${signalClass}`}>
-                                            <div>
-                                                <p>{label}</p>
-                                                <strong>{value}</strong>
-                                            </div>
-                                            <span>{context}</span>
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        </RevealOnScroll>
-                        <RevealOnScroll delay="rv-d1" className="admin-analytics-rail">
-                            <div>
-                                <p className="admin-kicker">Priority alerts</p>
-                                <h3>Needs attention</h3>
-                            </div>
-                            <div className="admin-analytics-list-stack">
-                                {topAlerts.length ? topAlerts.map((alert, index) => (
-                                    <div key={`${alert.label}-${index}`} className="admin-analytics-list-row is-alert" title={alert.label}>
-                                        <span>{alert.label}</span>
-                                        <strong>{alert.count ?? alert.value ?? 0}</strong>
-                                    </div>
-                                )) : <div className="admin-chart-empty is-compact">No priority alerts in this view.</div>}
-                            </div>
-                        </RevealOnScroll>
-                        <RevealOnScroll delay="rv-d2" className="admin-analytics-rail">
-                            <div>
-                                <p className="admin-kicker">Demand leaders</p>
-                                <h3>Top packages and dishes</h3>
-                            </div>
-                            <div className="admin-analytics-list-stack is-sectioned">
-                                {!!topPackages.length && (
-                                    <div className="admin-analytics-demand-group">
-                                        <div className="admin-analytics-demand-group-head">
-                                            <span>Packages</span>
-                                            <em>Revenue</em>
-                                        </div>
-                                        {topPackages.slice(0, 3).map((row, index) => (
-                                            <div key={`${row.label || row.name}-package-${index}`} className="admin-analytics-list-row is-revenue" title={row.label || row.name || 'Package'}>
-                                                <span className="admin-analytics-item-name">
-                                                    <em>Package</em>
-                                                    <b>{row.label || row.name || 'Package'}</b>
-                                                </span>
-                                                <strong>{formatCurrency(row.revenue || 0)}</strong>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {!!topDishes.length && (
-                                    <div className="admin-analytics-demand-group">
-                                        <div className="admin-analytics-demand-group-head">
-                                            <span>Dishes</span>
-                                            <em>Selections</em>
-                                        </div>
-                                        {topDishes.slice(0, 3).map((row, index) => (
-                                            <div key={`${row.label || row.name}-dish-${index}`} className="admin-analytics-list-row is-count" title={row.label || row.name || 'Dish'}>
-                                                <span className="admin-analytics-item-name">
-                                                    <em>Dish</em>
-                                                    <b>{row.label || row.name || 'Dish'}</b>
-                                                </span>
-                                                <strong>{row.selections ?? row.paxServed ?? row.bookings ?? 0}</strong>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {!topPackages.length && !topDishes.length && <div className="admin-chart-empty is-compact">No demand leaders for this filter.</div>}
-                            </div>
-                        </RevealOnScroll>
-                    </section>
-                )}
-
-                {activeAnalyticsView !== 'overview' && (
-                <RevealOnScroll as="section" delay="rv-d1" className="admin-key-takeaways">
-                    <div>
-                        <p className="admin-kicker">Key takeaways</p>
-                        <h3>What Admin should notice first</h3>
-                    </div>
-                    <div className="admin-key-takeaway-grid">
-                        {(analyticsTakeaways.length ? analyticsTakeaways : [
-                            analyticsInsightItems.revenue,
-                            analyticsInsightItems.conversion,
-                            analyticsInsightItems.operations,
-                        ].filter(Boolean)).slice(0, 3).map((insight, index) => (
-                            <InsightLine key={`${insight.headline}-${index}`} insight={insight} compact={false} />
-                        ))}
-                        {!analyticsTakeaways.length && !analyticsInsightItems.revenue && (
-                            <div className="admin-loading-note is-compact">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Checking for the latest updates...</span>
-                            </div>
-                        )}
-                    </div>
-                </RevealOnScroll>
-                )}
 
                 {activeAnalyticsView === 'thesis' && (
                 <div className="admin-analytics-grid">
