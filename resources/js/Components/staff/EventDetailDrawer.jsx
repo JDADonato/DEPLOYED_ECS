@@ -50,28 +50,22 @@ const normalizeDishes = (selectedMenu) => {
 
 const normalizeImages = (uploads) => {
     if (!uploads) return [];
-    
-    // Aggressively clean stray brackets/quotes if double encoded
-    const cleanUrl = (url) => {
-        if (typeof url !== 'string') return url;
-        return url.replace(/^\["?|"?\]$/g, '').replace(/\\"/g, '').replace(/^"|"$/g, '').trim();
-    };
-
-    let parsedArray = [];
-    if (typeof uploads === 'string') {
-        try {
-            const parsed = JSON.parse(uploads);
-            parsedArray = Array.isArray(parsed) ? parsed : [uploads];
-        } catch {
-            parsedArray = [uploads];
+    try {
+        const str = typeof uploads === 'string' ? uploads : JSON.stringify(uploads);
+        const matches = str.match(/(?:https?:\/\/[^"'\s\\]+|\/storage\/[^"'\s\\]+)/g);
+        if (matches && matches.length > 0) {
+            return [...new Set(matches.map(m => m.replace(/\\/g, '')))];
         }
-    } else if (Array.isArray(uploads)) {
-        parsedArray = uploads;
-    } else {
-        parsedArray = [uploads];
+    } catch (e) {
+        console.error("Failed to parse images:", e);
     }
     
-    return parsedArray.map(cleanUrl).filter(Boolean);
+    // Fallback if it's just a raw path that doesn't start with /storage/ or http
+    if (typeof uploads === 'string') {
+        const cleaned = uploads.replace(/^[\["'\s]+|[\]"'\s]+$/g, '').replace(/\\/g, '');
+        return cleaned ? [cleaned] : [];
+    }
+    return Array.isArray(uploads) ? uploads.filter(item => typeof item === 'string') : [];
 };
 
 const EventDetailDrawer = ({
