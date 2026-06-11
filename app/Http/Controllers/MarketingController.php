@@ -552,7 +552,7 @@ class MarketingController extends Controller
 
         if ($email) {
             try {
-                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\VerifyEmailOTP($otp));
+                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\VerifyEmailOTP($otp, 'account verification', 15, $temporaryPassword));
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('Failed to send OTP email during assisted booking: ' . $e->getMessage());
             }
