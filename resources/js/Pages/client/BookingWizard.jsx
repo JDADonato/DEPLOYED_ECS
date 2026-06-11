@@ -35,7 +35,7 @@ const stepLabels = [
     { step: 4, label: 'Packages' },
     { step: 5, label: 'Menu' },
     { step: 6, label: 'Details' },
-    { step: 7, label: 'Tasting' },
+    { step: 7, label: 'Food Tasting' },
 ];
 
 const stepMessages = {
@@ -45,7 +45,7 @@ const stepMessages = {
     4: { eyebrow: 'Choose your package', greeting: 'Review packages for your event type', sub: 'The package options, amenities, pricing, and security terms adjust based on the event you selected.' },
     5: { eyebrow: 'Personalize the spread', greeting: 'Build a menu your guests will remember', sub: 'Choose dishes and keep an eye on the estimate in the summary.' },
     6: { eyebrow: 'Set the logistics', greeting: 'Where should the team prepare?', sub: 'Add contact and venue details so setup fees are clear before submitting.' },
-    7: { eyebrow: 'Food tasting', greeting: 'Would you like to schedule a tasting?', sub: 'Choose whether you want a tasting, then submit your event plan.' },
+    7: { eyebrow: 'Food tasting', greeting: 'Would you like to schedule a food tasting?', sub: 'Choose whether you want a food tasting, then submit your event plan.' },
 };
 
 const money = (value) => `₱${Number(value || 0).toLocaleString()}`;
@@ -519,7 +519,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
                                         <div><dt>Time</dt><dd>{reviewData.tasting_preferred_time || '-'}</dd></div>
                                     </dl>
                                 ) : (
-                                    <p className="booking-review-muted">You can coordinate a tasting with the team later from your dashboard.</p>
+                                    <p className="booking-review-muted">You can coordinate a food tasting with the team later from your dashboard.</p>
                                 )}
                             </section>
                         </div>
