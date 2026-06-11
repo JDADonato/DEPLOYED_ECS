@@ -802,7 +802,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         const customer = result.customer || {};
 
         return (
-            <div className="fixed inset-0 z-[9998] overflow-y-auto bg-[#fffaf3]">
+            <div className="booking-page fixed inset-0 z-[9998] overflow-y-auto bg-[#fffaf3] font-sans text-slate-900">
                 <div className="mx-auto flex min-h-screen max-w-4xl items-center px-4 py-10">
                     <div className="w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl">
                         <div className="border-b border-emerald-100 bg-emerald-50 p-8">
