@@ -27,17 +27,60 @@ const FoodTasting = () => {
     const dashboardHref = dashboardHrefForUser(user, '/');
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors((current) => ({ ...current, [e.target.name]: undefined }));
+        const { name, value } = e.target;
+        let newErrors = { ...errors };
+
+        if (name === 'preferred_date' && value) {
+            const dateObj = new Date(value);
+            const day = dateObj.getDay();
+            if (day >= 1 && day <= 4) {
+                newErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
+            } else {
+                delete newErrors.preferred_date;
+            }
+        } else if (name === 'preferred_time' && value) {
+            const [hours, minutes] = value.split(':').map(Number);
+            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
+                newErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
+            } else {
+                delete newErrors.preferred_time;
+            }
+        } else if (newErrors[name]) {
+            delete newErrors[name];
         }
+
+        setFormData({ ...formData, [name]: value });
+        setErrors(newErrors);
+    };
+
+    const getMinDate = () => {
+        const today = new Date();
+        today.setDate(today.getDate() + 3);
+        return today.toISOString().split('T')[0];
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
-        setErrors({});
+        let nextErrors = {};
+        if (formData.preferred_date) {
+            const day = new Date(formData.preferred_date).getDay();
+            if (day >= 1 && day <= 4) nextErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
+        }
+        if (formData.preferred_time) {
+            const [hours, minutes] = formData.preferred_time.split(':').map(Number);
+            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
+                nextErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
+            }
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setErrors(nextErrors);
+            setMessage({ type: 'error', text: firstErrorMessage(nextErrors, 'Please correct the highlighted errors.') });
+            setLoading(false);
+            return;
+        }
 
         try {
             const response = await csrfFetch('/api/food-tasting', {
@@ -111,9 +154,20 @@ const FoodTasting = () => {
                     <div className="mb-6 flex items-start justify-between gap-5">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-[#720101]">Request Session</p>
-                            <h2 className="mt-1 text-2xl font-display font-bold">Schedule your tasting</h2>
+                            <h2 className="mt-1 text-2xl font-display font-bold">Schedule your food tasting</h2>
                         </div>
                         {user && <button onClick={() => router.get(dashboardHref)} className="hidden rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 sm:block">Dashboard</button>}
+                    </div>
+
+                    <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                        <p className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                            Heads up!
+                        </p>
+                        <p className="mt-1 text-sm text-blue-800">
+                            The dishes that will be served are good for 4 pax only. Please also note there is a maximum of 6 bookings per day.
+                            Food tastings require at least 3 days lead time, and are only available Friday to Sunday, between 11:00 AM and 3:00 PM.
+                        </p>
                     </div>
 
                     {message && (
@@ -154,7 +208,7 @@ const FoodTasting = () => {
                             </label>
                             <label className="block">
                                 <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Preferred Date</span>
-                                <input type="date" name="preferred_date" required value={formData.preferred_date} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
+                                <input type="date" name="preferred_date" required min={getMinDate()} value={formData.preferred_date} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
                                 <FieldError message={errors.preferred_date} />
                             </label>
                             <label className="block">
@@ -171,7 +225,7 @@ const FoodTasting = () => {
                         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             <button type="button" onClick={() => router.get('/menu')} className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50">Browse Menu</button>
                             <button type="submit" disabled={loading} className="rounded-xl bg-[#720101] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#720101]/15 hover:bg-[#5a0101] disabled:opacity-60">
-                                {loading ? 'Scheduling...' : 'Schedule tasting'}
+                                {loading ? 'Scheduling...' : 'Schedule food tasting'}
                             </button>
                         </div>
                     </form>

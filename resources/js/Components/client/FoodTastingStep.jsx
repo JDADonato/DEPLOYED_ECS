@@ -23,10 +23,30 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
     }, []);
 
     const handleChange = (event) => {
-        setTastingData({ ...tastingData, [event.target.name]: event.target.value });
-        if (errors[event.target.name]) {
-            setErrors((current) => ({ ...current, [event.target.name]: undefined }));
+        const { name, value } = event.target;
+        let newErrors = { ...errors };
+
+        if (name === 'preferred_date' && value) {
+            const dateObj = new Date(value);
+            const day = dateObj.getDay(); // 0 is Sunday, 5 is Friday, 6 is Saturday
+            if (day >= 1 && day <= 4) {
+                newErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
+            } else {
+                delete newErrors.preferred_date;
+            }
+        } else if (name === 'preferred_time' && value) {
+            const [hours, minutes] = value.split(':').map(Number);
+            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
+                newErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
+            } else {
+                delete newErrors.preferred_time;
+            }
+        } else if (newErrors[name]) {
+            delete newErrors[name];
         }
+
+        setTastingData({ ...tastingData, [name]: value });
+        setErrors(newErrors);
     };
 
     const handleSameAsAbove = (checked) => {
@@ -44,10 +64,23 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
     const handleSubmitWithTasting = () => {
         if (isSubmitting) return;
         const nextErrors = {};
-        if (!tastingData.guest_name?.trim()) nextErrors.guest_name = 'Add the name for the tasting request.';
-        if (!tastingData.guest_email?.trim()) nextErrors.guest_email = 'Add an email so the team can confirm the tasting.';
-        if (!tastingData.preferred_date) nextErrors.preferred_date = 'Choose a preferred tasting date.';
-        if (!tastingData.preferred_time) nextErrors.preferred_time = 'Choose a preferred tasting time.';
+        if (!tastingData.guest_name?.trim()) nextErrors.guest_name = 'Add the name for the food tasting request.';
+        if (!tastingData.guest_email?.trim()) nextErrors.guest_email = 'Add an email so the team can confirm the food tasting.';
+        if (!tastingData.preferred_date) {
+            nextErrors.preferred_date = 'Choose a preferred food tasting date.';
+        } else {
+            const day = new Date(tastingData.preferred_date).getDay();
+            if (day >= 1 && day <= 4) nextErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
+        }
+        
+        if (!tastingData.preferred_time) {
+            nextErrors.preferred_time = 'Choose a preferred food tasting time.';
+        } else {
+            const [hours, minutes] = tastingData.preferred_time.split(':').map(Number);
+            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
+                nextErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
+            }
+        }
 
         if (Object.keys(nextErrors).length > 0) {
             setErrors(nextErrors);
@@ -101,13 +134,23 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
             <div className="booking-step-grid">
                 <section className="booking-step-panel">
                     <p className="booking-step-kicker">Final preference</p>
-                    <h2>Would you like to schedule a tasting?</h2>
+                    <h2>Would you like to schedule a food tasting?</h2>
                     <p className="booking-step-copy">
-                        You can request a tasting before the event, or submit the booking now and coordinate details with the team later.
+                        You can request a food tasting before the event, or submit the booking now and coordinate details with the team later.
                     </p>
                     <p className="mt-4 text-sm font-semibold leading-6 text-slate-500">
                         Food tasting lets you sample selected dishes, confirm flavors, and share final notes before the event menu is locked in.
                     </p>
+                    <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                        <p className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                            Heads up!
+                        </p>
+                        <p className="mt-1 text-sm text-blue-800">
+                            The dishes that will be served are good for 4 pax only. Please also note there is a maximum of 6 bookings per day.
+                            Food tastings require at least 3 days lead time, and are only available Friday to Sunday, between 11:00 AM and 3:00 PM.
+                        </p>
+                    </div>
 
                     {isSubmitting && (
                         <div className="booking-inline-error border-[#f0aa0b]/40 bg-[#f0aa0b]/10 text-[#6f4a05]">
@@ -124,7 +167,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                             disabled={isSubmitting}
                             className={`booking-preset ${showTasting ? 'booking-preset-active' : ''}`}
                         >
-                            <strong>Schedule tasting</strong>
+                            <strong>Schedule food tasting</strong>
                             <span>Pick a preferred date and time.</span>
                         </button>
                         <button
@@ -133,7 +176,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                             disabled={isSubmitting}
                             className="booking-preset"
                         >
-                            <strong>Review without tasting</strong>
+                            <strong>Review without food tasting</strong>
                             <span>Check your choices before sending.</span>
                         </button>
                     </div>

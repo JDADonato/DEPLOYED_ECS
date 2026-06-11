@@ -13,6 +13,7 @@ const ClientNavbar = ({ user, logout, activePath }) => {
         { n: 'About', p: '/about' },
         { n: 'Amenities', p: '/amenities' },
         { n: 'Menu', p: '/menu' },
+        { n: 'Food Tasting', p: '/food-tasting' },
         { n: 'Book Now', p: '/book' },
         { n: 'Contact', p: '/contact' },
     ];

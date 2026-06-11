@@ -20,12 +20,12 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
     };
 
     const handleNext = () => {
-        if (!pax || pax < 20) {
+        if (!pax || pax < 50) {
             setModal({
                 isOpen: true,
                 type: 'error',
                 title: 'Guest count needed',
-                message: 'Please enter at least 20 guests to continue.',
+                message: 'Please enter at least 50 guests to continue.',
             });
             return;
         }
@@ -63,10 +63,10 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <div className="booking-compact-number">
-                        <button type="button" onClick={() => handlePaxChange(Math.max(20, pax - 10))}>-</button>
+                        <button type="button" onClick={() => handlePaxChange(Math.max(50, pax - 10))}>-</button>
                         <input
                             type="number"
-                            min="20"
+                            min="50"
                             max={bookingData.remainingPax || 3500}
                             value={pax}
                             onChange={(event) => handlePaxChange(event.target.value)}
@@ -89,7 +89,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <p className="text-sm font-semibold text-slate-500">
-                        Minimum 20 guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
+                        Minimum 50 guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
                     </p>
                 </div>
 
