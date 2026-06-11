@@ -47,6 +47,19 @@ const normalizeDishes = (selectedMenu) => {
     }
 };
 
+const normalizeImages = (uploads) => {
+    if (!uploads) return [];
+    if (typeof uploads === 'string') {
+        try {
+            const parsed = JSON.parse(uploads);
+            return Array.isArray(parsed) ? parsed : [uploads];
+        } catch {
+            return [uploads];
+        }
+    }
+    return Array.isArray(uploads) ? uploads : [uploads];
+};
+
 const EventDetailDrawer = ({
     isOpen,
     booking,
@@ -72,6 +85,7 @@ const EventDetailDrawer = ({
     const ownershipStatus = ownershipStatusLabel(booking, currentUser);
     const liveStatus = liveStatusLabel(booking.live_status);
     const dishes = normalizeDishes(booking.selected_menu);
+    const themeImages = normalizeImages(booking.theme_uploads);
     const payments = booking.payments || [];
     const showCustomerAccount = hasDifferentBookingContact(booking);
 
@@ -225,7 +239,7 @@ const EventDetailDrawer = ({
                                         {booking.venue_building_details && <p className="text-xs font-semibold text-slate-500">{booking.venue_building_details}</p>}
                                     </div>
                                 </div>
-                                {(booking.color_motif || booking.theme_uploads) && (
+                                {(booking.color_motif || themeImages.length > 0) && (
                                     <div className="border-t border-slate-100 pt-3">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Event Aesthetics & Inspiration</p>
                                         {booking.color_motif && (
@@ -234,10 +248,14 @@ const EventDetailDrawer = ({
                                                 <span className="text-xs font-black text-slate-900">{booking.color_motif}</span>
                                             </div>
                                         )}
-                                        {booking.theme_uploads && (
-                                            <a href={booking.theme_uploads} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-slate-200">
-                                                <img src={booking.theme_uploads} alt="Theme Inspiration" className="h-48 w-full object-cover transition duration-300 group-hover:opacity-90" />
-                                            </a>
+                                        {themeImages.length > 0 && (
+                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                {themeImages.map((imgUrl, i) => (
+                                                    <a key={i} href={imgUrl} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-slate-200">
+                                                        <img src={imgUrl} alt={`Theme Inspiration ${i+1}`} className="h-48 w-full object-cover transition duration-300 group-hover:opacity-90" />
+                                                    </a>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 )}
