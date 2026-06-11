@@ -225,6 +225,22 @@ const EventDetailDrawer = ({
                                         {booking.venue_building_details && <p className="text-xs font-semibold text-slate-500">{booking.venue_building_details}</p>}
                                     </div>
                                 </div>
+                                {(booking.color_motif || booking.theme_uploads) && (
+                                    <div className="border-t border-slate-100 pt-3">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Event Aesthetics & Inspiration</p>
+                                        {booking.color_motif && (
+                                            <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5">
+                                                <span className="text-xs font-bold text-slate-600">Color motif:</span>
+                                                <span className="text-xs font-black text-slate-900">{booking.color_motif}</span>
+                                            </div>
+                                        )}
+                                        {booking.theme_uploads && (
+                                            <a href={booking.theme_uploads} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-slate-200">
+                                                <img src={booking.theme_uploads} alt="Theme Inspiration" className="h-48 w-full object-cover transition duration-300 group-hover:opacity-90" />
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="border-t border-slate-100 pt-3 grid gap-4 sm:grid-cols-2">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Booking Contact</p>
