@@ -10,7 +10,7 @@ const SMART_CACHE_PREFIX = 'ecs:smart-resource:';
 export const defaultBookingData = {
     date: null, time: '', duration: 4, remainingPax: null,
     eventType: '',
-    pax: 20, dietaryNotes: '',
+    pax: 50, dietaryNotes: '',
     budget: 0, selectedDishes: { starter: [], main: [], side: [], dessert: [], drink: [] }, customMenu: {}, totalCost: 0,
     client_full_name: '', venue_address_line: '', venue_street: '', venue_city: '', venue_province: '', venue_zip_code: '', client_email: '', client_phone: '', venueDistance: 'metro-manila', isHighRise: false,
     wantsTasting: false, tasting_guest_name: '', tasting_guest_email: '', tasting_guest_phone: '', tasting_preferred_date: '', tasting_preferred_time: '', tasting_notes: ''

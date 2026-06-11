@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock, MessageSquareText, Phone, Utensils } from 'lucide-react';
+import { Head, router, Link } from '@inertiajs/react';
 import { useAuth } from '../../context/AuthContext';
 import csrfFetch from '../../utils/csrf';
 import { FieldError, FormErrorSummary } from '../../Components/common/FormFeedback';
 import { focusFirstInvalidField, firstErrorMessage } from '../../utils/validation';
 import StaffPreviewBanner from '../../Components/common/StaffPreviewBanner';
+import ClientNavbar from '../../Components/common/ClientNavbar';
 import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
 
 const FoodTasting = () => {
     const { user } = useAuth();
     const [formData, setFormData] = useState({
-        guest_name: user ? user.username : '',
+        guest_name: user ? user.username || user.client_full_name : '',
         guest_email: user ? user.email || '' : '',
         guest_phone: '',
         preferred_date: '',
@@ -108,129 +108,170 @@ const FoodTasting = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f7f4ee] font-sans text-[#1a1a1a]">
-            <header className="fixed top-0 z-50 w-full border-b border-[#720101]/10 bg-white/95 shadow-sm backdrop-blur">
-                <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-8">
-                    <button onClick={() => window.history.length > 1 ? window.history.back() : router.get('/')} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-[#720101] transition-colors hover:bg-[#720101]/5">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </button>
-                    <div className="text-center">
-                        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#720101]">Food Tasting</p>
-                        <p className="hidden text-xs font-semibold text-gray-500 sm:block">Schedule a tasting session before finalizing your menu</p>
-                    </div>
-                    <button onClick={() => router.get(user ? dashboardHref : '/')} className="rounded-full bg-[#720101] px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#5a0101]">
-                        {user ? 'Dashboard' : 'Home'}
-                    </button>
-                </div>
-            </header>
+        <div className="booking-page min-h-screen bg-[#fffaf3] font-sans text-slate-900">
+            <Head title="Food Tasting | Eloquente Catering" />
+            <ClientNavbar user={user} />
             <StaffPreviewBanner user={user} label="customer-facing food tasting page" />
 
-            <main className={`mx-auto grid max-w-7xl gap-8 px-5 pb-12 ${isStaffUser(user) ? 'pt-36' : 'pt-28'} sm:px-8 lg:grid-cols-[0.9fr_1.1fr]`}>
-                <RevealOnScroll as="section" className="rounded-3xl bg-[#1a1a1a] p-8 text-white shadow-xl shadow-black/10 lg:sticky lg:top-24 lg:self-start">
-                    <div className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0aa0b] text-[#1a1a1a]">
-                        <Utensils className="h-7 w-7" />
-                    </div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-[#f0aa0b]">Food Tasting</p>
-                    <h1 className="mt-3 text-4xl font-display font-bold leading-tight">Taste the menu before the event day.</h1>
-                    <p className="mt-4 text-sm font-medium leading-7 text-white/65">Schedule a focused tasting session so our team can confirm flavor direction, dietary needs, and final menu notes.</p>
-
-                    <div className="mt-8 grid gap-3">
-                        {[
-                            [CalendarDays, 'Pick your preferred date'],
-                            [Clock, 'Choose a convenient time'],
-                            [MessageSquareText, 'Share allergies and menu notes'],
-                            [Phone, 'Our team confirms availability'],
-                        ].map(([Icon, text]) => (
-                            <div key={text} className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
-                                <Icon className="h-5 w-5 text-[#f0aa0b]" />
-                                <span className="text-sm font-bold text-white/85">{text}</span>
-                            </div>
-                        ))}
-                    </div>
-                </RevealOnScroll>
-
-                <RevealOnScroll as="section" delay="rv-d1" className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-                    <div className="mb-6 flex items-start justify-between gap-5">
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-[#720101]">Request Session</p>
-                            <h2 className="mt-1 text-2xl font-display font-bold">Schedule your food tasting</h2>
-                        </div>
-                        {user && <button onClick={() => router.get(dashboardHref)} className="hidden rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 sm:block">Dashboard</button>}
-                    </div>
-
-                    <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                        <p className="text-sm font-bold text-blue-900 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                            Heads up!
-                        </p>
-                        <p className="mt-1 text-sm text-blue-800">
-                            The dishes that will be served are good for 4 pax only. Please also note there is a maximum of 6 bookings per day.
-                            Food tastings require at least 3 days lead time, and are only available Friday to Sunday, between 11:00 AM and 3:00 PM.
-                        </p>
-                    </div>
-
-                    {message && (
-                        <div className={`mb-6 flex items-center gap-3 rounded-2xl p-4 text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                            <CheckCircle2 className="h-5 w-5" />
-                            {message.text}
-                        </div>
-                    )}
-
-                    {scheduledTastingId && user && (
-                        <div className="mb-6 rounded-2xl border border-[#720101]/10 bg-[#faf7f2] p-4">
-                            <p className="text-sm font-bold text-[#1a1a1a]">Your tasting request is on file. The team will confirm the schedule from the Marketing workspace.</p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <button onClick={() => router.get(dashboardHref)} className="rounded-xl bg-[#720101] px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-[#5a0101]">Go to Dashboard</button>
-                                <button onClick={() => router.get('/menu')} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50">Browse Menu</button>
+            <div className={`booking-wizard-shell flex min-h-[calc(100vh-68px)] ${isStaffUser(user) ? 'pt-[104px]' : 'pt-[68px]'}`}>
+                <main className="booking-wizard-main min-w-0 flex-1">
+                    <RevealOnScroll className="booking-wizard-header border-b border-[#720101]/10 bg-white">
+                        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="min-w-0">
+                                    <Link href="/" className="inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 transition hover:text-[#720101]">
+                                        <span className="mr-2 text-base leading-none">&larr;</span>
+                                        Home
+                                    </Link>
+                                    <div className="mt-3">
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-[#9f6500]">Food tasting</p>
+                                        <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-[#1a1a1a] sm:text-3xl">Would you like to schedule a food tasting?</h1>
+                                        <p className="mt-1 max-w-2xl text-sm font-medium leading-6 text-slate-500">You can request a food tasting before your event to confirm flavors.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    )}
+                    </RevealOnScroll>
 
-                    <form onSubmit={handleSubmit} className="grid gap-5">
-                        <input type="text" name="website" value={formData.website} onChange={handleChange} tabIndex="-1" autoComplete="off" className="hidden" aria-hidden="true" />
-                        <FormErrorSummary errors={errors} message={Object.keys(errors).length > 0 ? firstErrorMessage(errors) : ''} />
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <label className="block">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Name</span>
-                                <input name="guest_name" required value={formData.guest_name} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
-                                <FieldError message={errors.guest_name} />
-                            </label>
-                            <label className="block">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Email</span>
-                                <input type="email" name="guest_email" required value={formData.guest_email} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
-                                <FieldError message={errors.guest_email} />
-                            </label>
-                            <label className="block">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Phone</span>
-                                <input type="tel" name="guest_phone" required value={formData.guest_phone} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
-                                <FieldError message={errors.guest_phone} />
-                            </label>
-                            <label className="block">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Preferred Date</span>
-                                <input type="date" name="preferred_date" required min={getMinDate()} value={formData.preferred_date} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
-                                <FieldError message={errors.preferred_date} />
-                            </label>
-                            <label className="block">
-                                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Preferred Time</span>
-                                <input type="time" name="preferred_time" required value={formData.preferred_time} onChange={handleChange} className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:bg-white" />
-                                <FieldError message={errors.preferred_time} />
-                            </label>
+                    <RevealOnScroll as="section" delay="rv-d1" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                        <div className="booking-step animate-fadeIn">
+                            <div className="booking-step-grid">
+                                <section className="booking-step-panel">
+                                    <p className="booking-step-kicker">Final preference</p>
+                                    <h2>Taste the menu before the event day.</h2>
+                                    <p className="booking-step-copy">
+                                        Schedule a focused tasting session so our team can confirm flavor direction, dietary needs, and final menu notes.
+                                    </p>
+                                    <p className="mt-4 text-sm font-semibold leading-6 text-slate-500">
+                                        Food tasting lets you sample selected dishes, confirm flavors, and share final notes before the event menu is locked in.
+                                    </p>
+                                    <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                                        <p className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                                            Heads up!
+                                        </p>
+                                        <p className="mt-1 text-sm text-blue-800">
+                                            The dishes that will be served are good for 4 pax only. Please also note there is a maximum of 6 bookings per day.
+                                            Food tastings require at least 3 days lead time, and are only available Friday to Sunday, between 11:00 AM and 3:00 PM.
+                                        </p>
+                                    </div>
+
+                                    {message && (
+                                        <div className={`mt-6 flex items-center gap-3 rounded-xl p-4 text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                            {message.text}
+                                        </div>
+                                    )}
+
+                                    {scheduledTastingId && user && (
+                                        <div className="mt-6 rounded-2xl border border-[#720101]/10 bg-[#faf7f2] p-4">
+                                            <p className="text-sm font-bold text-[#1a1a1a]">Your tasting request is on file. The team will confirm the schedule from the Marketing workspace.</p>
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                <button type="button" onClick={() => router.get(dashboardHref)} className="rounded-xl bg-[#720101] px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-[#5a0101]">Go to Dashboard</button>
+                                                <button type="button" onClick={() => router.get('/menu')} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50">Browse Menu</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+
+                                <section className="booking-choice-area">
+                                    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <input type="text" name="website" value={formData.website} onChange={handleChange} tabIndex="-1" autoComplete="off" className="hidden" aria-hidden="true" />
+                                        
+                                        <div className="md:col-span-2">
+                                            <FormErrorSummary errors={errors} message={Object.keys(errors).length > 0 ? firstErrorMessage(errors) : ''} />
+                                        </div>
+                                        
+                                        <label>
+                                            <span className="booking-field-label">Guest name</span>
+                                            <input
+                                                type="text"
+                                                name="guest_name"
+                                                placeholder="Name for the tasting"
+                                                value={formData.guest_name}
+                                                onChange={handleChange}
+                                                required
+                                                className="booking-input"
+                                            />
+                                            <FieldError message={errors.guest_name} />
+                                        </label>
+                                        <label>
+                                            <span className="booking-field-label">Email address</span>
+                                            <input
+                                                type="email"
+                                                name="guest_email"
+                                                placeholder="Email address"
+                                                value={formData.guest_email}
+                                                onChange={handleChange}
+                                                required
+                                                className="booking-input"
+                                            />
+                                            <FieldError message={errors.guest_email} />
+                                        </label>
+                                        <label>
+                                            <span className="booking-field-label">Mobile number</span>
+                                            <input
+                                                type="tel"
+                                                name="guest_phone"
+                                                placeholder="Phone number"
+                                                value={formData.guest_phone}
+                                                onChange={handleChange}
+                                                required
+                                                className="booking-input"
+                                            />
+                                            <FieldError message={errors.guest_phone} />
+                                        </label>
+                                        <div className="hidden md:block"></div>
+                                        <label>
+                                            <span className="booking-field-label">Preferred date</span>
+                                            <input
+                                                type="date"
+                                                name="preferred_date"
+                                                min={getMinDate()}
+                                                value={formData.preferred_date}
+                                                onChange={handleChange}
+                                                required
+                                                className="booking-input"
+                                            />
+                                            <FieldError message={errors.preferred_date} />
+                                        </label>
+                                        <label>
+                                            <span className="booking-field-label">Preferred time</span>
+                                            <input
+                                                type="time"
+                                                name="preferred_time"
+                                                value={formData.preferred_time}
+                                                onChange={handleChange}
+                                                required
+                                                className="booking-input"
+                                            />
+                                            <FieldError message={errors.preferred_time} />
+                                        </label>
+                                        <label className="md:col-span-2">
+                                            <span className="booking-field-label">Notes</span>
+                                            <textarea
+                                                name="notes"
+                                                rows="3"
+                                                placeholder="Dietary restrictions or tasting requests"
+                                                value={formData.notes}
+                                                onChange={handleChange}
+                                                className="booking-note-field"
+                                            />
+                                            <FieldError message={errors.notes} />
+                                        </label>
+                                        
+                                        <div className="md:col-span-2 booking-step-actions !mt-6 !border-t-0 !p-0">
+                                            <button type="button" onClick={() => router.get('/menu')} disabled={loading} className="booking-secondary-btn">Browse Menu</button>
+                                            <button type="submit" disabled={loading} className="booking-primary-btn disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500">
+                                                {loading ? 'Scheduling...' : 'Schedule food tasting'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </section>
+                            </div>
                         </div>
-                        <label className="block">
-                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Notes / Dietary Requirements</span>
-                            <textarea name="notes" rows="5" value={formData.notes} onChange={handleChange} className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#720101] focus:bg-white" placeholder="Allergies, preferred dishes, event context, or special tasting requests." />
-                            <FieldError message={errors.notes} />
-                        </label>
-                        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                            <button type="button" onClick={() => router.get('/menu')} className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50">Browse Menu</button>
-                            <button type="submit" disabled={loading} className="rounded-xl bg-[#720101] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#720101]/15 hover:bg-[#5a0101] disabled:opacity-60">
-                                {loading ? 'Scheduling...' : 'Schedule food tasting'}
-                            </button>
-                        </div>
-                    </form>
-                </RevealOnScroll>
-            </main>
+                    </RevealOnScroll>
+                </main>
+            </div>
         </div>
     );
 };
