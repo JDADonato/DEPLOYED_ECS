@@ -521,7 +521,7 @@ const SmartEventDetailsPanel = ({
     const readSections = [
         { label: 'Venue address', value: detailsForm.venue_address_line },
         { label: 'Venue notes', value: detailsForm.venue_building_details },
-        { label: 'Reservation time', value: formatTimeLabel(detailsForm.reservation_time) || detailsForm.reservation_time },
+        { label: 'Event time', value: formatTimeLabel(detailsForm.reservation_time) || detailsForm.reservation_time },
         { label: 'Serving time', value: formatTimeLabel(detailsForm.serving_time) || detailsForm.serving_time },
         { label: 'Color motif', value: detailsForm.color_motif },
         { label: 'Event timeline', value: serializeTimelineRows(timelineRows) || detailsForm.event_timeline },
@@ -563,7 +563,7 @@ const SmartEventDetailsPanel = ({
                             value={value}
                             onChange={(val) => setDetailTime(fieldKey, val)}
                             minTime={fieldKey === 'serving_time' && eventStartTime ? eventStartTime : undefined}
-                            maxTime={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : (fieldKey === 'reservation_time' && eventStartTime ? eventStartTime : undefined)}
+                            maxTime={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : undefined}
                             className="min-w-0 flex-1 bg-transparent text-sm font-bold text-gray-900 outline-none"
                         />
                     </div>
@@ -653,7 +653,7 @@ const SmartEventDetailsPanel = ({
                     </div>
 
                     <div className="grid gap-4 xl:grid-cols-2">
-                        <TimePicker label="Reservation time" fieldKey="reservation_time" value={detailsForm.reservation_time} helper="When guests or organizers can access the setup." />
+                        <TimePicker label="Event time" fieldKey="reservation_time" value={detailsForm.reservation_time} helper="When the event actually starts." />
                         <TimePicker label="Serving time" fieldKey="serving_time" value={detailsForm.serving_time} helper="When food service should begin." />
                     </div>
 
