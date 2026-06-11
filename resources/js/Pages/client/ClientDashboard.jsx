@@ -383,6 +383,20 @@ const HistoryPanel = ({ bookings, onHide }) => (
 );
 
 const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const containerRef = React.useRef(null);
+    const listRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const options = React.useMemo(() => {
         const opts = [];
         for (let h = 0; h < 24; h++) {
@@ -406,25 +420,64 @@ const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => 
         return t < minTime || t > maxTime;
     };
 
+    React.useEffect(() => {
+        if (isOpen && listRef.current) {
+            const valStr = parseEventStartTime(value);
+            const targetTime = valStr || minTime || '12:00';
+            const element = listRef.current.querySelector(`[data-time="${targetTime}"]`);
+            if (element) {
+                element.scrollIntoView({ block: 'center', behavior: 'auto' });
+            }
+        }
+    }, [isOpen, value, minTime]);
+
     return (
-        <select 
-            value={parseEventStartTime(value) || ''} 
-            onChange={e => onChange(e)}
-            className={`appearance-none bg-no-repeat ${className}`}
-            style={{ 
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundSize: '1.5em 1.5em',
-                paddingRight: '2.5rem'
-            }}
-        >
-            <option value="" disabled>Select time</option>
-            {options.map(t => (
-                <option key={t} value={t} disabled={isOutOfBounds(t)}>
-                    {formatTimeLabel(t)}
-                </option>
-            ))}
-        </select>
+        <div className="relative flex-1" ref={containerRef}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex w-full items-center justify-between bg-white text-left ${className}`}
+            >
+                <span className="truncate">{value ? formatTimeLabel(value) : 'Select time'}</span>
+                <svg className={`ml-2 h-4 w-4 shrink-0 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            
+            {isOpen && (
+                <div 
+                    className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-xl custom-scrollbar"
+                    ref={listRef}
+                >
+                    <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                        {options.map(t => {
+                            const disabled = isOutOfBounds(t);
+                            const selected = parseEventStartTime(value) === t;
+                            return (
+                                <button
+                                    key={t}
+                                    data-time={t}
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => {
+                                        onChange(t);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`rounded-xl px-2 py-2 text-[11px] sm:text-xs font-bold transition-all
+                                        ${selected ? 'bg-[#720101] text-white shadow-sm' : 
+                                          disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through opacity-70' : 
+                                          'bg-white text-gray-700 hover:bg-[#faf7f2] hover:text-[#720101]'
+                                        }
+                                    `}
+                                >
+                                    {formatTimeLabel(t)}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
