@@ -2,15 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
     Archive,
-    ChevronDown,
     Eye,
     Filter,
+    Image as ImageIcon,
     Mail,
     Pencil,
     Save,
     Search,
     Send,
     Trash2,
+    Upload,
     X,
 } from 'lucide-react';
 import StaffSkeleton from '../staff/StaffSkeleton';
@@ -65,6 +66,15 @@ const roleOptions = ['Client', 'Marketing', 'Accounting', 'Admin'];
 const typeOptions = ['all', ...Object.keys(typeLabels)];
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 const isFutureDate = (value) => value && new Date(value).getTime() > Date.now();
+
+const imagePreviewUrl = (form) => {
+    if (form.image_file) return URL.createObjectURL(form.image_file);
+    const path = form.image_path;
+    if (!path) return '';
+    return (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/'))
+        ? path
+        : `/storage/${path.replace(/^\/+/, '')}`;
+};
 
 const formatDate = (value) => {
     if (!value) return 'Not set';
@@ -128,6 +138,13 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
     const primaryClass = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#720101] px-4 py-3 text-sm font-black text-white transition hover:bg-[#5a0101] disabled:opacity-60';
     const secondaryClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-4 py-3 text-sm font-black text-[#720101] transition hover:bg-[#fff7e8] disabled:opacity-60';
     const publishLabel = isFutureDate(form.starts_at) ? 'Schedule Announcement' : 'Publish Now';
+    const imagePreview = useMemo(() => imagePreviewUrl(form), [form.image_file, form.image_path]);
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+        };
+    }, [imagePreview]);
 
     const stats = useMemo(() => announcements.reduce((acc, item) => {
         acc.total += 1;
@@ -430,62 +447,62 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
     return (
         <div className={isAdminVariant ? 'admin-content-surface admin-announcement-surface' : 'space-y-5'}>
             {composerOpen && (
-                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm">
-                    <form onSubmit={(event) => submit(event, 'draft')} className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[1.35rem] border border-[#720101]/15 bg-white shadow-2xl">
-                        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#720101]/10 bg-[#fffaf3] px-5 py-4 lg:px-6">
+                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+                    <form onSubmit={(event) => submit(event, 'draft')} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] shadow-2xl">
+                        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#720101]/10 bg-[#fffaf3] px-4 py-3 sm:px-5">
                             <div>
                                 <p className="marketing-kicker">{editingId ? 'Editing' : 'Composer'}</p>
-                                <h3 className="mt-1 text-2xl font-black text-[#111827]">{editingId ? 'Update announcement' : 'New announcement'}</h3>
+                                <h3 className="mt-1 font-display text-xl font-black text-[#111827] sm:text-2xl">{editingId ? 'Update announcement' : 'New announcement'}</h3>
                             </div>
                             <div className="flex flex-wrap justify-end gap-2">
                                 {editingId && (
-                                    <button type="button" onClick={() => openCustomerPreview({ id: editingId })} className={secondaryClass}>
+                                    <button type="button" onClick={() => openCustomerPreview({ id: editingId })} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] transition hover:bg-[#fff7e8] sm:px-4 sm:text-sm">
                                         <Eye size={16} />
                                         Preview as customer
                                     </button>
                                 )}
-                                <button type="button" aria-label="Close announcement composer" onClick={closeComposer} className="rounded-xl border border-[#720101]/15 bg-white p-3 text-[#720101] hover:bg-[#fff7e8]">
+                                <button type="button" aria-label="Close announcement composer" onClick={closeComposer} className="rounded-xl border border-[#720101]/15 bg-white p-2.5 text-[#720101] transition hover:bg-[#fff7e8]">
                                     <X size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 lg:px-6">
-                            <div className="grid gap-4 lg:grid-cols-2">
-                                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 lg:col-span-2">
+                        <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4 sm:px-5">
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 md:col-span-2">
                                     Title
-                                    <input required value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Short, customer-friendly headline" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10" />
+                                    <input required value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Short, customer-friendly headline" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-[#111827] outline-none shadow-sm focus:border-[#720101] focus:ring-2 focus:ring-[#720101]/10" />
                                 </label>
 
-                                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 lg:col-span-2">
+                                <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 md:col-span-2">
                                     Short summary
-                                    <textarea value={form.summary} onChange={(event) => updateField('summary', event.target.value)} placeholder="One or two lines customers can scan quickly." rows={2} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal outline-none focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10" />
+                                    <textarea value={form.summary} onChange={(event) => updateField('summary', event.target.value)} placeholder="One or two lines customers can scan quickly." rows={3} className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-[#111827] outline-none shadow-sm focus:border-[#720101] focus:ring-2 focus:ring-[#720101]/10" />
                                 </label>
 
-                                <label className="block text-xs font-black uppercase tracking-widest text-slate-500 lg:col-span-2">
+                                <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400 md:col-span-2">
                                     Full message
-                                    <textarea value={form.body} onChange={(event) => updateField('body', event.target.value)} placeholder="Add the full update, advisory, promo, or reminder." rows={5} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal outline-none focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10" />
+                                    <textarea value={form.body} onChange={(event) => updateField('body', event.target.value)} placeholder="Add the full update, advisory, promo, or reminder." rows={5} className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-[#111827] outline-none shadow-sm focus:border-[#720101] focus:ring-2 focus:ring-[#720101]/10" />
                                 </label>
 
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Type
-                                    <select value={form.type} onChange={(event) => updateField('type', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none">
+                                    <select value={form.type} onChange={(event) => updateField('type', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]">
                                         {Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                 </label>
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Audience
-                                    <select value={form.visibility} onChange={(event) => updateField('visibility', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none">
+                                    <select value={form.visibility} onChange={(event) => updateField('visibility', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]">
                                         {Object.entries(visibilityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                 </label>
 
                                 {form.visibility === 'specific_roles' && (
-                                    <div className="rounded-xl border border-[#720101]/10 bg-[#fff7e8] p-4 lg:col-span-2">
-                                        <p className="text-xs font-black uppercase tracking-widest text-[#9f6500]">Choose roles</p>
+                                    <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-3 md:col-span-2">
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-[#9f6500]">Choose roles</p>
                                         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
                                             {roleOptions.map((role) => (
-                                                <label key={role} className="flex items-center gap-2 rounded-lg border border-[#720101]/10 bg-white px-3 py-2 text-sm font-bold text-slate-700">
+                                                <label key={role} className="flex items-center gap-2 rounded-lg border border-[#720101]/10 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm">
                                                     <input
                                                         type="checkbox"
                                                         checked={form.visibility_roles.includes(role)}
@@ -504,9 +521,9 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                 )}
 
                                 {form.visibility === 'specific_users' && (
-                                    <div className="rounded-xl border border-[#720101]/10 bg-[#fff7e8] p-4 lg:col-span-2">
-                                        <p className="text-xs font-black uppercase tracking-widest text-[#9f6500]">Choose people</p>
-                                        <label className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                                    <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-3 md:col-span-2">
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-[#9f6500]">Choose people</p>
+                                        <label className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                                             <Search size={16} className="text-slate-400" />
                                             <input value={audienceSearch} onChange={(event) => setAudienceSearch(event.target.value)} placeholder="Search name, email, or role" className="w-full text-sm font-bold outline-none" />
                                         </label>
@@ -538,86 +555,89 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                     </div>
                                 )}
 
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Publish from
-                                    <input type="datetime-local" value={form.starts_at} onChange={(event) => updateField('starts_at', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
+                                    <input type="datetime-local" value={form.starts_at} onChange={(event) => updateField('starts_at', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]" />
                                 </label>
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Hide after (optional)
-                                    <input type="datetime-local" value={form.ends_at} onChange={(event) => updateField('ends_at', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
-                                    <span className="mt-2 block text-[11px] font-semibold normal-case leading-5 tracking-normal text-slate-500">
+                                    <input type="datetime-local" value={form.ends_at} onChange={(event) => updateField('ends_at', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]" />
+                                    <span className="mt-1.5 block text-[11px] font-semibold normal-case leading-5 tracking-normal text-slate-500">
                                         Leave blank to keep it visible until staff manually archives it.
                                     </span>
                                 </label>
 
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Button text
-                                    <input value={form.cta_label} onChange={(event) => updateField('cta_label', event.target.value)} placeholder="Optional" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
+                                    <input value={form.cta_label} onChange={(event) => updateField('cta_label', event.target.value)} placeholder="Optional" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]" />
                                 </label>
-                                <label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                     Button link
-                                    <input value={form.cta_url} onChange={(event) => updateField('cta_url', event.target.value)} placeholder="/book" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none" />
+                                    <input value={form.cta_url} onChange={(event) => updateField('cta_url', event.target.value)} placeholder="/book" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]" />
                                 </label>
 
-                                <div className="md:col-span-2">
-                                    <label className="mb-2 block text-xs font-black uppercase text-gray-500">
-                                        Image URL or storage path
-                                    </label>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => updateField('image_file', e.target.files[0])}
-                                            className="staff-control file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#720101]/10 file:text-[#720101] hover:file:bg-[#720101]/20 cursor-pointer"
-                                        />
+                                <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-3 md:col-span-2">
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Announcement image</p>
+                                    <div className="mt-2 grid gap-3 md:grid-cols-[auto_1fr] md:items-start">
+                                        <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm md:w-28">
+                                            {imagePreview ? (
+                                                <img src={imagePreview} alt="Announcement preview" className="h-full w-full object-cover" />
+                                            ) : (
+                                                <ImageIcon size={24} />
+                                            )}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-50">
+                                                <Upload size={14} />
+                                                Choose image
+                                                <input type="file" accept="image/*" onChange={(event) => updateField('image_file', event.target.files?.[0] || null)} className="hidden" />
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Optional image link or storage path"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 outline-none shadow-sm focus:border-[#720101]"
+                                                value={form.image_path || ''}
+                                                onChange={(event) => updateField('image_path', event.target.value)}
+                                            />
+                                            {(form.image_path || form.image_file) && (
+                                                <select
+                                                    aria-label="Image fit option"
+                                                    value={form.image_fit || 'fit_text'}
+                                                    onChange={(event) => updateField('image_fit', event.target.value)}
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 outline-none shadow-sm focus:border-[#720101]"
+                                                >
+                                                    <option value="fit_text">Cover Background</option>
+                                                    <option value="fit_image">Show Full Image</option>
+                                                </select>
+                                            )}
+                                        </div>
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Optional image link"
-                                        className="staff-control mb-3"
-                                        value={form.image_path || ''}
-                                        onChange={(e) => updateField('image_path', e.target.value)}
-                                    />
-
-                                    {(form.image_path || form.image_file) && (
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-500">
-                                            Image Fit Option
-                                            <select
-                                                value={form.image_fit || 'fit_text'}
-                                                onChange={(e) => updateField('image_fit', e.target.value)}
-                                                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal outline-none focus:border-[#720101]"
-                                            >
-                                                <option value="fit_text">Cover Background</option>
-                                                <option value="fit_image">Show Full Image</option>
-                                            </select>
-                                        </label>
-                                    )}
                                 </div>
 
-                                <label className="flex items-center justify-between rounded-xl border border-[#720101]/10 bg-[#fff7e8] px-4 py-3 lg:col-span-2">
+                                <label className="flex items-center justify-between rounded-xl border border-[#720101]/10 bg-[#fffaf3] px-3 py-3 md:col-span-2">
                                     <span className="text-sm font-black text-[#111827]">Send by email when published</span>
                                     <input type="checkbox" checked={form.send_email} onChange={(event) => updateField('send_email', event.target.checked)} className="h-5 w-5" />
                                 </label>
 
                                 {form.send_email && (
-                                    <div className="space-y-3 rounded-xl border border-[#720101]/10 bg-white p-4 lg:col-span-2">
-                                        <input value={form.email_subject} onChange={(event) => updateField('email_subject', event.target.value)} placeholder="Email subject. Leave blank to use the title." className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-[#720101]" />
-                                        <textarea value={form.email_body} onChange={(event) => updateField('email_body', event.target.value)} placeholder="Email message. Leave blank to reuse the announcement." rows={3} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold outline-none focus:border-[#720101]" />
+                                    <div className="space-y-3 rounded-xl border border-[#720101]/10 bg-white p-3 md:col-span-2">
+                                        <input value={form.email_subject} onChange={(event) => updateField('email_subject', event.target.value)} placeholder="Email subject. Leave blank to use the title." className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none focus:border-[#720101]" />
+                                        <textarea value={form.email_body} onChange={(event) => updateField('email_body', event.target.value)} placeholder="Email message. Leave blank to reuse the announcement." rows={3} className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-[#720101]" />
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="grid shrink-0 gap-3 border-t border-[#720101]/10 bg-[#fffaf3] px-5 py-4 sm:grid-cols-[1fr_1fr_auto] lg:px-6">
-                            <button type="submit" disabled={saving} className={secondaryClass}>
+                        <div className="grid shrink-0 gap-2 border-t border-[#720101]/10 bg-[#fffaf3] px-4 py-3 sm:grid-cols-[1fr_1fr_auto] sm:px-5">
+                            <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-4 py-2.5 text-sm font-black text-[#720101] transition hover:bg-[#fff7e8] disabled:opacity-60">
                                 <Save size={16} />
                                 {editingId ? 'Save changes' : 'Save draft'}
                             </button>
-                            <button type="button" disabled={saving} onClick={(event) => submit(event, 'publish')} className={primaryClass}>
+                            <button type="button" disabled={saving} onClick={(event) => submit(event, 'publish')} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#720101] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#5a0101] disabled:opacity-60">
                                 <Send size={16} />
                                 {saving ? 'Saving...' : publishLabel}
                             </button>
-                            <button type="button" onClick={closeComposer} className={secondaryClass}>
+                            <button type="button" onClick={closeComposer} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-4 py-2.5 text-sm font-black text-[#720101] transition hover:bg-[#fff7e8]">
                                 Cancel
                             </button>
                         </div>
