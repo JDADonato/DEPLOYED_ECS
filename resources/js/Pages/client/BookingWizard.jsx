@@ -327,6 +327,8 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
 
         if (!user) {
             saveBookingDraft(merged, currentStep);
+            setShowReviewModal(false);
+            setReviewData(null);
             showModal('error', 'Save your event plan', 'You have already built your event plan. Create an account to save it, submit it, and continue from your dashboard.', () => router.get('/register'), 'Register Now');
             return;
         }
@@ -380,6 +382,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
 
             clearDraft();
             setShowReviewModal(false);
+            setReviewData(null);
             showModal(
                 'success',
                 'Booking Submitted',
