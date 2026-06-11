@@ -171,7 +171,26 @@ class PayMongoWebhookController extends Controller
                 'message' => $exception->getMessage(),
             ]);
 
-            return response()->json(['message' => 'Webhook processing failed.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            PaymentEventService::record(
+                'webhook_processing_failed',
+                'paymongo',
+                null,
+                [
+                    'event_id' => $eventId ?: null,
+                    'event_type' => $eventType,
+                    'resource_id' => Arr::get($event, 'data.attributes.data.id'),
+                    'reference_number' => $this->resourceReferenceNumber($event),
+                    'error' => $exception->getMessage(),
+                ],
+                Arr::get($event, 'data.attributes.data.id'),
+                null
+            );
+
+            return response()->json([
+                'message' => 'Webhook received. Processing failure recorded.',
+                'event_type' => $eventType,
+                'result' => ['status' => 'processing_failed'],
+            ]);
         }
 
         return response()->json([

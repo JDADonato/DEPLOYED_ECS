@@ -6,7 +6,9 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\PaymentEvent;
 use App\Models\User;
+use App\Services\PaymentCalculationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class PayMongoWebhookTest extends TestCase
@@ -108,6 +110,29 @@ class PayMongoWebhookTest extends TestCase
         $this->assertSame('Paid', $payment->status);
         $this->assertEquals($firstVerifiedAt, $payment->verified_at);
         $this->assertSame(1, PaymentEvent::where('provider_event_id', 'evt_duplicate_paid')->count());
+    }
+
+    public function test_processing_exception_is_acknowledged_and_recorded(): void
+    {
+        $payment = $this->payment($this->booking($this->user('Client')), ['amount' => 5000]);
+
+        $this->mock(PaymentCalculationService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('updateBookingMilestone')
+                ->once()
+                ->andThrow(new \RuntimeException('Milestone update failed'));
+        });
+
+        $this->postWebhook($this->paidPayload($payment, [
+            'event_id' => 'evt_processing_failure',
+        ]))->assertOk()->assertJsonPath('result.status', 'processing_failed');
+
+        $this->assertSame('Pending', $payment->fresh()->status);
+        $this->assertDatabaseHas('payment_events', [
+            'event_type' => 'webhook_processing_failed',
+            'source' => 'paymongo',
+            'provider_reference' => $payment->paymongo_checkout_session_id,
+            'provider_event_id' => null,
+        ]);
     }
 
     private function postWebhook(array $payload)
