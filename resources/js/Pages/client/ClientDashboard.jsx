@@ -429,16 +429,20 @@ const SmartEventDetailsPanel = ({
                     <strong className="text-sm text-[#720101]">{formatTimeLabel(value) || 'Not set'}</strong>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                    {quickTimes.map(time => (
-                        <button
-                            key={`${fieldKey}-${time.value}`}
-                            type="button"
-                            onClick={() => setDetailTime(fieldKey, time.value)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-black transition ${value === time.value ? 'border-[#720101] bg-[#720101] text-white' : 'border-gray-200 bg-[#faf7f2] text-gray-700 hover:border-[#720101]/30'}`}
-                        >
-                            {time.label}
-                        </button>
-                    ))}
+                    {quickTimes.map(time => {
+                        const isDisabled = fieldKey === 'serving_time' && eventStartTime && time.value < eventStartTime;
+                        return (
+                            <button
+                                key={`${fieldKey}-${time.value}`}
+                                type="button"
+                                disabled={isDisabled}
+                                onClick={() => setDetailTime(fieldKey, time.value)}
+                                className={`rounded-xl border px-3 py-2 text-xs font-black transition ${value === time.value ? 'border-[#720101] bg-[#720101] text-white' : 'border-gray-200 bg-[#faf7f2] text-gray-700 hover:border-[#720101]/30'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {time.label}
+                            </button>
+                        );
+                    })}
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
                     <label className={`flex h-12 items-center gap-3 rounded-xl border px-3 ${isCustom ? 'border-[#720101] bg-[#720101]/5' : 'border-gray-200 bg-white'}`}>
@@ -447,6 +451,7 @@ const SmartEventDetailsPanel = ({
                             type="time"
                             value={parseEventStartTime(value)}
                             onChange={(event) => setDetailTime(fieldKey, event.target.value)}
+                            min={fieldKey === 'serving_time' && eventStartTime ? eventStartTime : undefined}
                             className="min-w-0 flex-1 bg-transparent text-sm font-bold text-gray-900 outline-none"
                         />
                     </label>
@@ -468,24 +473,15 @@ const SmartEventDetailsPanel = ({
                     <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Event details</p>
                     <h3 className="mt-1 font-display text-2xl font-bold text-[#1a1a1a]">Planning details</h3>
                 </div>
-                {activeBooking.canEditSupplementary && (
+                {activeBooking.canEditSupplementary && !detailsEditMode && (
                     <div className="flex flex-wrap gap-2">
-                        {detailsEditMode && (
-                            <button
-                                type="button"
-                                onClick={() => setDetailsEditMode(false)}
-                                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                        )}
                         <button
                             type="button"
-                            onClick={() => detailsEditMode ? saveEventDetails() : setDetailsEditMode(true)}
+                            onClick={() => setDetailsEditMode(true)}
                             disabled={savingDetails}
                             className="rounded-xl bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-sm hover:bg-[#5a0101] disabled:opacity-50"
                         >
-                            {detailsEditMode ? (savingDetails ? 'Saving...' : 'Save changes') : 'Edit'}
+                            Edit
                         </button>
                     </div>
                 )}
@@ -590,7 +586,7 @@ const SmartEventDetailsPanel = ({
                         <div className="mt-4 space-y-3">
                             {timelineRows.map((row, index) => (
                                 <div key={index} className="grid gap-2 rounded-2xl border border-gray-100 bg-[#faf7f2]/40 p-3 lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                                    <input type="time" value={parseEventStartTime(row.time)} onChange={(event) => updateTimelineRow(index, 'time', event.target.value)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
+                                    <input type="time" min={eventStartTime || undefined} value={parseEventStartTime(row.time)} onChange={(event) => updateTimelineRow(index, 'time', event.target.value)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.activity || ''} onChange={(event) => updateTimelineRow(index, 'activity', event.target.value)} placeholder="Activity" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.note || ''} onChange={(event) => updateTimelineRow(index, 'note', event.target.value)} placeholder="Note" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#720101]" />
                                     <button type="button" onClick={() => removeTimelineRow(index)} className="h-11 rounded-xl border border-red-100 bg-red-50 px-3 text-xs font-black text-red-700 hover:bg-red-100">Remove</button>
@@ -634,6 +630,24 @@ const SmartEventDetailsPanel = ({
                                 containerClassName="mt-4 max-h-64 rounded-2xl"
                             />
                         )}
+                    </div>
+                    
+                    <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-6">
+                        <button
+                            type="button"
+                            onClick={() => setDetailsEditMode(false)}
+                            className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => saveEventDetails()}
+                            disabled={savingDetails}
+                            className="rounded-xl bg-[#720101] px-6 py-3 text-sm font-black uppercase tracking-widest text-white shadow-sm hover:bg-[#5a0101] disabled:opacity-50"
+                        >
+                            {savingDetails ? 'Saving...' : 'Save changes'}
+                        </button>
                     </div>
                 </div>
             )}
@@ -861,7 +875,7 @@ const ClientDashboard = () => {
         // NOT on background data refreshes (which would discard unsaved edits).
         if (bookingChanged || forceResync) {
             setDetailsForm({
-                reservation_time: booking.reservation_time || '',
+                reservation_time: booking.reservation_time || booking.event_time || '',
                 serving_time: booking.serving_time || '',
                 venue_address_line: booking.venue_address_line || '',
                 venue_building_details: booking.venue_building_details || '',
