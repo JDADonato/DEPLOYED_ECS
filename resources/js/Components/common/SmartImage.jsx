@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const DEFAULT_FALLBACK = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
+const DEFAULT_FALLBACK = '/logo.png';
 
 const normalizeImageSrc = (value, fallback) => {
     if (typeof value !== 'string') return fallback;

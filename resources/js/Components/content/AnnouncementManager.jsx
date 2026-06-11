@@ -317,6 +317,25 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         router.visit(`/preview/announcements/${item.id}`);
     };
 
+    const saveAndPreviewEditingAnnouncement = async () => {
+        if (!editingId) {
+            flash('Save the announcement first, then preview it as a customer.', 'error');
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const saved = await saveAnnouncement();
+            setComposerOpen(false);
+            resetForm();
+            router.visit(`/preview/announcements/${saved.id || editingId}`);
+        } catch (error) {
+            flash(error.message, 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const payloadFromForm = () => ({
         ...form,
         status: form.status || 'draft',
@@ -456,9 +475,9 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                             </div>
                             <div className="flex flex-wrap justify-end gap-2">
                                 {editingId && (
-                                    <button type="button" onClick={() => openCustomerPreview({ id: editingId })} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] transition hover:bg-[#fff7e8] sm:px-4 sm:text-sm">
+                                    <button type="button" disabled={saving} onClick={saveAndPreviewEditingAnnouncement} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] transition hover:bg-[#fff7e8] disabled:opacity-60 sm:px-4 sm:text-sm">
                                         <Eye size={16} />
-                                        Preview as customer
+                                        {saving ? 'Saving...' : 'Preview as customer'}
                                     </button>
                                 )}
                                 <button type="button" aria-label="Close announcement composer" onClick={closeComposer} className="rounded-xl border border-[#720101]/15 bg-white p-2.5 text-[#720101] transition hover:bg-[#fff7e8]">
