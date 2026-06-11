@@ -1439,7 +1439,25 @@ const ClientDashboard = () => {
         }
     };
 
+    const clampTime = (value) => {
+        const parsed = parseEventStartTime(value);
+        const minTime = parseEventStartTime(activeBooking?.event_time);
+        const maxTime = minTime ? addMinutesToTime(minTime, 4 * 60) : '';
+
+        if (!parsed || !minTime || !maxTime) return value;
+        
+        if (maxTime < minTime) {
+            if (parsed >= minTime || parsed <= maxTime) return value;
+            return minTime;
+        }
+        
+        if (parsed < minTime) return minTime;
+        if (parsed > maxTime) return maxTime;
+        return value;
+    };
+
     const setDetailTime = (key, value) => {
+        if (key === 'serving_time') value = clampTime(value);
         setDetailsForm(prev => ({ ...prev, [key]: value }));
     };
 
@@ -1464,6 +1482,7 @@ const ClientDashboard = () => {
     };
 
     const updateTimelineRow = (index, key, value) => {
+        if (key === 'time') value = clampTime(value);
         setTimelineRows(prev => prev.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row));
     };
 
@@ -1479,7 +1498,9 @@ const ClientDashboard = () => {
     };
 
     const applyTimelineTemplate = (templateName) => {
-        setTimelineRows(timelineTemplates[templateName] || [{ time: '', activity: '', note: '' }]);
+        const template = timelineTemplates[templateName];
+        if (!template) return;
+        setTimelineRows(template.map(t => ({ ...t, time: clampTime(t.time) })));
     };
 
     const updateSpecialInstructionSection = (key, value) => {
