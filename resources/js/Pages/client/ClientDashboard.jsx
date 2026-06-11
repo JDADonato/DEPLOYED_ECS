@@ -413,11 +413,21 @@ const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => 
     }, [value]);
 
     const isOutOfBounds = (t) => {
-        if (!minTime || !maxTime) return false;
-        if (maxTime < minTime) {
-            return t < minTime && t > maxTime;
+        if (!minTime && !maxTime) return false;
+        
+        let out = false;
+        if (minTime && maxTime) {
+            if (maxTime < minTime) {
+                out = t < minTime && t > maxTime;
+            } else {
+                out = t < minTime || t > maxTime;
+            }
+        } else if (minTime) {
+            out = t < minTime;
+        } else if (maxTime) {
+            out = t > maxTime;
         }
-        return t < minTime || t > maxTime;
+        return out;
     };
 
     React.useEffect(() => {
@@ -551,9 +561,9 @@ const SmartEventDetailsPanel = ({
                         <span className="text-xs font-black uppercase tracking-widest text-gray-500">Custom</span>
                         <BoundedTimeSelect
                             value={value}
-                            onChange={(event) => setDetailTime(fieldKey, event.target.value)}
+                            onChange={(val) => setDetailTime(fieldKey, val)}
                             minTime={fieldKey === 'serving_time' && eventStartTime ? eventStartTime : undefined}
-                            maxTime={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : undefined}
+                            maxTime={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : (fieldKey === 'reservation_time' && eventStartTime ? eventStartTime : undefined)}
                             className="min-w-0 flex-1 bg-transparent text-sm font-bold text-gray-900 outline-none"
                         />
                     </label>
@@ -688,7 +698,7 @@ const SmartEventDetailsPanel = ({
                         <div className="mt-4 space-y-3">
                             {timelineRows.map((row, index) => (
                                 <div key={index} className="grid gap-2 rounded-2xl border border-gray-100 bg-[#faf7f2]/40 p-3 lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                                    <BoundedTimeSelect minTime={eventStartTime || undefined} maxTime={eventEndTime || undefined} value={row.time} onChange={(event) => updateTimelineRow(index, 'time', event.target.value)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
+                                    <BoundedTimeSelect minTime={eventStartTime || undefined} maxTime={eventEndTime || undefined} value={row.time} onChange={(val) => updateTimelineRow(index, 'time', val)} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.activity || ''} onChange={(event) => updateTimelineRow(index, 'activity', event.target.value)} placeholder="Activity" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-900 outline-none focus:border-[#720101]" />
                                     <input value={row.note || ''} onChange={(event) => updateTimelineRow(index, 'note', event.target.value)} placeholder="Note" className="h-11 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#720101]" />
                                     <button type="button" onClick={() => removeTimelineRow(index)} className="h-11 rounded-xl border border-red-100 bg-red-50 px-3 text-xs font-black text-red-700 hover:bg-red-100">Remove</button>
