@@ -3,7 +3,7 @@ import logoImg from '../../images/ECS_LOGO.png';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { router } from '@inertiajs/react';
-import { CalendarPlus, Filter } from 'lucide-react';
+import { CalendarPlus, Filter, Search } from 'lucide-react';
 import FlashToast from '../Components/common/FlashToast';
 import ConfirmModal from '../Components/common/ConfirmModal';
 import PromptModal from '../Components/common/PromptModal';
@@ -272,6 +272,7 @@ const DashboardMarketing = () => {
     const [eventTypeForm, setEventTypeForm] = useState(emptyEventTypeForm());
     const [editingEventTypeId, setEditingEventTypeId] = useState(null);
     const [activeMenuCategory, setActiveMenuCategory] = useState('starter');
+    const [menuItemSearch, setMenuItemSearch] = useState('');
     const [menuItemModal, setMenuItemModal] = useState({ open: false, mode: 'add', data: null });
     const [menuItemForm, setMenuItemForm] = useState({
         name: '', category: 'starter', cost_per_head: '', price_adj: '0',
@@ -2785,7 +2786,20 @@ const DashboardMarketing = () => {
 
     const renderPublicContent = () => {
         const categories = ['starter', 'main', 'side', 'dessert', 'drink'];
-        const visibleItems = menuItems.filter(item => item.category === activeMenuCategory);
+        const menuSearch = menuItemSearch.trim().toLowerCase();
+        const visibleItems = menuItems.filter((item) => {
+            if (item.category !== activeMenuCategory) return false;
+            if (!menuSearch) return true;
+
+            const currentPrice = Number(item.cost_per_head || 0) + Number(item.price_adj || 0);
+            return [
+                item.name,
+                item.description,
+                item.category,
+                `php ${currentPrice}`,
+                String(currentPrice),
+            ].filter(Boolean).some((value) => value.toLowerCase().includes(menuSearch));
+        });
         const catalogMeta = {
             announcements: {
                 title: 'Announcements',
@@ -3001,6 +3015,16 @@ const DashboardMarketing = () => {
                                     </button>
                                 ))}
                             </nav>
+                            <label className="flex min-w-0 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm transition focus-within:border-[#720101] focus-within:ring-2 focus-within:ring-[#720101]/10 lg:w-80">
+                                <Search size={16} className="shrink-0 text-gray-400" />
+                                <input
+                                    type="search"
+                                    value={menuItemSearch}
+                                    onChange={(event) => setMenuItemSearch(event.target.value)}
+                                    placeholder="Search menu items"
+                                    className="min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold text-gray-700 outline-none placeholder:text-gray-400"
+                                />
+                            </label>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
@@ -3048,7 +3072,11 @@ const DashboardMarketing = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            {visibleItems.length === 0 && <div className="p-8 text-center text-sm text-gray-500">No menu items in this category.</div>}
+                            {visibleItems.length === 0 && (
+                                <div className="p-8 text-center text-sm text-gray-500">
+                                    {menuSearch ? 'No menu items match this search.' : 'No menu items in this category.'}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
