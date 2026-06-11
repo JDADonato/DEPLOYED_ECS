@@ -270,7 +270,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     const progressPercent = Math.round((currentStep / (steps.length - 1)) * 100);
     const canContinueCustomer = customerState.mode === 'existing'
         ? Boolean(customerState.selected?.id)
-        : Boolean(customerState.newCustomer.full_name.trim() && customerState.newCustomer.email);
+        : Boolean(customerState.newCustomer.full_name.trim() && customerState.newCustomer.email && customerState.newCustomer.username.trim());
     const useCompactCustomerResults = customerResults.length > 4;
 
     const showError = (title, message) => setModal({ isOpen: true, type: 'error', title, message });
@@ -307,6 +307,11 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
 
         if (customerState.mode === 'new' && !customerState.newCustomer.email) {
             showError('Email needed', 'An email address is required so the customer can receive the booking invite and updates.');
+            return false;
+        }
+
+        if (customerState.mode === 'new' && !customerState.newCustomer.username.trim()) {
+            showError('Username needed', 'A username is required so the customer can log in later.');
             return false;
         }
 
@@ -620,8 +625,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                 <input value={customerState.newCustomer.phone} onChange={(event) => updateNewCustomer('phone', event.target.value)} className="booking-input" placeholder="Mobile number" />
                             </label>
                             <label className="md:col-span-2">
-                                <span className="booking-field-label">Username <em>Optional</em></span>
-                                <input value={customerState.newCustomer.username} onChange={(event) => updateNewCustomer('username', event.target.value)} className="booking-input" placeholder="Leave blank to generate automatically" />
+                                <span className="booking-field-label">Username</span>
+                                <input value={customerState.newCustomer.username} onChange={(event) => updateNewCustomer('username', event.target.value)} className="booking-input" placeholder="Desired username for login" />
                             </label>
                         </div>
                     )}
