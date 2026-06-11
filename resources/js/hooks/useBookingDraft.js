@@ -5,6 +5,7 @@ export const BOOKING_DRAFT_KEY = 'ecs_booking_draft';
 
 const ACTIVE_KEY = 'ecs_booking_active';
 const REMINDER_KEY = 'ecs_booking_reminder_sent';
+const SMART_CACHE_PREFIX = 'ecs:smart-resource:';
 
 export const defaultBookingData = {
     date: null, time: '', duration: 4, remainingPax: null,
@@ -27,6 +28,80 @@ const readDraft = (userId) => {
         return isValidDraft(draft, userId) ? draft : null;
     } catch (error) {
         return null;
+    }
+};
+
+const compactDish = (dish) => {
+    if (!dish || typeof dish !== 'object') return dish;
+
+    return {
+        id: dish.id,
+        dishId: dish.dishId,
+        name: dish.name,
+        category: dish.category,
+        costPerHead: dish.costPerHead,
+        priceAdj: dish.priceAdj,
+        includedInPackage: dish.includedInPackage,
+        isExtraSelection: dish.isExtraSelection,
+    };
+};
+
+const compactMenu = (menu = {}) => Object.fromEntries(
+    Object.entries(menu || {}).map(([category, dishes]) => [
+        category,
+        Array.isArray(dishes) ? dishes.map(compactDish).filter(Boolean) : [],
+    ])
+);
+
+const compactDraft = (draft, step, userId, { minimal = false } = {}) => {
+    const payload = {
+        ...draft,
+        selectedDishes: Object.fromEntries(
+            Object.entries(draft?.selectedDishes || defaultBookingData.selectedDishes).map(([category, ids]) => [
+                category,
+                Array.isArray(ids) ? ids : [],
+            ])
+        ),
+        customMenu: minimal ? {} : compactMenu(draft?.customMenu),
+        _step: step,
+        _user_id: userId,
+    };
+
+    Object.keys(payload).forEach((key) => {
+        if (payload[key] === undefined) delete payload[key];
+    });
+
+    return payload;
+};
+
+const clearDraftStoragePressure = () => {
+    try {
+        Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith(SMART_CACHE_PREFIX)) {
+                localStorage.removeItem(key);
+            }
+        });
+        localStorage.removeItem(REMINDER_KEY);
+    } catch (error) {
+        // Ignore cleanup failures; saving the draft is best-effort.
+    }
+};
+
+const safeSetDraft = (payload) => {
+    try {
+        localStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(payload));
+        return true;
+    } catch (error) {
+        if (error?.name !== 'QuotaExceededError') return false;
+    }
+
+    clearDraftStoragePressure();
+
+    try {
+        localStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(payload));
+        return true;
+    } catch (error) {
+        return false;
     }
 };
 
@@ -64,11 +139,10 @@ const sendContinuationReminder = (draft, user) => {
 };
 
 export const saveBookingDraft = (draft, step, userId = null) => {
-    localStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify({
-        ...draft,
-        _step: step,
-        _user_id: userId,
-    }));
+    const compact = compactDraft(draft, step, userId);
+    if (safeSetDraft(compact)) return true;
+
+    return safeSetDraft(compactDraft(draft, step, userId, { minimal: true }));
 };
 
 export default function useBookingDraft(user, toast) {
