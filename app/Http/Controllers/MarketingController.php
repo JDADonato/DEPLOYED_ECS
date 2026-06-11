@@ -342,23 +342,6 @@ class MarketingController extends Controller
                     }
                 }
 
-                if (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches'])) {
-                    $selectedTranches = $data['upfront_payment']['tranches'];
-                    $method = $data['upfront_payment']['method'] ?? 'Cash';
-                    
-                    if (in_array($method, ['Cash', 'Card Terminal'], true)) {
-                        $booking->payments()
-                            ->whereIn('payment_type', $selectedTranches)
-                            ->update([
-                                'payment_method' => $method,
-                                'status' => 'Verified',
-                                'verified_by' => $actor->username ?? 'staff',
-                                'verified_at' => now(),
-                                'paymongo_reference_number' => $data['upfront_payment']['reference'] ?? null,
-                            ]);
-                    }
-                }
-
                 AuditLog::create([
                     'user_id' => $actor->id,
                     'username' => $actor->username,
@@ -382,6 +365,22 @@ class MarketingController extends Controller
 
                 $paymentCalc = app(\App\Services\PaymentCalculationService::class);
                 $paymentCalc->syncPendingTranches($booking);
+
+                if (!empty($data['upfront_payment']) && !empty($data['upfront_payment']['tranches']) && in_array($data['upfront_payment']['method'] ?? '', ['Cash', 'Card Terminal'])) {
+                    $method = $data['upfront_payment']['method'];
+                    $selectedTranches = $data['upfront_payment']['tranches'];
+
+                    $booking->payments()
+                        ->whereIn('payment_type', $selectedTranches)
+                        ->update([
+                            'payment_method' => $method,
+                            'status' => 'Verified',
+                            'verified_by' => $actor->username ?? 'staff',
+                            'verified_at' => now(),
+                            'paymongo_reference_number' => $data['upfront_payment']['reference'] ?? null,
+                        ]);
+                }
+
                 $paymentCalc->updateBookingMilestone($booking);
 
                 return [$booking, $customer, $createdNewCustomer, $temporaryPassword];

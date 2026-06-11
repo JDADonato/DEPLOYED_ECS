@@ -139,7 +139,14 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
 
     const availableTranches = useMemo(() => {
         if (!bookingData.date) return [];
-        const days = Math.floor((new Date(bookingData.date) - new Date()) / (1000 * 60 * 60 * 24));
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const [year, month, day] = bookingData.date.split('-');
+        const eventDate = new Date(year, month - 1, day);
+        
+        const days = Math.round((eventDate - today) / (1000 * 60 * 60 * 24));
         const total = reviewCosts?.finalTotal || 0;
         
         if (days <= 10) {
