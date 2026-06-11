@@ -418,13 +418,14 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         }
     };
 
-    const metricCards = [
-        ['Drafts', stats.draft],
-        ['Scheduled', stats.scheduled],
-        ['Published', stats.published],
-        ['Emails sent', stats.sent],
-        ['Reads', stats.read],
-    ];
+    const tabCounts = {
+        all: stats.total,
+        draft: stats.draft,
+        scheduled: stats.scheduled,
+        published: stats.published,
+        sent: stats.sent,
+        archived: stats.archived,
+    };
 
     return (
         <div className={isAdminVariant ? 'admin-content-surface admin-announcement-surface' : 'space-y-5'}>
@@ -657,28 +658,10 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                 </div>
             )}
 
-            <section className={isAdminVariant ? 'admin-announcement-toolbar' : `${shellClass} p-3 sm:p-4`}>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="admin-announcement-metrics">
-                        {metricCards.map(([label, value]) => (
-                            <span key={label}>
-                                <strong>{value}</strong>
-                                {label}
-                            </span>
-                        ))}
-                    </div>
-                    <div className="flex flex-wrap gap-2 lg:justify-end">
-                        <button type="button" onClick={openNewAnnouncement} className={primaryClass}>
-                            New announcement
-                        </button>
-                    </div>
-                </div>
-            </section>
-
             <div className={isAdminVariant ? 'admin-content-workspace' : 'grid gap-4'}>
                 <section className={`${shellClass} overflow-hidden`}>
                     <div className="border-b border-[#720101]/10 bg-white px-3 py-3 sm:px-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                             <div className="flex flex-wrap gap-1.5">
                                 {tabs.map((tab) => (
                                     <button
@@ -687,14 +670,22 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                         onClick={() => setFilters((current) => ({ ...current, tab: tab.id }))}
                                         className={`rounded-lg border px-3 py-2 text-xs font-black transition sm:text-sm ${filters.tab === tab.id ? 'border-[#720101] bg-[#720101] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#720101]/20 hover:bg-[#fff7e8] hover:text-[#720101]'}`}
                                     >
-                                        {tab.label}
+                                        <span>{tab.label}</span>
+                                        <span className={`ml-2 inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-[11px] ${filters.tab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                            {tabCounts[tab.id] || 0}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
-                            <button type="button" onClick={() => setFiltersOpen((open) => !open)} className="staff-button-secondary shrink-0">
-                                <Filter size={16} />
-                                Filters
-                            </button>
+                            <div className="flex flex-wrap gap-2 xl:justify-end">
+                                <button type="button" onClick={() => setFiltersOpen((open) => !open)} className="staff-button-secondary shrink-0">
+                                    <Filter size={16} />
+                                    Filters
+                                </button>
+                                <button type="button" onClick={openNewAnnouncement} className={primaryClass}>
+                                    New announcement
+                                </button>
+                            </div>
                         </div>
 
                         {filtersOpen && (
