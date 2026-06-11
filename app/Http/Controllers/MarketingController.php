@@ -531,8 +531,6 @@ class MarketingController extends Controller
         $temporaryPassword = Str::password(12);
         $username = $this->uniqueClientUsername($customerData['username'] ?? null, $customerData['full_name'] ?? null, $email);
         $createdNewCustomer = true;
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
         $user = User::create([
             'full_name' => $customerData['full_name'] ?? $username,
             'username' => $username,
@@ -544,19 +542,7 @@ class MarketingController extends Controller
             'must_change_password' => true,
             'temporary_password_expires_at' => now()->addHours(24),
             'temporary_password_secret' => $temporaryPassword,
-            'otp_code' => \Illuminate\Support\Facades\Hash::make($otp),
-            'otp_expires_at' => now()->addMinutes(15),
-            'otp_resend_available_at' => now()->addSeconds(60),
-            'otp_resend_attempts' => 0,
         ]);
-
-        if ($email) {
-            try {
-                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\VerifyEmailOTP($otp, 'account verification', 15, $temporaryPassword));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send OTP email during assisted booking: ' . $e->getMessage());
-            }
-        }
 
         return $user;
     }

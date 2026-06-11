@@ -15,17 +15,14 @@ class VerifyEmailOTP extends Mailable
 
     public int $expiresInMinutes;
 
-    public ?string $temporaryPassword;
-
     /**
      * Create a new message instance.
      */
-    public function __construct($otpCode, string $purpose = 'account verification', int $expiresInMinutes = 10, ?string $temporaryPassword = null)
+    public function __construct($otpCode, string $purpose = 'account verification', int $expiresInMinutes = 10)
     {
         $this->otpCode = $otpCode;
         $this->purpose = $purpose;
         $this->expiresInMinutes = $expiresInMinutes;
-        $this->temporaryPassword = $temporaryPassword;
     }
 
     /**

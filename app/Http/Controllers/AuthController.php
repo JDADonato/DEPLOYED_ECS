@@ -83,6 +83,24 @@ class AuthController extends Controller
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->save();
 
+        if (empty($user->email_verified_at) && $user->role === 'Client' && !empty($user->email)) {
+            if (!$user->otp_expires_at || now()->isAfter($user->otp_expires_at)) {
+                $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $user->update([
+                    'otp_code' => \Illuminate\Support\Facades\Hash::make($otp),
+                    'otp_expires_at' => now()->addMinutes(15),
+                    'otp_resend_available_at' => now()->addSeconds(60),
+                    'otp_resend_attempts' => 0,
+                ]);
+
+                try {
+                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\VerifyEmailOTP($otp));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send OTP email during login: ' . $e->getMessage());
+                }
+            }
+        }
+
         if ($user->requiresPasswordChange()) {
             return redirect()->route('password.change-required')
                 ->with('message', 'Please set your own password before continuing.');
