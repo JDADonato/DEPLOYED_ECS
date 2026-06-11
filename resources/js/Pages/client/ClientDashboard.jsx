@@ -557,7 +557,7 @@ const SmartEventDetailsPanel = ({
                     })}
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-                    <label className={`flex h-12 items-center gap-3 rounded-xl border px-3 ${isCustom ? 'border-[#720101] bg-[#720101]/5' : 'border-gray-200 bg-white'}`}>
+                    <div className={`flex h-12 items-center gap-3 rounded-xl border px-3 ${isCustom ? 'border-[#720101] bg-[#720101]/5' : 'border-gray-200 bg-white'}`}>
                         <span className="text-xs font-black uppercase tracking-widest text-gray-500">Custom</span>
                         <BoundedTimeSelect
                             value={value}
@@ -566,7 +566,7 @@ const SmartEventDetailsPanel = ({
                             maxTime={fieldKey === 'serving_time' && eventEndTime ? eventEndTime : (fieldKey === 'reservation_time' && eventStartTime ? eventStartTime : undefined)}
                             className="min-w-0 flex-1 bg-transparent text-sm font-bold text-gray-900 outline-none"
                         />
-                    </label>
+                    </div>
                     {eventStartTime && (
                         <>
                             <button type="button" onClick={() => setDetailTime(fieldKey, eventStartTime)} className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-black text-gray-600 hover:bg-gray-50">Event start</button>
