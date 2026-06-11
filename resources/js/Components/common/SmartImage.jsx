@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const DEFAULT_FALLBACK = '/logo.png';
 
@@ -28,12 +28,21 @@ const SmartImage = ({
     const [currentSrc, setCurrentSrc] = useState(() => normalizeImageSrc(src, fallbackSrc));
     const [loaded, setLoaded] = useState(false);
     const [failed, setFailed] = useState(false);
+    const imgRef = useRef(null);
 
     useEffect(() => {
         setCurrentSrc(normalizeImageSrc(src, fallbackSrc));
         setLoaded(false);
         setFailed(false);
     }, [src, fallbackSrc]);
+
+    useEffect(() => {
+        if (imgRef.current && imgRef.current.complete) {
+            if (imgRef.current.naturalWidth > 0) {
+                setLoaded(true);
+            }
+        }
+    }, [currentSrc]);
 
     const handleError = () => {
         if (failed || currentSrc === fallbackSrc) {
@@ -53,6 +62,7 @@ const SmartImage = ({
         >
             {!loaded && <span className="smart-image-skeleton" aria-hidden="true" />}
             <img
+                ref={imgRef}
                 src={currentSrc}
                 alt={alt}
                 loading={loading}
