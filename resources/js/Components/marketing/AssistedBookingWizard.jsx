@@ -270,7 +270,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     const progressPercent = Math.round((currentStep / (steps.length - 1)) * 100);
     const canContinueCustomer = customerState.mode === 'existing'
         ? Boolean(customerState.selected?.id)
-        : Boolean(customerState.newCustomer.full_name.trim() && (customerState.newCustomer.email || customerState.newCustomer.phone));
+        : Boolean(customerState.newCustomer.full_name.trim() && customerState.newCustomer.email);
     const useCompactCustomerResults = customerResults.length > 4;
 
     const showError = (title, message) => setModal({ isOpen: true, type: 'error', title, message });
@@ -305,8 +305,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             return false;
         }
 
-        if (customerState.mode === 'new' && !customerState.newCustomer.email && !customerState.newCustomer.phone) {
-            showError('Contact needed', 'Add at least an email or phone number so the customer can receive booking updates.');
+        if (customerState.mode === 'new' && !customerState.newCustomer.email) {
+            showError('Email needed', 'An email address is required so the customer can receive the booking invite and updates.');
             return false;
         }
 
@@ -612,7 +612,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                 <input value={customerState.newCustomer.full_name} onChange={(event) => updateNewCustomer('full_name', event.target.value)} className="booking-input" placeholder="Walk-in customer name" />
                             </label>
                             <label>
-                                <span className="booking-field-label">Email <em>Optional</em></span>
+                                <span className="booking-field-label">Email</span>
                                 <input type="email" value={customerState.newCustomer.email} onChange={(event) => updateNewCustomer('email', event.target.value)} className="booking-input" placeholder="customer@email.com" />
                             </label>
                             <label>
@@ -623,11 +623,6 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                 <span className="booking-field-label">Username <em>Optional</em></span>
                                 <input value={customerState.newCustomer.username} onChange={(event) => updateNewCustomer('username', event.target.value)} className="booking-input" placeholder="Leave blank to generate automatically" />
                             </label>
-                            {!customerState.newCustomer.email && (
-                                <div className="md:col-span-2 rounded-2xl border border-[#f0aa0b]/40 bg-[#fff7e8] p-4 text-sm font-bold leading-6 text-[#7c4a03]">
-                                    No email means the booking can still be created, but Marketing must manually share the temporary password and booking details.
-                                </div>
-                            )}
                         </div>
                     )}
                     </div>
