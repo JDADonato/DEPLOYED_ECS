@@ -34,6 +34,7 @@ const emptyForm = {
     cta_url: '',
     image_path: '',
     image_fit: 'fit_text',
+    image_overlay_enabled: true,
 };
 
 const typeLabels = {
@@ -303,6 +304,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
             cta_url: item.cta_url || '',
             image_path: item.image_path || '',
             image_fit: item.image_fit || 'fit_text',
+            image_overlay_enabled: item.image_overlay_enabled !== false,
         });
         setSelectedUsers(ids.map((id) => ({ id, username: `User #${id}`, email: '', role: '' })));
         setComposerOpen(true);
@@ -349,6 +351,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         cta_url: form.cta_url || null,
         image_path: form.image_path || null,
         image_fit: form.image_fit || 'fit_text',
+        image_overlay_enabled: form.image_overlay_enabled !== false,
         visibility_roles: form.visibility === 'specific_roles' ? form.visibility_roles : [],
         specific_user_ids: form.visibility === 'specific_users' ? form.specific_user_ids : [],
     });
@@ -618,6 +621,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                                             ...prev,
                                                             image_file: file,
                                                             image_fit: file ? 'fit_text' : prev.image_fit,
+                                                            image_overlay_enabled: file ? true : prev.image_overlay_enabled,
                                                         }));
                                                     }}
                                                     className="hidden"
@@ -640,6 +644,17 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                                     <option value="fit_text">Cover Background</option>
                                                     <option value="fit_image">Show Full Image</option>
                                                 </select>
+                                            )}
+                                            {(form.image_path || form.image_file) && (form.image_fit || 'fit_text') === 'fit_text' && (
+                                                <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-sm">
+                                                    <span>Dark text overlay</span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={form.image_overlay_enabled !== false}
+                                                        onChange={(event) => updateField('image_overlay_enabled', event.target.checked)}
+                                                        className="h-5 w-5"
+                                                    />
+                                                </label>
                                             )}
                                         </div>
                                     </div>

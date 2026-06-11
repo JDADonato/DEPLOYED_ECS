@@ -29,6 +29,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         cta_label: '',
         cta_url: '',
         image_fit: 'fit_text',
+        image_overlay_enabled: true,
     });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
@@ -48,6 +49,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                 cta_label: announcement.cta_label || '',
                 cta_url: announcement.cta_url || '',
                 image_fit: announcement.image_fit || 'fit_text',
+                image_overlay_enabled: announcement.image_overlay_enabled !== false,
             });
             setImageFile(null);
             
@@ -87,7 +89,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         }
 
         setImageFile(file);
-        setForm((prev) => ({ ...prev, image_fit: 'fit_text' }));
+        setForm((prev) => ({ ...prev, image_fit: 'fit_text', image_overlay_enabled: true }));
         setImagePreview(URL.createObjectURL(file));
         setErrors((prev) => {
             const copy = { ...prev };
@@ -111,6 +113,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         formData.append('cta_label', form.cta_label || '');
         formData.append('cta_url', form.cta_url || '');
         formData.append('image_fit', form.image_fit);
+        formData.append('image_overlay_enabled', form.image_overlay_enabled !== false ? '1' : '0');
         
         // Include required fields to satisfy server validation
         formData.append('visibility', announcement.visibility || 'all_customers');
@@ -325,6 +328,18 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                             )}
                         </div>
                     </div>
+
+                    {imagePreview && form.image_fit === 'fit_text' && (
+                        <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-sm">
+                            <span>Dark text overlay</span>
+                            <input
+                                type="checkbox"
+                                checked={form.image_overlay_enabled !== false}
+                                onChange={(event) => setForm((prev) => ({ ...prev, image_overlay_enabled: event.target.checked }))}
+                                className="h-5 w-5"
+                            />
+                        </label>
+                    )}
 
                     <div className="grid gap-3 md:grid-cols-2">
                         {/* CTA Label */}

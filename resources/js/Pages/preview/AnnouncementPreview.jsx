@@ -40,6 +40,8 @@ const imageUrl = (announcement) => {
     return `/storage/${path.replace(/^\/+/, '')}`;
 };
 
+const hasAnnouncementOverlay = (announcement) => announcement?.image_overlay_enabled !== false;
+
 const dashboardHrefForUser = (user) => {
     if (!user) return '/';
     const role = user.role?.toLowerCase();
@@ -188,7 +190,9 @@ const AnnouncementPreview = ({ announcement: initialAnnouncement }) => {
                                                         aspectRatio="21 / 9"
                                                         containerClassName="absolute inset-0 h-full w-full transition-transform duration-700"
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                                                    {hasAnnouncementOverlay(announcement) && (
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/15" />
+                                                    )}
                                                     <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 xl:px-0 w-full py-12 md:py-16">
                                                         <div className="flex flex-wrap items-center gap-3 mb-4">
                                                             <span className="rounded-full bg-white/15 backdrop-blur-sm px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white">

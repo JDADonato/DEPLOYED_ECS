@@ -11,6 +11,7 @@ use App\Services\OperationalBroadcastService;
 use App\Support\ResourceVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -84,9 +85,7 @@ class AnnouncementController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('announcements', 'image_fit')) {
-            unset($data['image_fit']);
-        }
+        $this->removeUnsupportedImageColumns($data);
         $data['slug'] = $this->service->uniqueSlug($data['title']);
         $data['created_by'] = $request->user()->id;
         $data['updated_by'] = $request->user()->id;
@@ -95,15 +94,13 @@ class AnnouncementController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('announcements', 'announcement', $announcement->id, 'created', 'Announcement created.');
 
-        return response()->json($announcement->fresh(['creator:id,username']), 201);
+        return response()->json($this->adminPayload($announcement->fresh(['creator:id,username'])), 201);
     }
 
     public function update(Request $request, Announcement $announcement)
     {
         $data = $this->validated($request, $announcement->id);
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('announcements', 'image_fit')) {
-            unset($data['image_fit']);
-        }
+        $this->removeUnsupportedImageColumns($data);
         $data['slug'] = $this->service->uniqueSlug($data['title'], $announcement->id);
         $data['updated_by'] = $request->user()->id;
 
@@ -111,7 +108,7 @@ class AnnouncementController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('announcements', 'announcement', $announcement->id, 'updated', 'Announcement updated.');
 
-        return response()->json($announcement->fresh(['creator:id,username']));
+        return response()->json($this->adminPayload($announcement->fresh(['creator:id,username'])));
     }
 
     public function publish(Request $request, Announcement $announcement)
@@ -208,6 +205,7 @@ class AnnouncementController extends Controller
             ->map(fn ($announcement) => array_merge($announcement->toArray(), [
                 'image_path' => $this->imageUrl($announcement->image_path),
                 'image_url' => $this->imageUrl($announcement->image_path),
+                'image_overlay_enabled' => $this->imageOverlayEnabled($announcement),
                 'is_read' => $announcement->reads->isNotEmpty(),
             ]));
 
@@ -247,7 +245,14 @@ class AnnouncementController extends Controller
             'image_path' => 'nullable|string|max:255',
             'image_file' => 'nullable|image|max:2048',
             'image_fit' => ['nullable', Rule::in(['fit_image', 'fit_text'])],
+            'image_overlay_enabled' => 'nullable|boolean',
         ]);
+
+        if ($request->has('image_overlay_enabled')) {
+            $data['image_overlay_enabled'] = $request->boolean('image_overlay_enabled');
+        } else {
+            unset($data['image_overlay_enabled']);
+        }
 
         if ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('announcement-images', 'public');
@@ -282,10 +287,40 @@ class AnnouncementController extends Controller
             'image_path' => $announcement->image_path,
             'image_url' => $this->imageUrl($announcement->image_path),
             'image_fit' => $announcement->image_fit,
+            'image_overlay_enabled' => $this->imageOverlayEnabled($announcement),
             'published_at' => optional($announcement->published_at)->toDateTimeString(),
             'starts_at' => optional($announcement->starts_at)->toDateTimeString(),
             'ends_at' => optional($announcement->ends_at)->toDateTimeString(),
         ];
+    }
+
+    private function adminPayload(Announcement $announcement): array
+    {
+        return array_merge($announcement->toArray(), [
+            'image_path' => $this->imageUrl($announcement->image_path),
+            'image_url' => $this->imageUrl($announcement->image_path),
+            'image_overlay_enabled' => $this->imageOverlayEnabled($announcement),
+        ]);
+    }
+
+    private function removeUnsupportedImageColumns(array &$data): void
+    {
+        if (! Schema::hasColumn('announcements', 'image_fit')) {
+            unset($data['image_fit']);
+        }
+
+        if (! Schema::hasColumn('announcements', 'image_overlay_enabled')) {
+            unset($data['image_overlay_enabled']);
+        }
+    }
+
+    private function imageOverlayEnabled(Announcement $announcement): bool
+    {
+        if (! Schema::hasColumn('announcements', 'image_overlay_enabled')) {
+            return true;
+        }
+
+        return $announcement->image_overlay_enabled ?? true;
     }
 
     private function validatePublishability(Announcement $announcement): void

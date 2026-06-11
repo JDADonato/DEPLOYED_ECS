@@ -36,6 +36,7 @@ class Announcement extends Model
         'cta_url',
         'image_path',
         'image_fit',
+        'image_overlay_enabled',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class Announcement extends Model
         'ends_at' => 'datetime',
         'published_at' => 'datetime',
         'send_email' => 'boolean',
+        'image_overlay_enabled' => 'boolean',
     ];
 
     public function creator(): BelongsTo
