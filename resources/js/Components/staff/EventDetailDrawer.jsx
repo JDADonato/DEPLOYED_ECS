@@ -9,6 +9,7 @@ import {
     reviewStatusLabel,
 } from '../../utils/statusLabels';
 import { bookingContactEmail, bookingContactName, bookingContactPhone, customerAccountEmail, customerAccountHandle, customerAccountName, customerAccountPhone, hasDifferentBookingContact } from '../../utils/customerIdentity';
+import SmartImage from '../common/SmartImage';
 
 const formatDate = (value) => {
     if (!value) return 'Date pending';
@@ -49,15 +50,28 @@ const normalizeDishes = (selectedMenu) => {
 
 const normalizeImages = (uploads) => {
     if (!uploads) return [];
+    
+    // Aggressively clean stray brackets/quotes if double encoded
+    const cleanUrl = (url) => {
+        if (typeof url !== 'string') return url;
+        return url.replace(/^\["?|"?\]$/g, '').replace(/\\"/g, '').replace(/^"|"$/g, '').trim();
+    };
+
+    let parsedArray = [];
     if (typeof uploads === 'string') {
         try {
             const parsed = JSON.parse(uploads);
-            return Array.isArray(parsed) ? parsed : [uploads];
+            parsedArray = Array.isArray(parsed) ? parsed : [uploads];
         } catch {
-            return [uploads];
+            parsedArray = [uploads];
         }
+    } else if (Array.isArray(uploads)) {
+        parsedArray = uploads;
+    } else {
+        parsedArray = [uploads];
     }
-    return Array.isArray(uploads) ? uploads : [uploads];
+    
+    return parsedArray.map(cleanUrl).filter(Boolean);
 };
 
 const EventDetailDrawer = ({
@@ -252,7 +266,7 @@ const EventDetailDrawer = ({
                                             <div className="grid gap-2 sm:grid-cols-2">
                                                 {themeImages.map((imgUrl, i) => (
                                                     <a key={i} href={imgUrl} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-slate-200">
-                                                        <img src={imgUrl} alt={`Theme Inspiration ${i+1}`} className="h-48 w-full object-cover transition duration-300 group-hover:opacity-90" />
+                                                        <SmartImage src={imgUrl} alt={`Theme Inspiration ${i+1}`} aspectRatio="16 / 9" containerClassName="h-48 w-full transition duration-300 group-hover:opacity-90" />
                                                     </a>
                                                 ))}
                                             </div>
