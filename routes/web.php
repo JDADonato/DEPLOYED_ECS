@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', fn () => Inertia::render('LandingPage'))->name('home');
@@ -56,21 +57,33 @@ Route::get('/sitemap.xml', function () {
 Route::get('/api/announcements', [AnnouncementController::class, 'publicIndex'])->middleware('cache.headers:public;max_age=60;etag');
 Route::post('/api/contact-inquiries', [ContactInquiryController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/storage/{path}', function ($path) {
+    $path = urldecode(ltrim($path, '/'));
+    if (str_starts_with($path, 'storage/')) {
+        $path = ltrim(substr($path, strlen('storage/')), '/');
+    }
+
     if (str_contains($path, '..')) {
         \Illuminate\Support\Facades\Log::warning("Storage fallback block: Path contains '..' - '$path'");
         abort(404);
     }
-    $path = urldecode(ltrim($path, '/'));
-    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    $disk = Storage::disk('public');
     if (!$disk->exists($path)) {
         $fullPath = storage_path('app/public/' . $path);
         \Illuminate\Support\Facades\Log::warning("Storage fallback warning: File not found at path '$path' (Expected full path: '$fullPath')");
         abort(404);
     }
     try {
-        $file = $disk->get($path);
-        $type = $disk->mimeType($path);
-        return response($file, 200)->header('Content-Type', $type);
+        $root = realpath($disk->path(''));
+        $filePath = realpath($disk->path($path));
+
+        if (!$root || !$filePath || !str_starts_with($filePath, $root)) {
+            Log::warning("Storage fallback block: Resolved path outside public disk - '$path'");
+            abort(404);
+        }
+
+        return response()->file($filePath, [
+            'Cache-Control' => 'public, max-age=31536000',
+        ]);
     } catch (\Exception $e) {
         \Illuminate\Support\Facades\Log::error("Storage fallback exception for '$path': " . $e->getMessage());
         abort(404);

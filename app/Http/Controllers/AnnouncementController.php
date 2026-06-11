@@ -11,7 +11,9 @@ use App\Services\OperationalBroadcastService;
 use App\Support\ResourceVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class AnnouncementController extends Controller
@@ -204,6 +206,8 @@ class AnnouncementController extends Controller
             ->latest('published_at')
             ->get()
             ->map(fn ($announcement) => array_merge($announcement->toArray(), [
+                'image_path' => $this->imageUrl($announcement->image_path),
+                'image_url' => $this->imageUrl($announcement->image_path),
                 'is_read' => $announcement->reads->isNotEmpty(),
             ]));
 
@@ -247,7 +251,16 @@ class AnnouncementController extends Controller
 
         if ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('announcement-images', 'public');
-            $data['image_path'] = '/storage/' . $path;
+
+            if (!$path || !Storage::disk('public')->exists($path)) {
+                throw ValidationException::withMessages([
+                    'image_file' => 'The image was uploaded but could not be saved. Please try again.',
+                ]);
+            }
+
+            $data['image_path'] = $path;
+        } elseif (array_key_exists('image_path', $data)) {
+            $data['image_path'] = $this->normalizeImagePath($data['image_path']);
         }
 
         $data['send_email'] = $request->boolean('send_email');
@@ -296,6 +309,8 @@ class AnnouncementController extends Controller
 
     private function imageUrl(?string $path): ?string
     {
+        $path = $this->normalizeImagePath($path);
+
         if (blank($path)) {
             return null;
         }
@@ -305,5 +320,32 @@ class AnnouncementController extends Controller
         }
 
         return '/storage/'.ltrim($path, '/');
+    }
+
+    private function normalizeImagePath(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        $path = trim($path);
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, '/storage/')) {
+            return ltrim(substr($path, strlen('/storage/')), '/');
+        }
+
+        if (str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            return ltrim(substr($path, strlen('storage/')), '/');
+        }
+
+        return ltrim($path, '/');
     }
 }

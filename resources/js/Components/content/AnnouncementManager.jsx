@@ -609,7 +609,19 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                             <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-50">
                                                 <Upload size={14} />
                                                 Choose image
-                                                <input type="file" accept="image/*" onChange={(event) => updateField('image_file', event.target.files?.[0] || null)} className="hidden" />
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(event) => {
+                                                        const file = event.target.files?.[0] || null;
+                                                        setForm((prev) => ({
+                                                            ...prev,
+                                                            image_file: file,
+                                                            image_fit: file ? 'fit_text' : prev.image_fit,
+                                                        }));
+                                                    }}
+                                                    className="hidden"
+                                                />
                                             </label>
                                             <input
                                                 type="text"

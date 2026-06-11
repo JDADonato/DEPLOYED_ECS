@@ -87,6 +87,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         }
 
         setImageFile(file);
+        setForm((prev) => ({ ...prev, image_fit: 'fit_text' }));
         setImagePreview(URL.createObjectURL(file));
         setErrors((prev) => {
             const copy = { ...prev };
