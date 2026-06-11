@@ -446,10 +446,10 @@ const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => 
             
             {isOpen && (
                 <div 
-                    className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-xl custom-scrollbar"
+                    className="absolute z-50 mt-2 max-h-64 min-w-[260px] sm:min-w-[300px] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-3 shadow-xl custom-scrollbar"
                     ref={listRef}
                 >
-                    <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {options.map(t => {
                             const disabled = isOutOfBounds(t);
                             const selected = parseEventStartTime(value) === t;
@@ -463,9 +463,9 @@ const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => 
                                         onChange(t);
                                         setIsOpen(false);
                                     }}
-                                    className={`rounded-xl px-2 py-2 text-[11px] sm:text-xs font-bold transition-all
+                                    className={`rounded-xl px-3 py-2.5 text-xs whitespace-nowrap font-bold transition-all
                                         ${selected ? 'bg-[#720101] text-white shadow-sm' : 
-                                          disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through opacity-70' : 
+                                          disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through opacity-60' : 
                                           'bg-white text-gray-700 hover:bg-[#faf7f2] hover:text-[#720101]'
                                         }
                                     `}
