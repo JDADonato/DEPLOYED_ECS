@@ -8,6 +8,7 @@ use App\Models\EventType;
 use App\Models\MenuItem;
 use App\Models\Package;
 use App\Services\OperationalBroadcastService;
+use App\Support\CatalogImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -114,6 +115,7 @@ class SettingsController extends Controller
                 ->orderBy('category')
                 ->orderBy('name')
                 ->get()
+                ->map(fn (MenuItem $item) => CatalogImage::menuItemPayload($item))
         )));
     }
 
@@ -227,7 +229,7 @@ class SettingsController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'menu_item', $item->id, 'pricing_updated', 'Dish pricing updated.');
 
-        return response()->json(['message' => 'Dish pricing updated successfully.', 'item' => $item->fresh()]);
+        return response()->json(['message' => 'Dish pricing updated successfully.', 'item' => CatalogImage::menuItemPayload($item->fresh())]);
     }
 
     public function createMenuItem(Request $request)
@@ -244,10 +246,9 @@ class SettingsController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $imageUrl = $data['image'] ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
+        $imageUrl = CatalogImage::normalize($data['image'] ?? null) ?? CatalogImage::DEFAULT_MENU_IMAGE;
         if ($request->hasFile('image_file')) {
-            $path = $request->file('image_file')->store('menu-images', 'public');
-            $imageUrl = '/storage/' . $path;
+            $imageUrl = CatalogImage::storeMenuImage($request);
         }
 
         $item = MenuItem::create([
@@ -266,7 +267,7 @@ class SettingsController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'menu_item', $item->id, 'created', 'Menu item created.');
 
-        return response()->json($item, 201);
+        return response()->json(CatalogImage::menuItemPayload($item), 201);
     }
 
     public function updateMenuItem(Request $request, int $id)
@@ -286,8 +287,9 @@ class SettingsController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
-            $path = $request->file('image_file')->store('menu-images', 'public');
-            $data['image'] = '/storage/' . $path;
+            $data['image'] = CatalogImage::storeMenuImage($request);
+        } elseif (array_key_exists('image', $data)) {
+            $data['image'] = CatalogImage::normalize($data['image']);
         }
 
         $item->update($data);
@@ -296,7 +298,7 @@ class SettingsController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'menu_item', $item->id, 'updated', 'Menu item updated.');
 
-        return response()->json(['message' => 'Menu item updated successfully.', 'item' => $item->fresh()]);
+        return response()->json(['message' => 'Menu item updated successfully.', 'item' => CatalogImage::menuItemPayload($item->fresh())]);
     }
 
     public function archiveMenuItem(int $id)
@@ -308,7 +310,7 @@ class SettingsController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'menu_item', $item->id, 'archived', 'Menu item archived.');
 
-        return response()->json(['message' => 'Menu item archived successfully.', 'item' => $item->fresh()]);
+        return response()->json(['message' => 'Menu item archived successfully.', 'item' => CatalogImage::menuItemPayload($item->fresh())]);
     }
 
     public function unarchiveMenuItem(int $id)
@@ -320,7 +322,7 @@ class SettingsController extends Controller
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'menu_item', $item->id, 'unarchived', 'Menu item unarchived.');
 
-        return response()->json(['message' => 'Menu item unarchived successfully.', 'item' => $item->fresh()]);
+        return response()->json(['message' => 'Menu item unarchived successfully.', 'item' => CatalogImage::menuItemPayload($item->fresh())]);
     }
 
     public function deleteMenuItem(int $id)

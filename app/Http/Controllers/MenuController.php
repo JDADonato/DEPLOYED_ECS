@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
+use App\Support\CatalogImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -32,12 +33,22 @@ class MenuController extends Controller
                 $query->whereRaw('is_best_seller is true');
             }
 
-            return $query
+            $page = $query
                 ->whereRaw('is_active is '.($active ? 'true' : 'false'))
                 ->orderBy('category')
                 ->orderBy('name')
                 ->paginate($perPage)
                 ->toArray();
+
+            $page['data'] = collect($page['data'])
+                ->map(fn (array $item) => [
+                    ...$item,
+                    'image' => CatalogImage::url($item['image'] ?? null),
+                    'image_url' => CatalogImage::url($item['image'] ?? null),
+                ])
+                ->all();
+
+            return $page;
         });
 
         return response()->json($items);
@@ -50,7 +61,7 @@ class MenuController extends Controller
     {
         $item = MenuItem::findOrFail($id);
 
-        return response()->json($item);
+        return response()->json(CatalogImage::menuItemPayload($item, includeCosts: false));
     }
 
     /**
@@ -78,7 +89,8 @@ class MenuController extends Controller
             return MenuItem::whereRaw('is_best_seller is true')
                 ->whereRaw('is_active is true')
                 ->orderBy('name')
-                ->get();
+                ->get()
+                ->map(fn (MenuItem $item) => CatalogImage::menuItemPayload($item, includeCosts: false));
         });
 
         return response()->json($items);

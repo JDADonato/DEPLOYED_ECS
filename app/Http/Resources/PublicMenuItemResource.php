@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\CatalogImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +20,8 @@ class PublicMenuItemResource extends JsonResource
             'dish_id' => $this->dish_id,
             'name' => $this->name,
             'category' => $this->category,
-            'image' => $this->image,
+            'image' => CatalogImage::url($this->image),
+            'image_url' => CatalogImage::url($this->image),
             'description' => $this->description,
             'is_best_seller' => (bool) $this->is_best_seller,
             'is_active' => (bool) $this->is_active,
