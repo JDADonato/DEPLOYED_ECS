@@ -657,8 +657,8 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                 </div>
             )}
 
-            <section className={isAdminVariant ? 'admin-announcement-toolbar' : `${shellClass} p-4`}>
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <section className={isAdminVariant ? 'admin-announcement-toolbar' : `${shellClass} p-3 sm:p-4`}>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="admin-announcement-metrics">
                         {metricCards.map(([label, value]) => (
                             <span key={label}>
@@ -667,49 +667,43 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                             </span>
                         ))}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {editingId && (
-                            <button type="button" onClick={() => openCustomerPreview({ id: editingId })} className={secondaryClass}>
-                                <Eye size={16} />
-                                Preview as customer
-                            </button>
-                        )}
-                        <button type="button" onClick={openNewAnnouncement} className={secondaryClass}>
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                        <button type="button" onClick={openNewAnnouncement} className={primaryClass}>
                             New announcement
                         </button>
                     </div>
                 </div>
             </section>
 
-            <div className={isAdminVariant ? 'admin-content-workspace' : 'grid gap-5'}>
+            <div className={isAdminVariant ? 'admin-content-workspace' : 'grid gap-4'}>
                 <section className={`${shellClass} overflow-hidden`}>
-                    <div className="border-b border-[#720101]/10 p-5">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-wrap gap-2">
+                    <div className="border-b border-[#720101]/10 bg-white px-3 py-3 sm:px-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex flex-wrap gap-1.5">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         type="button"
                                         onClick={() => setFilters((current) => ({ ...current, tab: tab.id }))}
-                                        className={`rounded-xl border px-4 py-2 text-sm font-black transition ${filters.tab === tab.id ? 'border-[#720101] bg-[#720101] text-white' : 'border-[#720101]/12 bg-white text-[#720101] hover:bg-[#fff7e8]'}`}
+                                        className={`rounded-lg border px-3 py-2 text-xs font-black transition sm:text-sm ${filters.tab === tab.id ? 'border-[#720101] bg-[#720101] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#720101]/20 hover:bg-[#fff7e8] hover:text-[#720101]'}`}
                                     >
                                         {tab.label}
                                     </button>
                                 ))}
                             </div>
-                            <button onClick={() => setFiltersOpen((open) => !open)} className={secondaryClass}>
+                            <button type="button" onClick={() => setFiltersOpen((open) => !open)} className="staff-button-secondary shrink-0">
                                 <Filter size={16} />
                                 Filters
                             </button>
                         </div>
 
                         {filtersOpen && (
-                            <div className="mt-4 grid gap-3 rounded-xl border border-[#720101]/10 bg-[#fff7e8] p-4 lg:grid-cols-[1fr_220px]">
-                                <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                            <div className="mt-3 grid gap-3 rounded-lg border border-[#720101]/10 bg-[#fffaf3] p-3 lg:grid-cols-[1fr_220px]">
+                                <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
                                     <Search size={16} className="text-slate-400" />
                                     <input value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} placeholder="Search announcements" className="w-full text-sm font-bold outline-none" />
                                 </label>
-                                <select value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value })} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold outline-none">
+                                <select value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold outline-none">
                                     {typeOptions.map((type) => <option key={type} value={type}>{type === 'all' ? 'All types' : typeLabels[type]}</option>)}
                                 </select>
                             </div>
@@ -723,53 +717,53 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                     ) : filteredItems.length === 0 ? (
                         <div className="p-8 text-center text-sm font-bold text-slate-400">No announcements match this view.</div>
                     ) : (
-                        <div className="divide-y divide-[#720101]/10">
+                        <div className="divide-y divide-slate-100">
                             {filteredItems.map((item) => {
                                 const canDelete = ['draft', 'scheduled'].includes(item.status);
                                 const emailTotal = Number(item.sent_count || 0) + Number(item.failed_count || 0) + Number(item.pending_count || 0);
 
                                 return (
-                                    <article key={item.id} className="p-5 transition hover:bg-[#fffaf3]">
-                                        <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-start">
+                                    <article key={item.id} className="px-3 py-4 transition hover:bg-[#fffaf3] sm:px-4">
+                                        <div className="grid gap-3 xl:grid-cols-[1fr_auto] xl:items-start">
                                             <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-3 text-xs font-black uppercase tracking-widest">
-                                                    <span className="text-[#9f6500]">{typeLabels[item.type] || item.type}</span>
-                                                    <span className="text-slate-400">{visibilityLabels[item.visibility] || item.visibility}</span>
-                                                    <span className="text-[#720101]">{statusCopy(item)}</span>
+                                                <div className="flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-wider">
+                                                    <span className="rounded-full bg-[#fff7e8] px-2.5 py-1 text-[#9f6500]">{typeLabels[item.type] || item.type}</span>
+                                                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">{visibilityLabels[item.visibility] || item.visibility}</span>
+                                                    <span className="rounded-full bg-[#720101]/10 px-2.5 py-1 text-[#720101]">{statusCopy(item)}</span>
                                                 </div>
-                                                <h4 className="mt-2 truncate text-xl font-black text-[#111827]">{item.title}</h4>
-                                                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-6 text-slate-500">{item.summary || item.body || 'No summary yet.'}</p>
-                                                <div className="mt-3 grid gap-2 text-xs font-black uppercase tracking-wider text-slate-400 sm:grid-cols-4">
+                                                <h4 className="mt-3 truncate text-lg font-black text-[#111827] sm:text-xl">{item.title}</h4>
+                                                <p className="mt-1 line-clamp-2 max-w-4xl text-sm font-semibold leading-6 text-slate-500">{item.summary || item.body || 'No summary yet.'}</p>
+                                                <div className="mt-3 grid gap-2 text-[11px] font-black uppercase tracking-wider text-slate-400 sm:grid-cols-4">
                                                     <span>{item.sent_count || 0} sent</span>
                                                     <span>{item.failed_count || 0} failed</span>
                                                     <span>{item.read_count || 0} reads</span>
                                                     <span>{emailTotal} email records</span>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-wrap gap-2 xl:justify-end">
-                                                <button type="button" onClick={() => openCustomerPreview(item)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 hover:bg-[#fff7e8]">
+                                            <div className="flex flex-wrap gap-2 xl:max-w-[28rem] xl:justify-end">
+                                                <button type="button" onClick={() => openCustomerPreview(item)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 hover:bg-[#fff7e8]">
                                                     <Eye size={14} className="inline" /> Preview as customer
                                                 </button>
-                                                <button type="button" onClick={() => startEdit(item)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 hover:bg-[#fff7e8]">
+                                                <button type="button" onClick={() => startEdit(item)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 hover:bg-[#fff7e8]">
                                                     <Pencil size={14} className="inline" /> Edit
                                                 </button>
                                                 {item.send_email && (
-                                                    <button type="button" disabled={saving} onClick={() => sendTest(item)} className="rounded-xl border border-[#9f6500]/20 bg-[#fff7e8] px-3 py-2 text-xs font-black text-[#9f6500] hover:bg-white">
+                                                    <button type="button" disabled={saving} onClick={() => sendTest(item)} className="rounded-lg border border-[#9f6500]/20 bg-[#fff7e8] px-3 py-2 text-xs font-black text-[#9f6500] hover:bg-white">
                                                         <Mail size={14} className="inline" /> Test
                                                     </button>
                                                 )}
                                                 {item.status !== 'published' && item.status !== 'archived' && (
-                                                    <button type="button" disabled={saving} onClick={() => runAction(item, 'publish')} className="rounded-xl bg-[#720101] px-3 py-2 text-xs font-black text-white hover:bg-[#5a0101]">
+                                                    <button type="button" disabled={saving} onClick={() => runAction(item, 'publish')} className="rounded-lg bg-[#720101] px-3 py-2 text-xs font-black text-white hover:bg-[#5a0101]">
                                                         <Send size={14} className="inline" /> Publish
                                                     </button>
                                                 )}
                                                 {item.status === 'published' && (
-                                                    <button type="button" disabled={saving} onClick={() => runAction(item, 'archive')} className="rounded-xl border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] hover:bg-[#fff7e8]">
+                                                    <button type="button" disabled={saving} onClick={() => runAction(item, 'archive')} className="rounded-lg border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] hover:bg-[#fff7e8]">
                                                         <Archive size={14} className="inline" /> Archive
                                                     </button>
                                                 )}
                                                 {canDelete && (
-                                                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(item)} className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-700 hover:bg-red-50">
+                                                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(item)} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-700 hover:bg-red-50">
                                                         <Trash2 size={14} className="inline" /> Discard
                                                     </button>
                                                 )}
