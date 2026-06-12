@@ -2508,7 +2508,7 @@ const DashboardAccounting = () => {
             />
             <ConfirmModal
                 isOpen={discountConfirm}
-                title={`Apply discount to booking #${discountModal.data?.id}?`}
+                title={`Apply discount to booking #${discountModal.data?.id || ''}?`}
                 message="This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?"
                 confirmText="Yes, apply discount"
                 cancelText="Cancel"
@@ -2532,45 +2532,54 @@ const DashboardAccounting = () => {
             {/* Discount Modal */}
             {discountModal.open && (
                 <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDiscountModal({ open: false, data: null })}></div>
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setDiscountModal({ open: false, data: null }); setDiscountConfirm(false); }}></div>
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                             <h3 className="text-lg font-bold text-slate-900">Apply Booking Discount</h3>
-                            <p className="text-xs text-slate-500 mt-1">{discountModal.data?.client_full_name || discountModal.data?.username}'s Event (#BK-{discountModal.data?.id.toString().padStart(4, '0')})</p>
+                            <p className="text-xs text-slate-500 mt-1">{discountModal.data?.client_full_name || discountModal.data?.username}'s Event (#BK-{(discountModal.data?.id || '').toString().padStart(4, '0')})</p>
                         </div>
                         <form onSubmit={handleDiscountSubmit} className="p-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Discount Type</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <label className={`border rounded-lg p-3 flex cursor-pointer transition-colors ${discountForm.discount_type === 'fixed' ? 'bg-amber-50 border-amber-600 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
-                                            <input type="radio" name="discount_type" value="fixed" checked={discountForm.discount_type === 'fixed'} onChange={() => setDiscountForm({ ...discountForm, discount_type: 'fixed' })} className="hidden" />
-                                            <div className="font-bold text-sm text-center w-full">Fixed Amount (₱)</div>
-                                        </label>
-                                        <label className={`border rounded-lg p-3 flex cursor-pointer transition-colors ${discountForm.discount_type === 'percentage' ? 'bg-amber-50 border-amber-600 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
-                                            <input type="radio" name="discount_type" value="percentage" checked={discountForm.discount_type === 'percentage'} onChange={() => setDiscountForm({ ...discountForm, discount_type: 'percentage' })} className="hidden" />
-                                            <div className="font-bold text-sm text-center w-full">Percentage (%)</div>
-                                        </label>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Discount Type</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDiscountForm({ ...discountForm, discount_type: 'fixed' })}
+                                            className={`py-2 text-sm font-semibold rounded-lg border transition-all ${discountForm.discount_type === 'fixed' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                                        >
+                                            Fixed Amount (₱)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDiscountForm({ ...discountForm, discount_type: 'percentage' })}
+                                            className={`py-2 text-sm font-semibold rounded-lg border transition-all ${discountForm.discount_type === 'percentage' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                                        >
+                                            Percentage (%)
+                                        </button>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">Discount Value</label>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Discount Value</label>
                                     <div className="relative">
-                                        {discountForm.discount_type === 'fixed' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₱</span>}
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-slate-500 font-bold">{discountForm.discount_type === 'fixed' ? '₱' : '%'}</span>
+                                        </div>
                                         <input
                                             type="number"
                                             required
-                                            min="0"
+                                            min="1"
+                                            step={discountForm.discount_type === 'percentage' ? '0.1' : '1'}
+                                            max={discountForm.discount_type === 'percentage' ? '100' : undefined}
                                             value={discountForm.discount_value}
-                                            onChange={e => setDiscountForm({ ...discountForm, discount_value: parseFloat(e.target.value) || 0 })}
-                                            className={`w-full ${discountForm.discount_type === 'fixed' ? 'pl-8' : 'px-4'} py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-amber-600 outline-none transition-all text-lg font-bold`}
+                                            onChange={e => setDiscountForm({ ...discountForm, discount_value: e.target.value })}
+                                            className="block w-full pl-8 pr-3 py-2.5 border border-amber-500 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-semibold text-slate-900"
                                         />
-                                        {discountForm.discount_type === 'percentage' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">%</span>}
                                     </div>
                                 </div>
                             </div>
                             <div className="mt-8 flex justify-end gap-3">
-                                <button type="button" onClick={() => setDiscountModal({ open: false, data: null })} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                                <button type="button" onClick={() => { setDiscountModal({ open: false, data: null }); setDiscountConfirm(false); }} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
                                 <button type="submit" disabled={discountLoading} className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70">
                                     {discountLoading ? <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : null}
                                     Apply Discount
