@@ -124,6 +124,10 @@ class FeedbackController extends Controller
                 ->sendToRoles(['Admin', 'Marketing'], new StaffOperationalNotification($subject, $subject, $body, url('/dashboard/marketing')), 'feedback_follow_up');
         }
 
+        if ($feedbackRequest->booking) {
+            PostEventLifecycleService::refresh($feedbackRequest->booking);
+        }
+
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('feedback', 'feedback_response', $response->id, 'submitted', 'Feedback submitted.');
 

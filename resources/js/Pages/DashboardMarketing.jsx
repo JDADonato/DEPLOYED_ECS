@@ -349,6 +349,7 @@ const DashboardMarketing = () => {
     const [bookingTransferStaff, setBookingTransferStaff] = useState([]);
     const [showBookingTransfer, setShowBookingTransfer] = useState(false);
     const [showAssistedBooking, setShowAssistedBooking] = useState(false);
+    const [completionPrompt, setCompletionPrompt] = useState({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false });
 
     // PDF Export State
     const [showExportModal, setShowExportModal] = useState(false);
@@ -855,7 +856,13 @@ const DashboardMarketing = () => {
                 const data = await response.json().catch(() => ({}));
                 bustMarketingBookingCaches();
                 if (data.booking) mergeUpdatedBooking(data.booking);
-                const label = newStatus === 'Confirmed' ? 'approved' : 'declined';
+                const label = newStatus === 'Confirmed'
+                    ? 'approved'
+                    : newStatus === 'Cancelled'
+                    ? 'declined'
+                    : newStatus === 'Completed'
+                    ? 'completed'
+                    : 'updated';
                 toast.success(`Booking #${id} has been ${label} successfully.`);
                 fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true }); // sync with server in background
             } else {
@@ -879,6 +886,47 @@ const DashboardMarketing = () => {
             fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true });
         } finally {
             setUpdatingBookingIds(prev => { const n = { ...prev }; delete n[id]; return n; });
+        }
+    };
+
+    const completeBooking = async ({ override = false } = {}) => {
+        const booking = completionPrompt.booking;
+        if (!booking?.id || completionPrompt.saving) return;
+
+        setCompletionPrompt(prev => ({ ...prev, saving: true }));
+
+        try {
+            const response = await csrfFetch(`/api/marketing/bookings/${booking.id}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    override,
+                    override_reason: override ? completionPrompt.overrideReason.trim() : undefined,
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                if (data.booking) mergeUpdatedBooking(data.booking);
+                setCompletionPrompt(prev => ({
+                    ...prev,
+                    blockers: data.blockers || [],
+                    saving: false,
+                }));
+                toast.error(data.error || 'This booking is not ready to complete.');
+                return;
+            }
+
+            if (data.booking) mergeUpdatedBooking(data.booking);
+            bustMarketingBookingCaches();
+            setCompletionPrompt({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false });
+            toast.success(data.message || 'Event completed and feedback request sent.');
+            fetchBookings({ scope: activeTab === 'bookings' ? 'all' : 'page', force: true });
+            fetchFeedbackSummary({ force: true });
+        } catch (error) {
+            console.error('Error completing booking:', error);
+            setCompletionPrompt(prev => ({ ...prev, saving: false }));
+            toast.error('We could not complete this event. Please check your connection.');
         }
     };
 
@@ -2091,6 +2139,14 @@ const DashboardMarketing = () => {
                                 Prep list PDF
                             </button>
                         )}
+                        {canEdit && selectedBooking.status === 'Confirmed' && (
+                            <button
+                                onClick={() => setCompletionPrompt({ isOpen: true, booking: selectedBooking, blockers: [], overrideReason: '', saving: false })}
+                                className="rounded-lg border border-[#720101] bg-[#720101] px-3 py-2 text-xs font-black text-white hover:bg-[#5c0101]"
+                            >
+                                Complete event
+                            </button>
+                        )}
                         <button onClick={() => setPdfPreviewUrl(`/documents/bookings/${selectedBooking.id}/preparation.pdf`)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
                             Export details
                         </button>
@@ -2227,6 +2283,91 @@ const DashboardMarketing = () => {
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderCompletionModal = () => {
+        if (!completionPrompt.isOpen || !completionPrompt.booking) return null;
+
+        const blockers = completionPrompt.blockers || [];
+        const canOverride = user?.role === 'Admin';
+
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4" onClick={() => setCompletionPrompt({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false })}>
+                <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                    <div className="border-b border-[#f1dfdf] bg-[#fffaf3] px-6 py-5">
+                        <p className="marketing-kicker">Post-event completion</p>
+                        <h3 className="mt-1 text-2xl font-black text-slate-950">Complete this event?</h3>
+                        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                            This will move the booking into completed history, create the customer feedback request, and notify the customer.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 px-6 py-5">
+                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">Booking</p>
+                            <p className="mt-1 text-lg font-black text-slate-950">{eventDisplayName(completionPrompt.booking)}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">Live status: {completionPrompt.booking.live_status || 'Not Started'}</p>
+                        </div>
+
+                        {blockers.length > 0 ? (
+                            <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
+                                <p className="text-xs font-black uppercase tracking-widest text-rose-700">Completion blockers</p>
+                                <ul className="mt-3 space-y-2 text-sm font-semibold text-rose-800">
+                                    {blockers.map((blocker, index) => (
+                                        <li key={`${blocker.key || 'blocker'}-${index}`}>- {blocker.label || blocker.key || 'This item needs review.'}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+                                The server will verify payment, preparation, refunds, event date, customer account, and live status before completing.
+                            </div>
+                        )}
+
+                        {canOverride && blockers.length > 0 && (
+                            <label className="block">
+                                <span className="text-xs font-black uppercase tracking-widest text-slate-500">Admin override reason</span>
+                                <textarea
+                                    value={completionPrompt.overrideReason}
+                                    onChange={(event) => setCompletionPrompt(prev => ({ ...prev, overrideReason: event.target.value }))}
+                                    rows={3}
+                                    className="staff-control mt-2"
+                                    placeholder="Explain why this event should be completed despite the blockers..."
+                                />
+                            </label>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setCompletionPrompt({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false })}
+                            className="staff-button-secondary"
+                        >
+                            Cancel
+                        </button>
+                        {canOverride && blockers.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => completeBooking({ override: true })}
+                                disabled={completionPrompt.saving || completionPrompt.overrideReason.trim().length < 5}
+                                className="staff-button-secondary border-amber-200 bg-amber-50 text-amber-800"
+                            >
+                                {completionPrompt.saving ? 'Completing...' : 'Override and complete'}
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => completeBooking()}
+                            disabled={completionPrompt.saving}
+                            className="staff-button-primary"
+                        >
+                            {completionPrompt.saving ? 'Checking...' : 'Complete event'}
                         </button>
                     </div>
                 </div>
@@ -3689,6 +3830,7 @@ const DashboardMarketing = () => {
                 toast={toast}
             />
             {renderExportModal()}
+            {renderCompletionModal()}
             {pdfPreviewUrl && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 sm:p-6" onClick={() => setPdfPreviewUrl(null)}>
                     <div className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>

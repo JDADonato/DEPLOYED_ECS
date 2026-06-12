@@ -14,6 +14,7 @@ use App\Notifications\BookingLiveStatusNotification;
 use App\Notifications\BookingStatusNotification;
 use App\Notifications\CustomerAssistedBookingInviteNotification;
 use App\Notifications\NewBookingNotification;
+use App\Services\BookingCompletionService;
 use App\Services\BookingValidationService;
 use App\Services\ConversionEventService;
 use App\Services\EmailDeliveryService;
@@ -22,7 +23,6 @@ use App\Services\FoodTastingScheduleService;
 use App\Services\NotificationRecipientService;
 use App\Services\OperationalBroadcastService;
 use App\Services\PaymentCalculationService;
-use App\Services\PostEventLifecycleService;
 use App\Support\ApiResponse;
 use App\Support\AuditContext;
 use App\Support\ResourceVersion;
@@ -640,6 +640,8 @@ class MarketingController extends Controller
     {
         $request->validate([
             'status' => 'required|in:Pending,Confirmed,Cancelled,Completed',
+            'override' => 'sometimes|boolean',
+            'override_reason' => 'nullable|string|max:1000',
         ]);
 
         $booking = Booking::find($id);
@@ -650,6 +652,10 @@ class MarketingController extends Controller
 
         if ($guard = $this->ensureCanMutateBooking($booking)) {
             return $guard;
+        }
+
+        if ($request->status === 'Completed') {
+            return $this->completeBooking($request, $booking);
         }
 
         $reviewStatus = match ($request->status) {
@@ -682,11 +688,6 @@ class MarketingController extends Controller
 
         if ($request->status === 'Confirmed') {
             EventPreparationService::ensureDefaultTasks($booking->fresh());
-        }
-
-        if ($request->status === 'Completed') {
-            EventPreparationService::ensureFeedbackRequest($booking->fresh());
-            PostEventLifecycleService::refresh($booking->fresh());
         }
 
         // ─── Send notification to the client ───
@@ -971,6 +972,8 @@ class MarketingController extends Controller
     {
         $data = $request->validate([
             'review_status' => 'required|in:Submitted,Under Review,Needs Customer Details,Clarification Received,Approved For Reservation,Not Available,Completed',
+            'override' => 'sometimes|boolean',
+            'override_reason' => 'nullable|string|max:1000',
         ]);
 
         $booking = Booking::find($id);
@@ -983,6 +986,10 @@ class MarketingController extends Controller
             return $guard;
         }
 
+        if ($data['review_status'] === 'Completed') {
+            return $this->completeBooking($request, $booking);
+        }
+
         $booking->update([
             'review_status' => $data['review_status'],
             'assigned_to' => $booking->assigned_to ?: Auth::id(),
@@ -993,15 +1000,60 @@ class MarketingController extends Controller
             EventPreparationService::ensureDefaultTasks($booking->fresh());
         }
 
-        if ($data['review_status'] === 'Completed') {
-            EventPreparationService::ensureFeedbackRequest($booking->fresh());
-            PostEventLifecycleService::refresh($booking->fresh());
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Review status updated.',
             'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
+        ]);
+    }
+
+    public function complete(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'override' => 'sometimes|boolean',
+            'override_reason' => 'nullable|string|max:1000',
+        ]);
+
+        $booking = Booking::find($id);
+
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        if ($guard = $this->ensureCanMutateBooking($booking)) {
+            return $guard;
+        }
+
+        return $this->completeBooking($request, $booking, (bool) ($data['override'] ?? false), $data['override_reason'] ?? null);
+    }
+
+    private function completeBooking(Request $request, Booking $booking, ?bool $override = null, ?string $overrideReason = null)
+    {
+        $override = $override ?? $request->boolean('override');
+        $overrideReason = $overrideReason ?? $request->input('override_reason');
+
+        if ($override && Auth::user()?->role !== 'Admin') {
+            return response()->json(['error' => 'Only admin users can override event completion blockers.'], 403);
+        }
+
+        $result = app(BookingCompletionService::class)
+            ->complete($booking, Auth::user(), $override, $overrideReason);
+
+        if (! $result['completed']) {
+            return response()->json([
+                'error' => 'This booking is not ready to complete.',
+                'blockers' => $result['blockers'],
+                'summary' => $result['summary'],
+                'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes', 'payments'])),
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event completed and feedback request sent.',
+            'booking' => new BookingSummaryResource($result['booking']),
+            'post_event_status' => $result['booking']->post_event_status,
+            'feedback_request_id' => $result['feedback_request']?->id,
         ]);
     }
 

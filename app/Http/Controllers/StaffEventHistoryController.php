@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\BookingHistoryNote;
+use App\Services\PostEventLifecycleService;
 use App\Support\ApiResponse;
 use App\Support\CustomerIdentity;
 use Illuminate\Http\Request;
@@ -112,6 +113,28 @@ class StaffEventHistoryController extends Controller
             'message' => 'History note added.',
             'note' => $this->notePayload($note->load('user:id,full_name,username,role')),
         ], 201);
+    }
+
+    public function close(Booking $booking)
+    {
+        if ($booking->status !== 'Completed') {
+            return response()->json(['error' => 'Only completed events can be closed.'], 422);
+        }
+
+        $status = PostEventLifecycleService::close($booking, Auth::id());
+
+        if ($status !== 'Closed') {
+            return response()->json([
+                'error' => "This event is not ready to close. Current post-event status: {$status}.",
+                'post_event_status' => $status,
+                'event' => $this->eventPayload($booking->fresh(['user', 'assignee', 'payments', 'refundCases', 'feedbackResponses.assignee', 'historyNotes.user'])),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Event closed.',
+            'event' => $this->eventPayload($booking->fresh(['user', 'assignee', 'payments', 'refundCases', 'feedbackResponses.assignee', 'historyNotes.user'])),
+        ]);
     }
 
     private function authorizeStaff(): void

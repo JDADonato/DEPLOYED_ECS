@@ -21,7 +21,7 @@ class PostEventLifecycleService
 
         Booking::query()
             ->whereDate('event_date', '<', $cutoff)
-            ->whereIn('status', ['Pending', 'Completed'])
+            ->where('status', 'Completed')
             ->whereIn('review_status', self::REVIEW_FLOW_STATUSES)
             ->orderBy('id')
             ->chunkById(100, function ($bookings) use (&$completed) {

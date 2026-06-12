@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/profile/activity', [ProfileController::class, 'activity'])->name('profile.activity');
     Route::get('/api/staff/event-history', [StaffEventHistoryController::class, 'index'])->middleware('role:Admin,Marketing,Accounting');
     Route::post('/api/staff/event-history/{booking}/notes', [StaffEventHistoryController::class, 'storeNote'])->middleware('role:Admin,Marketing,Accounting');
+    Route::post('/api/staff/event-history/{booking}/close', [StaffEventHistoryController::class, 'close'])->middleware('role:Admin,Marketing,Accounting');
     Route::get('/documents/payments/{payment}/receipt.pdf', [DocumentController::class, 'receipt'])->name('documents.receipt');
     Route::get('/documents/bookings/{booking}/preparation.pdf', [DocumentController::class, 'preparationList'])->name('documents.preparation');
     Route::get('/documents/calendar.pdf', [DocumentController::class, 'calendar'])->name('documents.calendar');
@@ -319,6 +320,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::get('/api/marketing/contact-inquiries', [ContactInquiryController::class, 'index']);
     Route::patch('/api/marketing/contact-inquiries/{inquiry}', [ContactInquiryController::class, 'update']);
     Route::put('/api/marketing/bookings/{id}/status', [MarketingController::class, 'updateStatus']);
+    Route::post('/api/marketing/bookings/{id}/complete', [MarketingController::class, 'complete']);
     Route::put('/api/marketing/bookings/{id}/assign', [MarketingController::class, 'assign']);
     Route::post('/api/marketing/bookings/{id}/claim', [MarketingController::class, 'claim']);
     Route::post('/api/marketing/bookings/{id}/transfer', [MarketingController::class, 'transfer']);

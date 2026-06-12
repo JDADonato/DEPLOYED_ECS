@@ -9,8 +9,10 @@ use App\Models\FeedbackResponse;
 use App\Models\FoodTasting;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\BookingFeedbackRequestNotification;
 use App\Services\EventPreparationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class OperationsHandoffTest extends TestCase
@@ -160,14 +162,17 @@ class OperationsHandoffTest extends TestCase
 
     public function test_completing_booking_creates_one_feedback_request(): void
     {
+        Notification::fake();
         $marketing = $this->user('Marketing');
-        $booking = $this->booking(['status' => 'Confirmed', 'assigned_to' => $marketing->id]);
+        $booking = $this->completionReadyBooking($marketing);
 
         $this->actingAs($marketing)
-            ->putJson("/api/marketing/bookings/{$booking->id}/status", ['status' => 'Completed'])
-            ->assertOk();
+            ->postJson("/api/marketing/bookings/{$booking->id}/complete")
+            ->assertOk()
+            ->assertJsonPath('post_event_status', 'Feedback Pending');
 
         $this->assertSame(1, FeedbackRequest::where('booking_id', $booking->id)->count());
+        Notification::assertSentTo($booking->user, BookingFeedbackRequestNotification::class);
 
         $this->actingAs($marketing)
             ->putJson("/api/marketing/bookings/{$booking->id}/status", ['status' => 'Completed'])
@@ -176,11 +181,42 @@ class OperationsHandoffTest extends TestCase
         $this->assertSame(1, FeedbackRequest::where('booking_id', $booking->id)->count());
     }
 
-    public function test_command_completes_past_submitted_booking_once(): void
+    public function test_completion_is_blocked_until_event_is_operationally_ready(): void
+    {
+        $marketing = $this->user('Marketing');
+        $booking = $this->booking([
+            'status' => 'Confirmed',
+            'assigned_to' => $marketing->id,
+            'event_date' => now()->addDays(2)->toDateString(),
+            'live_status' => 'Serving',
+        ]);
+
+        $this->actingAs($marketing)
+            ->postJson("/api/marketing/bookings/{$booking->id}/complete")
+            ->assertStatus(422)
+            ->assertJsonPath('blockers.0.key', 'event_date');
+
+        $this->assertSame(0, FeedbackRequest::where('booking_id', $booking->id)->count());
+    }
+
+    public function test_live_status_completed_does_not_request_feedback_by_itself(): void
+    {
+        $marketing = $this->user('Marketing');
+        $booking = $this->booking(['status' => 'Confirmed', 'assigned_to' => $marketing->id]);
+
+        $this->actingAs($marketing)
+            ->putJson("/api/marketing/bookings/{$booking->id}/livestatus", ['live_status' => 'Completed'])
+            ->assertOk();
+
+        $this->assertSame('Confirmed', $booking->fresh()->status);
+        $this->assertSame(0, FeedbackRequest::where('booking_id', $booking->id)->count());
+    }
+
+    public function test_command_normalizes_completed_past_submitted_booking_once(): void
     {
         $marketing = $this->user('Marketing');
         $pastSubmitted = $this->booking([
-            'status' => 'Pending',
+            'status' => 'Completed',
             'review_status' => 'Submitted',
             'event_date' => now()->subDay()->toDateString(),
             'assigned_to' => $marketing->id,
@@ -204,12 +240,17 @@ class OperationsHandoffTest extends TestCase
         $this->assertSame(1, FeedbackRequest::where('booking_id', $pastSubmitted->id)->count());
     }
 
-    public function test_past_submitted_cleanup_skips_future_and_confirmed_bookings(): void
+    public function test_past_submitted_cleanup_skips_future_pending_and_confirmed_bookings(): void
     {
         $futureSubmitted = $this->booking([
             'status' => 'Pending',
             'review_status' => 'Submitted',
             'event_date' => now()->addDay()->toDateString(),
+        ]);
+        $pastPending = $this->booking([
+            'status' => 'Pending',
+            'review_status' => 'Submitted',
+            'event_date' => now()->subDay()->toDateString(),
         ]);
         $pastConfirmed = $this->booking([
             'status' => 'Confirmed',
@@ -223,9 +264,11 @@ class OperationsHandoffTest extends TestCase
 
         $this->assertSame('Pending', $futureSubmitted->fresh()->status);
         $this->assertSame('Submitted', $futureSubmitted->fresh()->review_status);
+        $this->assertSame('Pending', $pastPending->fresh()->status);
+        $this->assertSame('Submitted', $pastPending->fresh()->review_status);
         $this->assertSame('Confirmed', $pastConfirmed->fresh()->status);
         $this->assertSame('Approved For Reservation', $pastConfirmed->fresh()->review_status);
-        $this->assertSame(0, FeedbackRequest::whereIn('booking_id', [$futureSubmitted->id, $pastConfirmed->id])->count());
+        $this->assertSame(0, FeedbackRequest::whereIn('booking_id', [$futureSubmitted->id, $pastPending->id, $pastConfirmed->id])->count());
     }
 
     public function test_cleanup_normalizes_completed_bookings_stuck_with_submitted_review_status(): void
@@ -307,6 +350,48 @@ class OperationsHandoffTest extends TestCase
         $this->actingAs($client)
             ->postJson("/api/customer/feedback-requests/{$request->token}/responses", ['rating' => 5])
             ->assertUnprocessable();
+    }
+
+    public function test_customer_feedback_refreshes_post_event_status_and_staff_can_close_ready_event(): void
+    {
+        $marketing = $this->user('Marketing');
+        $client = $this->user('Client');
+        $booking = $this->completionReadyBooking($marketing, ['user_id' => $client->id]);
+
+        $this->actingAs($marketing)
+            ->postJson("/api/marketing/bookings/{$booking->id}/complete")
+            ->assertOk();
+
+        $request = FeedbackRequest::where('booking_id', $booking->id)->firstOrFail();
+
+        $this->actingAs($client)
+            ->postJson("/api/customer/feedback-requests/{$request->token}/responses", [
+                'rating' => 5,
+                'food_rating' => 5,
+                'service_rating' => 5,
+                'communication_rating' => 5,
+                'value_rating' => 5,
+                'comments' => 'Excellent event.',
+                'testimonial_permission' => false,
+            ])
+            ->assertCreated();
+
+        $this->assertSame('Feedback Review Needed', $booking->fresh()->post_event_status);
+
+        $response = FeedbackResponse::where('booking_id', $booking->id)->firstOrFail();
+
+        $this->actingAs($marketing)
+            ->patchJson("/api/marketing/feedback-responses/{$response->id}", ['review_status' => 'Closed'])
+            ->assertOk();
+
+        $this->assertSame('Ready to Close', $booking->fresh()->post_event_status);
+
+        $this->actingAs($marketing)
+            ->postJson("/api/staff/event-history/{$booking->id}/close")
+            ->assertOk()
+            ->assertJsonPath('event.post_event_status', 'Closed');
+
+        $this->assertNotNull($booking->fresh()->closed_at);
     }
 
     public function test_marketing_can_manage_food_tasting_queue_and_outcome(): void
@@ -448,5 +533,33 @@ class OperationsHandoffTest extends TestCase
             'status' => 'Confirmed',
             'review_status' => 'Approved For Reservation',
         ], $overrides));
+    }
+
+    private function completionReadyBooking(User $marketing, array $overrides = []): Booking
+    {
+        $booking = $this->booking(array_merge([
+            'status' => 'Confirmed',
+            'review_status' => 'Approved For Reservation',
+            'assigned_to' => $marketing->id,
+            'event_date' => now()->subDay()->toDateString(),
+            'live_status' => 'Completed',
+        ], $overrides));
+
+        Payment::create([
+            'booking_id' => $booking->id,
+            'amount' => $booking->total_cost,
+            'payment_method' => 'PayMongo',
+            'payment_type' => 'Final',
+            'status' => 'Paid',
+        ]);
+
+        EventPreparationService::ensureDefaultTasks($booking);
+        EventPreparationTask::where('booking_id', $booking->id)->update([
+            'status' => 'Done',
+            'completed_by' => $marketing->id,
+            'completed_at' => now(),
+        ]);
+
+        return $booking->fresh(['user']);
     }
 }

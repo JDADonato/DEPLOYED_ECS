@@ -37,6 +37,7 @@ const EventHistoryPanel = ({ role = 'staff', onToast, surfaceMode = 'default' })
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [noteBody, setNoteBody] = useState('');
     const [noteSaving, setNoteSaving] = useState(false);
+    const [closingEvent, setClosingEvent] = useState(false);
     const [filters, setFilters] = useState({
         search: '',
         date_from: '',
@@ -130,6 +131,28 @@ const EventHistoryPanel = ({ role = 'staff', onToast, surfaceMode = 'default' })
         }
     };
 
+    const closeEvent = async () => {
+        if (!selectedEvent || closingEvent) return;
+        setClosingEvent(true);
+        try {
+            const response = await csrfFetch(`/api/staff/event-history/${selectedEvent.id}/close`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Could not close event.');
+
+            const updated = payload.event;
+            setEvents((items) => items.map((event) => event.id === selectedEvent.id ? { ...event, ...updated } : event));
+            setSelectedEvent((event) => ({ ...event, ...updated }));
+            notify(payload.message || 'Event closed.');
+        } catch (error) {
+            notify(error.message || 'Could not close event.', 'error');
+        } finally {
+            setClosingEvent(false);
+        }
+    };
+
     const roleCopy = useMemo(() => {
         if (role === 'marketing') return 'Feedback follow-up and testimonial work stay available through Marketing post-event tools.';
         if (role === 'accounting') return 'Payment and refund follow-up remains available through Finance tools when a record needs action.';
@@ -149,7 +172,16 @@ const EventHistoryPanel = ({ role = 'staff', onToast, surfaceMode = 'default' })
                 eyebrow="Event history"
                 title={`Booking #${selectedEvent.id}`}
                 onClose={() => setSelectedEvent(null)}
-                footer={<button type="button" onClick={() => setSelectedEvent(null)} className="staff-button-primary">Done</button>}
+                footer={(
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+                        {selectedEvent.post_event_status === 'Ready to Close' && (
+                            <button type="button" onClick={closeEvent} disabled={closingEvent} className="staff-button-primary">
+                                {closingEvent ? 'Closing...' : 'Close event'}
+                            </button>
+                        )}
+                        <button type="button" onClick={() => setSelectedEvent(null)} className="staff-button-secondary">Done</button>
+                    </div>
+                )}
             >
                 <div className="space-y-4">
                     <div className="rounded-lg border border-amber-100 bg-[#fffaf3] p-4">
@@ -263,7 +295,8 @@ const EventHistoryPanel = ({ role = 'staff', onToast, surfaceMode = 'default' })
                 <select value={filters.post_event_status} onChange={(event) => setFilter('post_event_status', event.target.value)} className="staff-control">
                     <option value="all">All post-event states</option>
                     <option value="Feedback Pending">Feedback Pending</option>
-                    <option value="Feedback Review">Feedback Review</option>
+                    <option value="Feedback Review Needed">Feedback Review Needed</option>
+                    <option value="Ready to Close">Ready to Close</option>
                     <option value="Closed">Closed</option>
                 </select>
                 <select value={filters.feedback_status} onChange={(event) => setFilter('feedback_status', event.target.value)} className="staff-control">
