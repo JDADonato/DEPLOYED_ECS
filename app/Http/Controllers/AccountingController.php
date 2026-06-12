@@ -199,7 +199,16 @@ class AccountingController extends Controller
             return response()->json(['error' => 'Cannot apply discount: A payment has already been processed.'], 400);
         }
 
-        $originalAmount = $booking->budget ?? $booking->total_cost ?? 0;
+        if (is_null($booking->budget)) {
+            $currentTotal = $booking->total_cost ?? 0;
+            if ($booking->discount_type === 'percentage' && $booking->discount_value > 0 && $booking->discount_value < 100) {
+                $originalAmount = $currentTotal / (1 - ($booking->discount_value / 100));
+            } else {
+                $originalAmount = $currentTotal + ($booking->discount_value ?? 0);
+            }
+        } else {
+            $originalAmount = $booking->budget;
+        }
         $discountValue = $request->discount_value ?? 0;
         $discountType = $request->discount_type ?? 'fixed';
 
@@ -234,6 +243,7 @@ class AccountingController extends Controller
         return response()->json([
             'message' => 'Discount applied successfully',
             'new_total_cost' => $newTotalCost,
+            'payments' => $booking->fresh(['payments'])->payments,
         ]);
     }
 

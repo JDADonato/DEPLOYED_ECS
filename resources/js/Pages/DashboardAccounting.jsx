@@ -149,6 +149,7 @@ const DashboardAccounting = () => {
     const [discountModal, setDiscountModal] = useState({ open: false, data: null });
     const [discountForm, setDiscountForm] = useState({ discount_type: 'fixed', discount_value: 0 });
     const [discountLoading, setDiscountLoading] = useState(false);
+    const [discountConfirm, setDiscountConfirm] = useState(false);
     const [remindingPaymentId, setRemindingPaymentId] = useState(null);
     const [selectedFinanceBooking, setSelectedFinanceBooking] = useState(null);
 
@@ -433,9 +434,12 @@ const DashboardAccounting = () => {
         }
     };
 
-    const handleDiscountSubmit = async (e) => {
+    const handleDiscountSubmit = (e) => {
         e.preventDefault();
-        if (!window.confirm("Are you sure you want to apply this discount? This will recalculate the pending payments.")) return;
+        setDiscountConfirm(true);
+    };
+
+    const confirmDiscountSubmit = async () => {
         setDiscountLoading(true);
         try {
             const res = await fetch(`/api/accounting/bookings/${discountModal.data.id}/discount`, {
@@ -449,11 +453,15 @@ const DashboardAccounting = () => {
             if (res.ok) {
                 setToast({ message: "Discount applied successfully", type: "success" });
                 setDiscountModal({ open: false, data: null });
+                setDiscountConfirm(false);
                 if (activeTab === 'bookings') fetchBookings();
                 if (selectedFinanceBooking) {
-                    const newTotalCost = (await res.json()).new_total_cost;
-                    setSelectedFinanceBooking({...selectedFinanceBooking, totalCost: newTotalCost, total_cost: newTotalCost});
-                    fetchBookings(); // to refresh payments
+                    const data = await res.json();
+                    setSelectedFinanceBooking({...selectedFinanceBooking, totalCost: data.new_total_cost, total_cost: data.new_total_cost, payments: data.payments});
+                    if (activeTab !== 'bookings') fetchBookings(); // refresh payments if not on bookings tab
+                } else {
+                    // Always try to fetch updated data
+                    fetchBookings();
                 }
             } else {
                 const err = await res.json().catch(() => ({}));
@@ -2488,14 +2496,24 @@ const DashboardAccounting = () => {
             <ConfirmModal
                 isOpen={refundConfirm.isOpen}
                 title={`${refundConfirm.action === 'retry_provider_refund' ? 'Retry provider refund' : 'Process refund'} for booking #${refundConfirm.bookingId || ''}?`}
-                message={refundConfirm.action === 'retry_provider_refund'
-                    ? `Accounting will retry the PayMongo refund for ${'P' + Number(refundConfirm.refundAmount || 0).toLocaleString()} and keep the case in review if the provider fails again.`
-                    : `Accounting will create a refund case, retain the non-refundable reservation fee, and refund ${'P' + Number(refundConfirm.refundAmount || 0).toLocaleString()} where payment references are available.`}
-                confirmText={refundConfirm.action === 'retry_provider_refund' ? 'Retry Refund' : 'Process Refund'}
-                tone="danger"
+                description={getRefundWarningDescription(refundConfirm.action, refundConfirm.refundAmount)}
+                confirmText={refundConfirm.action === 'retry_provider_refund' ? "Retry Refund" : "Yes, process refund"}
+                cancelText="Cancel"
+                isDestructive={true}
                 busy={refundProcessing}
                 onCancel={() => setRefundConfirm({ isOpen: false, bookingId: null, refundAmount: 0, action: 'process', refundCaseId: null })}
-                onConfirm={handleProcessRefund}
+                onConfirm={submitProcessRefund}
+            />
+            <ConfirmModal
+                isOpen={discountConfirm}
+                title={`Apply discount to booking #${discountModal.data?.id}?`}
+                description="This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?"
+                confirmText="Yes, apply discount"
+                cancelText="Cancel"
+                isDestructive={false}
+                busy={discountLoading}
+                onCancel={() => setDiscountConfirm(false)}
+                onConfirm={confirmDiscountSubmit}
             />
             <PromptModal
                 isOpen={refundActionPrompt.isOpen}

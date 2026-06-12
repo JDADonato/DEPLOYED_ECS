@@ -5093,35 +5093,42 @@ const DashboardAdmin = () => {
         }
     };
 
-    const handleDiscountSubmit = async (e) => {
+    const handleDiscountSubmit = (e) => {
         e.preventDefault();
-        if (!window.confirm("Are you sure you want to apply this discount? This will recalculate the pending payments.")) return;
-        setDiscountLoading(true);
-        try {
-            // Session auth - no token needed
-            const res = await fetch(`/api/admin/bookings/${discountModal.data.id}/discount`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(discountForm)
-            });
+        setConfirmDialog({
+            isOpen: true,
+            title: `Apply discount to booking #${discountModal.data?.id}?`,
+            message: "This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?",
+            isDestructive: false,
+            confirmText: 'Yes, apply discount',
+            action: async () => {
+                setDiscountLoading(true);
+                try {
+                    const res = await fetch(`/api/admin/bookings/${discountModal.data.id}/discount`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(discountForm)
+                    });
 
-            if (res.ok) {
-                showToast("Discount applied successfully");
-                setDiscountModal({ open: false, data: null });
-                bustAdminCache(ADMIN_BOOKINGS_URL, '/api/admin/analytics');
-                fetchBookings();
-            } else {
-                const err = await res.json().catch(() => ({}));
-                showToast(getErrorMessage(err, "Could not apply discount"), 'error');
+                    if (res.ok) {
+                        showToast("Discount applied successfully");
+                        setDiscountModal({ open: false, data: null });
+                        bustAdminCache(ADMIN_BOOKINGS_URL, '/api/admin/analytics');
+                        fetchBookings();
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        showToast(getErrorMessage(err, "Could not apply discount"), 'error');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast("Could not apply discount. Please try again.", 'error');
+                } finally {
+                    setDiscountLoading(false);
+                }
             }
-        } catch (error) {
-            console.error(error);
-            showToast("Could not apply discount. Please try again.", 'error');
-        } finally {
-            setDiscountLoading(false);
-        }
+        });
     };
 
     const handleProcessRefund = async (itemOrBookingId) => {
