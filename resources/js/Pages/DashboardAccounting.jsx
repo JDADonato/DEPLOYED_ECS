@@ -2504,7 +2504,7 @@ const DashboardAccounting = () => {
                 tone="danger"
                 busy={refundProcessing}
                 onCancel={() => setRefundConfirm({ isOpen: false, bookingId: null, refundAmount: 0, action: 'process', refundCaseId: null })}
-                onConfirm={submitProcessRefund}
+                onConfirm={handleProcessRefund}
             />
             <ConfirmModal
                 isOpen={discountConfirm}
