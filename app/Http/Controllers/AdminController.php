@@ -863,8 +863,12 @@ class AdminController extends Controller
         } else {
             $originalAmount = $booking->budget;
         }
-        $discountValue = $request->discount_value ?? 0;
+        $discountValue = (float) ($request->discount_value ?? 0);
         $discountType = $request->discount_type ?? 'fixed';
+
+        if ($discountValue <= 0) {
+            return response()->json(['error' => 'Discount value must be greater than zero.'], 422);
+        }
 
         if ($discountType === 'percentage') {
             $deduction = $originalAmount * ($discountValue / 100);

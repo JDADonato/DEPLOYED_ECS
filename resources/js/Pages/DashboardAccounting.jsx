@@ -2573,7 +2573,10 @@ const DashboardAccounting = () => {
                                             step={discountForm.discount_type === 'percentage' ? '0.1' : '1'}
                                             max={discountForm.discount_type === 'percentage' ? '100' : undefined}
                                             value={discountForm.discount_value}
-                                            onChange={e => setDiscountForm({ ...discountForm, discount_value: e.target.value })}
+                                            onChange={e => {
+                                                const val = parseFloat(e.target.value);
+                                                setDiscountForm({ ...discountForm, discount_value: isNaN(val) ? '' : val });
+                                            }}
                                             className="block w-full pl-8 pr-3 py-2.5 border border-amber-500 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-semibold text-slate-900"
                                         />
                                     </div>
