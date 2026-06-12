@@ -192,12 +192,11 @@ class AccountingController extends Controller
             return response()->json(['error' => 'Booking not found'], 404);
         }
 
-        // Security check: Block if any payment is locked
-        $lockedStatuses = ['Paid', 'Verified', 'Refunded'];
-        $hasLockedPayments = $booking->payments->contains(fn ($payment) => in_array($payment->status, $lockedStatuses, true));
-        if ($hasLockedPayments) {
-            return response()->json(['error' => 'Cannot apply discount: A payment has already been processed.'], 400);
-        }
+        // Calculate how much has already been paid (locked funds)
+        $lockedStatuses = ['Paid', 'Verified'];
+        $totalPaid = $booking->payments
+            ->filter(fn ($payment) => in_array($payment->status, $lockedStatuses, true))
+            ->sum(fn ($payment) => (float) $payment->amount);
 
         if (is_null($booking->budget)) {
             $currentTotal = $booking->total_cost ?? 0;
@@ -229,6 +228,11 @@ class AccountingController extends Controller
         }
 
         $newTotalCost = max(0, $newTotalCost);
+
+        // Safety: don't allow discount to reduce total below already-paid amount
+        if ($newTotalCost < $totalPaid) {
+            return response()->json(['error' => 'Discount too large: the new total (₱' . number_format($newTotalCost, 2) . ') would be less than the amount already paid (₱' . number_format($totalPaid, 2) . ').'], 422);
+        }
 
         $booking->update([
             'discount_value' => $discountValue,

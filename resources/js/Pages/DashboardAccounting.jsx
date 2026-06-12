@@ -442,7 +442,7 @@ const DashboardAccounting = () => {
     const confirmDiscountSubmit = async () => {
         setDiscountLoading(true);
         try {
-            const res = await fetch(`/api/accounting/bookings/${discountModal.data.id}/discount`, {
+            const res = await csrfFetch(`/api/accounting/bookings/${discountModal.data.id}/discount`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -450,23 +450,19 @@ const DashboardAccounting = () => {
                 body: JSON.stringify(discountForm)
             });
 
+            const data = await res.json().catch(() => ({}));
+
             if (res.ok) {
                 clearSmartCacheForPrefix(smartCacheKey('accounting:'));
                 setToast({ message: "Discount applied successfully", type: "success" });
                 setDiscountModal({ open: false, data: null });
                 setDiscountConfirm(false);
-                if (activeTab === 'bookings') fetchBookings({ force: true });
                 if (selectedFinanceBooking) {
-                    const data = await res.json();
                     setSelectedFinanceBooking({...selectedFinanceBooking, totalCost: data.new_total_cost, total_cost: data.new_total_cost, payments: data.payments});
-                    if (activeTab !== 'bookings') fetchBookings({ force: true }); // refresh payments if not on bookings tab
-                } else {
-                    // Always try to fetch updated data
-                    fetchBookings({ force: true });
                 }
+                fetchBookings({ force: true });
             } else {
-                const err = await res.json().catch(() => ({}));
-                setToast({ message: getErrorMessage(err, "Could not apply discount"), type: "error" });
+                setToast({ message: getErrorMessage(data, "Could not apply discount"), type: "error" });
             }
         } catch (error) {
             console.error(error);
