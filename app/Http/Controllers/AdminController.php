@@ -898,7 +898,7 @@ class AdminController extends Controller
 
         // Notify customer (dispatch synchronously to avoid queue worker dependency)
         if ($appliedDiscount > 0) {
-            $booking->user->notifyNow(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost));
+            defer(fn () => $booking->user->notifyNow(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost)));
         }
 
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);

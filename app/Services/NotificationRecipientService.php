@@ -66,30 +66,34 @@ class NotificationRecipientService
         $sentAny = false;
 
         if ($databaseChannels !== []) {
-            try {
-                NotificationFacade::sendNow($user, $notification, $databaseChannels);
-                $this->broadcastDatabaseNotification($user);
-                $sentAny = true;
-            } catch (\Throwable $e) {
-                Log::warning('Operational database notification delivery failed.', [
-                    'context' => $context,
-                    'user_id' => $user->id,
-                    'message' => $e->getMessage(),
-                ]);
-            }
+            defer(function () use ($user, $notification, $databaseChannels, $context) {
+                try {
+                    NotificationFacade::sendNow($user, $notification, $databaseChannels);
+                    $this->broadcastDatabaseNotification($user);
+                } catch (\Throwable $e) {
+                    Log::warning('Operational database notification delivery failed.', [
+                        'context' => $context,
+                        'user_id' => $user->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            });
+            $sentAny = true;
         }
 
         if ($mailChannels !== []) {
-            try {
-                NotificationFacade::sendNow($user, $notification, $mailChannels);
-                $sentAny = true;
-            } catch (\Throwable $e) {
-                Log::warning('Operational mail notification delivery failed.', [
-                    'context' => $context,
-                    'user_id' => $user->id,
-                    'message' => $e->getMessage(),
-                ]);
-            }
+            defer(function () use ($user, $notification, $mailChannels, $context) {
+                try {
+                    NotificationFacade::sendNow($user, $notification, $mailChannels);
+                } catch (\Throwable $e) {
+                    Log::warning('Operational mail notification delivery failed.', [
+                        'context' => $context,
+                        'user_id' => $user->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            });
+            $sentAny = true;
         }
 
         return $sentAny;

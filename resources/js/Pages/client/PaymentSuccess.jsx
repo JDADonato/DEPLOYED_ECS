@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { ArrowRight, Check, FileCheck2, LockKeyhole, ReceiptText } from 'lucide-react';
 import logoImg from '../../../images/ECS_LOGO.png';
 import { customerPaymentStatus, isSettledPaymentStatus } from '../../utils/statusLabels';
+import { clearSmartCacheForPrefix } from '../../utils/smartResource';
 
 const PaymentSuccess = ({ paymentStatus = 'Pending', syncMessage = 'Payment is still pending PayMongo confirmation.' }) => {
+    useEffect(() => {
+        // Clear cached dashboard data so that when they return, it fetches the fresh 'Paid' status.
+        try {
+            const userJson = JSON.parse(localStorage.getItem('ecs_user'));
+            if (userJson && userJson.id) {
+                clearSmartCacheForPrefix(`user:${userJson.id}`);
+            }
+        } catch (e) {}
+        clearSmartCacheForPrefix('client:dashboard_data');
+    }, []);
+
     const isConfirmed = isSettledPaymentStatus(paymentStatus);
     const displayStatus = customerPaymentStatus(paymentStatus);
 
