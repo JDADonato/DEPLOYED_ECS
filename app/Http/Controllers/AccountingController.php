@@ -180,6 +180,63 @@ class AccountingController extends Controller
         ]);
     }
 
+    public function applyDiscount(Request $request, int $id)
+    {
+        $request->validate([
+            'discount_value' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:fixed,percentage',
+        ]);
+
+        $booking = Booking::with('payments')->find($id);
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        // Security check: Block if any payment is locked
+        $lockedStatuses = ['Paid', 'Verified', 'Refunded'];
+        $hasLockedPayments = $booking->payments->contains(fn ($payment) => in_array($payment->status, $lockedStatuses, true));
+        if ($hasLockedPayments) {
+            return response()->json(['error' => 'Cannot apply discount: A payment has already been processed.'], 400);
+        }
+
+        $originalAmount = $booking->budget ?? $booking->total_cost ?? 0;
+        $discountValue = $request->discount_value ?? 0;
+        $discountType = $request->discount_type ?? 'fixed';
+
+        if ($discountType === 'percentage') {
+            $deduction = $originalAmount * ($discountValue / 100);
+            $newTotalCost = $originalAmount - $deduction;
+            $appliedDiscount = $deduction;
+        } elseif ($discountType === 'fixed') {
+            $newTotalCost = $originalAmount - $discountValue;
+            $appliedDiscount = $discountValue;
+        } else {
+            $newTotalCost = $originalAmount;
+            $appliedDiscount = 0;
+        }
+
+        $newTotalCost = max(0, $newTotalCost);
+
+        $booking->update([
+            'discount_value' => $discountValue,
+            'discount_type' => $discountType,
+            'total_cost' => $newTotalCost,
+        ]);
+        
+        // Recalculate pending payments
+        app(\App\Services\PaymentCalculationService::class)->syncPendingTranches($booking);
+
+        // Notify customer
+        if ($appliedDiscount > 0) {
+            $booking->user->notify(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost));
+        }
+
+        return response()->json([
+            'message' => 'Discount applied successfully',
+            'new_total_cost' => $newTotalCost,
+        ]);
+    }
+
     public function summary()
     {
         $approvedBookings = fn ($query) => $query->whereNotIn('status', ['Pending', 'Cancelled', 'Completed', 'completed']);

@@ -837,13 +837,20 @@ class AdminController extends Controller
     public function applyDiscount(Request $request, int $id)
     {
         $request->validate([
-            'discount_value' => 'nullable|numeric',
+            'discount_value' => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
         ]);
 
-        $booking = Booking::find($id);
+        $booking = Booking::with('payments')->find($id);
         if (! $booking) {
             return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        // Security check: Block if any payment is locked
+        $lockedStatuses = ['Paid', 'Verified', 'Refunded'];
+        $hasLockedPayments = $booking->payments->contains(fn ($payment) => in_array($payment->status, $lockedStatuses, true));
+        if ($hasLockedPayments) {
+            return response()->json(['error' => 'Cannot apply discount: A payment has already been processed.'], 400);
         }
 
         $originalAmount = $booking->budget ?? $booking->total_cost ?? 0;
@@ -853,10 +860,13 @@ class AdminController extends Controller
         if ($discountType === 'percentage') {
             $deduction = $originalAmount * ($discountValue / 100);
             $newTotalCost = $originalAmount - $deduction;
+            $appliedDiscount = $deduction;
         } elseif ($discountType === 'fixed') {
             $newTotalCost = $originalAmount - $discountValue;
+            $appliedDiscount = $discountValue;
         } else {
             $newTotalCost = $originalAmount;
+            $appliedDiscount = 0;
         }
 
         $newTotalCost = max(0, $newTotalCost);
@@ -866,6 +876,15 @@ class AdminController extends Controller
             'discount_type' => $discountType,
             'total_cost' => $newTotalCost,
         ]);
+        
+        // Recalculate pending payments
+        app(\App\Services\PaymentCalculationService::class)->syncPendingTranches($booking);
+
+        // Notify customer
+        if ($appliedDiscount > 0) {
+            $booking->user->notify(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost));
+        }
+
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
 
         return response()->json([

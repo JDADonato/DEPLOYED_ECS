@@ -384,6 +384,7 @@ Route::middleware(['auth', 'role:Accounting,Admin'])->group(function () {
     Route::put('/api/accounting/payments/{id}/verify', [AccountingController::class, 'verifyPayment']);
     Route::put('/api/accounting/payments/{id}', [AccountingController::class, 'updatePayment']);
     Route::put('/api/accounting/bookings/{id}/payment-terms', [AccountingController::class, 'updateBookingPaymentTerms']);
+    Route::post('/api/accounting/bookings/{id}/discount', [AccountingController::class, 'applyDiscount']);
     Route::get('/api/accounting/ledger', [AccountingController::class, 'getLedger']);
     Route::get('/api/accounting/reconciliation', [AccountingController::class, 'getReconciliation']);
     Route::post('/api/accounting/remind/{paymentId}', [AccountingController::class, 'remindClient']);

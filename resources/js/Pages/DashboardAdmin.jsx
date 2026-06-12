@@ -5112,7 +5112,8 @@ const DashboardAdmin = () => {
                 bustAdminCache(ADMIN_BOOKINGS_URL, '/api/admin/analytics');
                 fetchBookings();
             } else {
-                showToast("Could not apply discount", 'error');
+                const err = await res.json().catch(() => ({}));
+                showToast(getErrorMessage(err, "Could not apply discount"), 'error');
             }
         } catch (error) {
             console.error(error);

@@ -144,6 +144,11 @@ const DashboardAccounting = () => {
     const [refundConfirm, setRefundConfirm] = useState({ isOpen: false, bookingId: null, refundAmount: 0, action: 'process', refundCaseId: null });
     const [refundActionPrompt, setRefundActionPrompt] = useState({ isOpen: false, bookingId: null, refundCaseId: null, action: '', title: '', message: '', busy: false });
     const [refundProcessing, setRefundProcessing] = useState(false);
+    
+    // DISCOUNTS STATE
+    const [discountModal, setDiscountModal] = useState({ open: false, data: null });
+    const [discountForm, setDiscountForm] = useState({ discount_type: 'fixed', discount_value: 0 });
+    const [discountLoading, setDiscountLoading] = useState(false);
     const [remindingPaymentId, setRemindingPaymentId] = useState(null);
     const [selectedFinanceBooking, setSelectedFinanceBooking] = useState(null);
 
@@ -681,584 +686,641 @@ const DashboardAccounting = () => {
             mark_forfeited: ['Mark as forfeited?', 'Explain why the paid amount is non-refundable.'],
             close_no_refund_due: ['Close with no refund due?', 'Explain why no refund is due for this case.'],
             reopen_manual_review: ['Reopen manual review?', 'Add context for why this refund case needs review again.'],
-        };
-        const [title, message] = labels[action] || ['Update refund case', 'Add a note for the refund audit trail.'];
-        setRefundActionPrompt({ isOpen: true, bookingId: item.booking_id, refundCaseId: firstCase?.id || null, action, title, message, busy: false });
-    };
+    const [title, message] = labels[action] || ['Update refund case', 'Add a note for the refund audit trail.'];
+    setRefundActionPrompt({ isOpen: true, bookingId: item.booking_id, refundCaseId: firstCase?.id || null, action, title, message, busy: false });
+};
 
-    const submitRefundAction = async (notes) => {
-        const { bookingId, refundCaseId, action } = refundActionPrompt;
-        if (!bookingId || !action) return;
-        setRefundActionPrompt(prev => ({ ...prev, busy: true }));
-        try {
-            const res = await csrfFetch(`/api/accounting/refund/${bookingId}/${action}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refund_case_id: refundCaseId, notes }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || 'Could not update refund case.');
-            setToast({ message: data.message || 'Refund case updated.', type: 'success' });
-            setRefundActionPrompt({ isOpen: false, bookingId: null, refundCaseId: null, action: '', title: '', message: '', busy: false });
-            clearSmartCacheForPrefix(smartCacheKey('accounting:'));
-            fetchRefundQueue({ force: true });
-            fetchBookings({ silent: true, force: true });
-            fetchLedger({ silent: true });
-        } catch (error) {
-            setToast({ message: error.message || 'Could not update refund case.', type: 'error' });
-            setRefundActionPrompt(prev => ({ ...prev, busy: false }));
-        }
-    };
-
-    const syncRefundProviderStatus = async (item) => {
-        const firstCase = item.refund_cases?.[0] || null;
-        if (!item.booking_id || !firstCase?.id) return;
-
-        try {
-            const res = await csrfFetch(`/api/accounting/refund/${item.booking_id}/sync_provider_status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refund_case_id: firstCase.id }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || 'Could not sync provider status.');
-            setToast({ message: data.message || 'Provider refund status synced.', type: 'success' });
-            clearSmartCacheForPrefix(smartCacheKey('accounting:'));
-            fetchRefundQueue({ force: true });
-            fetchBookings({ silent: true, force: true });
-        } catch (error) {
-            setToast({ message: error.message || 'Could not sync provider status.', type: 'error' });
-        }
-    };
-
-    const paymentQueueCounts = useMemo(() => {
-        const pending = bookings.filter((booking) => paymentMatchesSegment(booking, 'needs_verification')).length;
-        const overdue = bookings.filter((booking) => paymentMatchesSegment(booking, 'overdue')).length;
-        const upcoming = bookings.filter((booking) => paymentMatchesSegment(booking, 'upcoming')).length;
-
-        return {
-            needs_verification: accountingSummary?.needs_verification ?? accountingSummary?.pending ?? pending,
-            overdue: accountingSummary?.overdue ?? overdue,
-            exceptions: reconciliationItems.length,
-            upcoming: accountingSummary?.due_soon ?? upcoming,
-            all_active: accountingSummary?.bookings ?? bookings.length,
-        };
-    }, [bookings, reconciliationItems.length, accountingSummary]);
-
-    const tabMeta = {
-        today: 'To-Dos',
-        payments: 'Payments',
-        reconciliation: 'Reconciliation',
-        ledger: 'Ledger & Receipts',
-        refunds: 'Refunds',
-        settings: 'Settings',
-        history: 'Event History',
-    };
-
-    const accountingNavbarPageEntries = useMemo(() => buildAccountingPageSearchEntries(), []);
-    const accountingNavbarResults = useMemo(() => {
-        const query = accountingNavbarSearch.trim();
-        const pageEntries = query
-            ? accountingNavbarPageEntries.filter((entry) => matchesNavbarQuery(entry, query))
-            : accountingNavbarPageEntries.slice(0, 6);
-        const bookingEntries = query.length < 2 ? [] : accountingNavbarBookingMatches.map((booking) => {
-            const contact = bookingContactName(booking);
-            const contactEmail = bookingContactEmail(booking);
-            const contactPhone = bookingContactPhone(booking);
-            const account = customerAccountName(booking);
-            const accountEmail = customerAccountEmail(booking);
-            const accountPhone = customerAccountPhone(booking);
-            const paid = toMoneyNumber(booking.paid_amount);
-            const remaining = toMoneyNumber(booking.remaining_balance);
-            const searchText = compactText([
-                contact,
-                contactEmail,
-                contactPhone,
-                account,
-                accountEmail,
-                accountPhone,
-                booking.id,
-            ], ' ');
-
-            return {
-                id: `accounting-booking:${booking.id}`,
-                kind: 'booking',
-                label: compactText([contact || account || 'Booking contact', `Booking #${booking.id}`], ' - '),
-                path: 'Accounting / Payments',
-                description: compactText([
-                    eventDisplayName(booking),
-                    formatAccountingDate(booking.event_date),
-                    remaining > 0 ? `Balance P${remaining.toLocaleString()}` : paid > 0 ? `Paid P${paid.toLocaleString()}` : null,
-                ]),
-                searchText: contact || account || String(booking.id),
-                nameText: compactText([contact, account, eventDisplayName(booking)], ' '),
-                contactText: compactText([contactEmail, contactPhone, accountEmail, accountPhone], ' '),
-                bookingText: compactText([booking.id, `Booking #${booking.id}`], ' '),
-                aliases: [searchText],
-                context: createStaffContext({
-                    booking: booking.id,
-                    customer: booking.user_id || booking.customer_account?.id,
-                    customerQuery: contact || account,
-                }),
-                record: booking,
-            };
+const handleDiscountSubmit = async (e) => {
+    e.preventDefault();
+    setDiscountLoading(true);
+    try {
+        const res = await fetch(`/api/accounting/bookings/${discountModal.data.id}/discount`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(discountForm)
         });
 
-        return [...pageEntries, ...bookingEntries]
-            .filter((entry, index, list) => list.findIndex((candidate) => candidate.id === entry.id) === index)
-            .filter((entry) => !query || matchesNavbarQuery(entry, query))
-            .filter((entry) => matchesNavbarAdvancedFilters(entry, accountingNavbarFilters, query))
-            .slice(0, 10);
-    }, [accountingNavbarBookingMatches, accountingNavbarFilters, accountingNavbarPageEntries, accountingNavbarSearch]);
-    const accountingNavbarFilterCount = Object.values(accountingNavbarFilters).filter((value) => value !== 'all').length;
-
-    const selectAccountingNavbarResult = (result) => {
-        if (!result) return;
-
-        if (result.kind === 'page') {
-            setActiveTab(result.tab);
+        if (res.ok) {
+            setToast({ message: "Discount applied successfully", type: "success" });
+            setDiscountModal({ open: false, data: null });
+            if (activeTab === 'bookings') fetchBookings();
+            if (selectedFinanceBooking) {
+                const newTotalCost = (await res.json()).new_total_cost;
+                setSelectedFinanceBooking({...selectedFinanceBooking, totalCost: newTotalCost, total_cost: newTotalCost});
+                fetchBookings(); // to refresh payments
+            }
         } else {
-            const searchText = result.searchText || accountingNavbarSearch.trim();
-            setAccountingStaffContext(result.context || createStaffContext({ customerQuery: searchText }));
-            setAccountingContextPanelOpen(true);
-            setPaymentSegment('all_active');
-            setBookingPaymentFilter('all');
-            setBookingSearchQuery(searchText);
-            setBookingPage(1);
-            setActiveTab('payments');
+            const err = await res.json().catch(() => ({}));
+            setToast({ message: getErrorMessage(err, "Could not apply discount"), type: "error" });
         }
+    } catch (error) {
+        console.error(error);
+        setToast({ message: "Could not apply discount. Please try again.", type: "error" });
+    } finally {
+        setDiscountLoading(false);
+    }
+};
 
-        setAccountingNavbarSearch('');
-        setAccountingNavbarSearchOpen(false);
-    };
-
-    const clearAccountingContext = useCallback(() => {
-        clearAccountingStaffContext();
-        setAccountingContextPanelOpen(false);
-    }, [clearAccountingStaffContext]);
-
-    const handleBookingSearchChange = useCallback((event) => {
-        const value = event.target.value;
-        setBookingSearchQuery(value);
-        if (!value.trim()) {
-            clearAccountingContext();
-        }
-    }, [clearAccountingContext]);
-
-    const handleReconciliationSearchChange = useCallback((event) => {
-        const value = event.target.value;
-        setReconciliationSearch(value);
-        if (!value.trim()) {
-            clearAccountingContext();
-        }
-    }, [clearAccountingContext]);
-
-    const handleRefundSearchChange = useCallback((event) => {
-        const value = event.target.value;
-        setRefundSearch(value);
-        if (!value.trim()) {
-            clearAccountingContext();
-        }
-    }, [clearAccountingContext]);
-
-    const handleLedgerClientSearchChange = useCallback((event) => {
-        const value = event.target.value;
-        setLedgerFilter((current) => ({ ...current, clientSearch: value }));
-        if (!value.trim()) {
-            clearAccountingContext();
-        }
-    }, [clearAccountingContext]);
-
-    const financeNextActions = useMemo(() => ([
-        {
-            id: 'verify-payments',
-            priority: dashboardSummary.pending > 0 ? 'action' : 'info',
-            title: 'Verify customer payments',
-            description: dashboardSummary.pending > 0 ? `${dashboardSummary.pending} payment records need review.` : 'No payments are waiting for verification.',
-            badge: dashboardSummary.pending,
-            primaryLabel: 'Open',
-            tone: dashboardSummary.pending > 0 ? 'warn' : 'good',
-            onOpen: () => {
-                setPaymentSegment('needs_verification');
-                setActiveTab('payments');
-            },
-        },
-        {
-            id: 'overdue-balances',
-            priority: dashboardSummary.overdue > 0 ? 'urgent' : 'info',
-            title: 'Follow up overdue balances',
-            description: dashboardSummary.overdue > 0 ? `${dashboardSummary.overdue} balances are past due.` : 'No overdue balances today.',
-            badge: dashboardSummary.overdue,
-            primaryLabel: 'Open',
-            tone: dashboardSummary.overdue > 0 ? 'danger' : 'good',
-            onOpen: () => {
-                setPaymentSegment('overdue');
-                setActiveTab('payments');
-            },
-        },
-        {
-            id: 'payment-exceptions',
-            priority: dashboardSummary.exceptions > 0 ? 'urgent' : 'info',
-            title: 'Resolve payment issues',
-            description: dashboardSummary.exceptions > 0 ? `${dashboardSummary.exceptions} payment records need attention.` : 'Online and staff payment records are aligned.',
-            badge: dashboardSummary.exceptions,
-            primaryLabel: 'Open',
-            tone: dashboardSummary.exceptions > 0 ? 'danger' : 'good',
-            onOpen: () => {
-                setPaymentSegment('exceptions');
-                setActiveTab('payments');
-            },
-        },
-        {
-            id: 'refund-queue',
-            priority: dashboardSummary.refunds > 0 ? 'followup' : 'info',
-            title: 'Process refund cases',
-            description: dashboardSummary.refunds > 0 ? `${dashboardSummary.refunds} refund cases are waiting.` : 'No refund cases are waiting.',
-            badge: dashboardSummary.refunds,
-            primaryLabel: 'Open',
-            tone: dashboardSummary.refunds > 0 ? 'warn' : 'good',
-            onOpen: () => setActiveTab('refunds'),
-        },
-    ]), [dashboardSummary.exceptions, dashboardSummary.overdue, dashboardSummary.pending, dashboardSummary.refunds]);
-
-    const accountingContextBookings = useMemo(() => {
-        if (!hasAccountingStaffContext) return [];
-        const search = normalizeSearch(accountingContextSearchText);
-
-        return bookings.filter((booking) => {
-            if (accountingStaffContext.booking && String(booking.id) === String(accountingStaffContext.booking)) return true;
-            if (accountingStaffContext.customerId && String(booking.user_id || booking.customer_account?.id || '') === String(accountingStaffContext.customerId)) return true;
-            if (!search) return false;
-
-            return normalizeSearch([
-                `booking #${booking.id}`,
-                booking.id,
-                bookingContactName(booking),
-                bookingContactEmail(booking),
-                bookingContactPhone(booking),
-                customerAccountName(booking),
-                customerAccountEmail(booking),
-                customerAccountPhone(booking),
-                eventDisplayName(booking),
-            ].filter(Boolean).join(' ')).includes(search);
-        }).slice(0, 6);
-    }, [accountingContextSearchText, accountingStaffContext, bookings, hasAccountingStaffContext]);
-
-    const accountingContextPayments = useMemo(() => (
-        accountingContextBookings.flatMap((booking) => (
-            (booking.payments || []).map((payment) => ({ booking, payment }))
-        ))
-    ), [accountingContextBookings]);
-
-    const accountingContextIdentity = useMemo(() => {
-        const primary = accountingContextBookings[0] || {};
-        return {
-            accountName: customerAccountName(primary) || accountingStaffContext.customerQuery || 'Customer context',
-            accountEmail: customerAccountEmail(primary),
-            accountPhone: customerAccountPhone(primary),
-            contactName: bookingContactName(primary) || accountingStaffContext.customerQuery,
-            contactEmail: bookingContactEmail(primary),
-            contactPhone: bookingContactPhone(primary),
-            hasDifferentContact: primary.id ? hasDifferentBookingContact(primary) : false,
-        };
-    }, [accountingContextBookings, accountingStaffContext.customerQuery]);
-
-    const accountingContextBalance = useMemo(() => (
-        accountingContextBookings.reduce((summary, booking) => {
-            const total = toMoneyNumber(booking.totalCost ?? booking.total_cost ?? booking.total);
-            const paid = (booking.payments || [])
-                .filter((payment) => isPaidStatus(payment.status))
-                .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
-            return {
-                total: summary.total + total,
-                paid: summary.paid + paid,
-                remaining: summary.remaining + Math.max(total - paid, 0),
-            };
-        }, { total: 0, paid: 0, remaining: 0 })
-    ), [accountingContextBookings]);
-
-    const openAccountingContextTab = useCallback((tab, searchText = accountingContextSearchText) => {
-        if (tab === 'refunds') {
-            setRefundSegment('all');
-            setRefundSearch(searchText);
-            setRefundPage(1);
-        } else if (tab === 'reconciliation') {
-            setReconciliationSearch(searchText);
-            setReconciliationTypeFilter('all');
-            setReconciliationPage(1);
-        } else if (tab === 'ledger') {
-            setLedgerFilter((current) => ({ ...current, clientSearch: searchText }));
-            setLedgerPage(1);
-        } else if (tab !== 'history') {
-            setPaymentSegment('all_active');
-            setBookingPaymentFilter('all');
-            setBookingSearchQuery(searchText);
-            setBookingPage(1);
-        }
-
-        setActiveTab(tab);
-        setAccountingContextPanelOpen(false);
-    }, [accountingContextSearchText, setActiveTab]);
-
-    const renderAccountingContextPanel = () => {
-        if (!hasAccountingStaffContext || !accountingContextPanelOpen) return null;
-        const primaryBooking = accountingContextBookings[0];
-        const searchLabel = accountingContextSearchText || accountingStaffContext.customerQuery || accountingStaffContext.booking || 'Current context';
-        const accountName = accountingContextIdentity.accountName === 'Customer account' ? searchLabel : accountingContextIdentity.accountName;
-
-        return (
-            <div className="staff-context-drawer-shell" role="dialog" aria-modal="true" aria-label="Accounting customer context">
-                <button type="button" className="staff-context-drawer-backdrop" onClick={() => setAccountingContextPanelOpen(false)} aria-label="Close customer context" />
-                <aside className="staff-context-drawer">
-                    <header className="staff-context-drawer-head">
-                        <div>
-                            <p>Customer context</p>
-                            <h3>{accountName}</h3>
-                            <span>{searchLabel}</span>
-                        </div>
-                        <button type="button" onClick={() => setAccountingContextPanelOpen(false)}>Close</button>
-                    </header>
-                    <div className="staff-context-drawer-body">
-                        <section className="staff-context-card">
-                            <span>Account</span>
-                            <strong>{accountName}</strong>
-                            <p>{accountingContextIdentity.accountEmail || 'No account email in loaded records'}</p>
-                            {accountingContextIdentity.accountPhone && <p>{accountingContextIdentity.accountPhone}</p>}
-                        </section>
-                        {accountingContextIdentity.hasDifferentContact && (
-                            <section className="staff-context-card">
-                                <span>Booking contact</span>
-                                <strong>{accountingContextIdentity.contactName}</strong>
-                                <p>{accountingContextIdentity.contactEmail || 'No booking email'}</p>
-                                {accountingContextIdentity.contactPhone && <p>{accountingContextIdentity.contactPhone}</p>}
-                            </section>
-                        )}
-                        <section className="staff-context-card staff-context-balance-card">
-                            <span>Finance state</span>
-                            <strong>{'P' + accountingContextBalance.remaining.toLocaleString()} remaining</strong>
-                            <p>{'P' + accountingContextBalance.paid.toLocaleString()} paid from {'P' + accountingContextBalance.total.toLocaleString()} total.</p>
-                            <p>{accountingContextPayments.length} payment milestone(s) in loaded records.</p>
-                        </section>
-                        <section className="staff-context-card">
-                            <span>Related bookings</span>
-                            {accountingContextBookings.length ? (
-                                <div className="staff-context-record-list">
-                                    {accountingContextBookings.map((booking) => (
-                                        <button key={booking.id} type="button" onClick={() => { setSelectedFinanceBooking(booking); openAccountingContextTab('payments'); }}>
-                                            <strong>Booking #{booking.id} - {eventDisplayName(booking)}</strong>
-                                            <p>{formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests / {booking.payment_state || booking.status || 'Payment record'}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p>No loaded finance record matches this context yet. Keep the filter applied or search all payments.</p>
-                            )}
-                        </section>
-                        <section className="staff-context-actions">
-                            <button type="button" onClick={() => openAccountingContextTab('payments')}>Open payments</button>
-                            <button type="button" onClick={() => openAccountingContextTab('reconciliation')}>Open reconciliation</button>
-                            <button type="button" onClick={() => openAccountingContextTab('refunds')}>Open refunds</button>
-                            <button type="button" onClick={() => openAccountingContextTab('ledger')}>Open ledger</button>
-                            <button type="button" onClick={() => openAccountingContextTab('history')}>Open history</button>
-                            {primaryBooking && (
-                                <button type="button" onClick={() => setSelectedFinanceBooking(primaryBooking)}>Payment details</button>
-                            )}
-                            <button type="button" className="is-muted" onClick={clearAccountingContext}>Clear context</button>
-                        </section>
-                    </div>
-                </aside>
-            </div>
-        );
-    };
-
-    const todayQueues = useMemo(() => {
-        const pendingBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'needs_verification')).slice(0, 4);
-        const overdueBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'overdue')).slice(0, 4);
-        const upcomingBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'upcoming')).slice(0, 4);
-
-        return {
-            urgent: [...reconciliationItems.slice(0, 3), ...overdueBookings].slice(0, 5),
-            pendingBookings,
-            upcomingBookings,
-            refunds: refundQueue.slice(0, 4),
-        };
-    }, [bookings, reconciliationItems, refundQueue]);
-
-    const exceptionLabels = {
-        checkout_started_unpaid: 'Customer started checkout but did not pay',
-        provider_paid_not_local: 'Online payment needs staff review',
-        pending_past_due: 'Payment is past due',
-        missing_paymongo_payment_id_for_refund: 'Refund needs original payment reference',
-        webhook_mismatch: 'Online payment details do not match',
-    };
-
-    const getReconciliationAction = (item) => {
-        const exceptions = item.exceptions || [];
-
-        if (exceptions.includes('provider_paid_not_local')) {
-            return {
-                label: 'Verify payment',
-                detail: 'Online payment exists. Confirm it, then mark the record paid.',
-                tone: 'primary',
-                onClick: () => handleVerify(item.id, 'Verify'),
-            };
-        }
-
-        if (exceptions.includes('checkout_started_unpaid') || exceptions.includes('pending_past_due')) {
-            return {
-                label: remindingPaymentId === item.id ? 'Sending...' : 'Send reminder',
-                detail: 'Customer has not completed this payment.',
-                tone: 'warn',
-                disabled: remindingPaymentId === item.id,
-                onClick: () => handleSendReminder(item.id),
-            };
-        }
-
-        if (exceptions.includes('missing_paymongo_payment_id_for_refund')) {
-            return {
-                label: 'Open refunds',
-                detail: 'Refund processing needs the original payment reference.',
-                tone: 'danger',
-                onClick: () => setActiveTab('refunds'),
-            };
-        }
-
-        return {
-            label: 'Review ledger',
-            detail: 'Compare the payment record against online payment details.',
-            tone: 'muted',
-            onClick: () => {
-                setPaymentSegment('exceptions');
-                setActiveTab('payments');
-            },
-        };
-    };
-
-    const paginate = (items, pageNumber, pageSize) => {
-        const start = (pageNumber - 1) * pageSize;
-        return items.slice(start, start + pageSize);
-    };
-
-    const filteredReconciliationItems = useMemo(() => {
-        const needle = reconciliationSearch.trim().toLowerCase();
-
-        return reconciliationItems.filter((item) => {
-            const exceptions = item.exceptions || [];
-            const haystack = [
-                item.id,
-                item.booking_id,
-                bookingContactName(item),
-                bookingContactEmail(item),
-                customerAccountName(item),
-                item.payment_type,
-                item.status,
-                item.paymongo_checkout_session_id,
-                item.paymongo_payment_id,
-                item.paymongo_reference_number,
-            ].join(' ').toLowerCase();
-
-            if (needle && !haystack.includes(needle)) return false;
-            if (reconciliationTypeFilter !== 'all' && !exceptions.includes(reconciliationTypeFilter)) return false;
-
-            return true;
+const confirmVoidPayment = async (reasonText) => {
+    const { bookingId, refundCaseId, action } = refundActionPrompt;
+    if (!bookingId || !action) return;
+    setRefundActionPrompt(prev => ({ ...prev, busy: true }));
+    try {
+        const res = await csrfFetch(`/api/accounting/refund/${bookingId}/${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refund_case_id: refundCaseId, notes: reasonText }),
         });
-    }, [reconciliationItems, reconciliationSearch, reconciliationTypeFilter]);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not update refund case.');
+        setToast({ message: data.message || 'Refund case updated.', type: 'success' });
+        setRefundActionPrompt({ isOpen: false, bookingId: null, refundCaseId: null, action: '', title: '', message: '', busy: false });
+        clearSmartCacheForPrefix(smartCacheKey('accounting:'));
+        fetchRefundQueue({ force: true });
+        fetchBookings({ silent: true, force: true });
+        fetchLedger({ silent: true });
+    } catch (error) {
+        setToast({ message: error.message || 'Could not update refund case.', type: 'error' });
+        setRefundActionPrompt(prev => ({ ...prev, busy: false }));
+    }
+};
 
-    const pagedReconciliationItems = useMemo(() => {
-        return paginate(filteredReconciliationItems, reconciliationPage, reconciliationPerPage);
-    }, [filteredReconciliationItems, reconciliationPage, reconciliationPerPage]);
+const submitRefundAction = async (notes) => {
+    const { bookingId, refundCaseId, action } = refundActionPrompt;
+    if (!bookingId || !action) return;
+    setRefundActionPrompt(prev => ({ ...prev, busy: true }));
+    try {
+        const res = await csrfFetch(`/api/accounting/refund/${bookingId}/${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refund_case_id: refundCaseId, notes }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not update refund case.');
+        setToast({ message: data.message || 'Refund case updated.', type: 'success' });
+        setRefundActionPrompt({ isOpen: false, bookingId: null, refundCaseId: null, action: '', title: '', message: '', busy: false });
+        clearSmartCacheForPrefix(smartCacheKey('accounting:'));
+        fetchRefundQueue({ force: true });
+        fetchBookings({ silent: true, force: true });
+        fetchLedger({ silent: true });
+    } catch (error) {
+        setToast({ message: error.message || 'Could not update refund case.', type: 'error' });
+        setRefundActionPrompt(prev => ({ ...prev, busy: false }));
+    }
+};
 
-    const filteredRefundQueue = useMemo(() => {
-        const needle = refundSearch.trim().toLowerCase();
-        return refundQueue.filter((item) => {
-            const status = String(item.refund_status || '').toLowerCase();
-            const matchesSegment = refundSegment === 'all'
-                ? true
-                : refundSegment === 'completed'
-                ? ['reviewed', 'refunded', 'completed'].some((value) => status.includes(value))
-                : refundSegment === 'manual'
-                    ? status.includes('manual') || status.includes('failed')
-                    : refundSegment === 'provider'
-                        ? status.includes('progress') || status.includes('approved') || status.includes('processing')
-                        : !['reviewed', 'refunded', 'completed'].some((value) => status.includes(value));
+const syncRefundProviderStatus = async (item) => {
+    const firstCase = item.refund_cases?.[0] || null;
+    if (!item.booking_id || !firstCase?.id) return;
 
-            if (!matchesSegment) return false;
-            if (!needle) return true;
+    try {
+        const res = await csrfFetch(`/api/accounting/refund/${item.booking_id}/sync_provider_status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refund_case_id: firstCase.id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not sync provider status.');
+        setToast({ message: data.message || 'Provider refund status synced.', type: 'success' });
+        clearSmartCacheForPrefix(smartCacheKey('accounting:'));
+        fetchRefundQueue({ force: true });
+        fetchBookings({ silent: true, force: true });
+    } catch (error) {
+        setToast({ message: error.message || 'Could not sync provider status.', type: 'error' });
+    }
+};
 
-            return [
+const paymentQueueCounts = useMemo(() => {
+    const pending = bookings.filter((booking) => paymentMatchesSegment(booking, 'needs_verification')).length;
+    const overdue = bookings.filter((booking) => paymentMatchesSegment(booking, 'overdue')).length;
+    const upcoming = bookings.filter((booking) => paymentMatchesSegment(booking, 'upcoming')).length;
+
+    return {
+        needs_verification: accountingSummary?.needs_verification ?? accountingSummary?.pending ?? pending,
+        overdue: accountingSummary?.overdue ?? overdue,
+        exceptions: reconciliationItems.length,
+        upcoming: accountingSummary?.due_soon ?? upcoming,
+        all_active: accountingSummary?.bookings ?? bookings.length,
+    };
+}, [bookings, reconciliationItems.length, accountingSummary]);
+
+const tabMeta = {
+    today: 'To-Dos',
+    payments: 'Payments',
+    reconciliation: 'Reconciliation',
+    ledger: 'Ledger & Receipts',
+    refunds: 'Refunds',
+    settings: 'Settings',
+    history: 'Event History',
+};
+
+const accountingNavbarPageEntries = useMemo(() => buildAccountingPageSearchEntries(), []);
+const accountingNavbarResults = useMemo(() => {
+    const query = accountingNavbarSearch.trim();
+    const pageEntries = query
+        ? accountingNavbarPageEntries.filter((entry) => matchesNavbarQuery(entry, query))
+        : accountingNavbarPageEntries.slice(0, 6);
+    const bookingEntries = query.length < 2 ? [] : accountingNavbarBookingMatches.map((booking) => {
+        const contact = bookingContactName(booking);
+        const contactEmail = bookingContactEmail(booking);
+        const contactPhone = bookingContactPhone(booking);
+        const account = customerAccountName(booking);
+        const accountEmail = customerAccountEmail(booking);
+        const accountPhone = customerAccountPhone(booking);
+        const paid = toMoneyNumber(booking.paid_amount);
+        const remaining = toMoneyNumber(booking.remaining_balance);
+        const searchText = compactText([
+            contact,
+            contactEmail,
+            contactPhone,
+            account,
+            accountEmail,
+            accountPhone,
+            booking.id,
+        ], ' ');
+
+        return {
+            id: `accounting-booking:${booking.id}`,
+            kind: 'booking',
+            label: compactText([contact || account || 'Booking contact', `Booking #${booking.id}`], ' - '),
+            path: 'Accounting / Payments',
+            description: compactText([
+                eventDisplayName(booking),
+                formatAccountingDate(booking.event_date),
+                remaining > 0 ? `Balance P${remaining.toLocaleString()}` : paid > 0 ? `Paid P${paid.toLocaleString()}` : null,
+            ]),
+            searchText: contact || account || String(booking.id),
+            nameText: compactText([contact, account, eventDisplayName(booking)], ' '),
+            contactText: compactText([contactEmail, contactPhone, accountEmail, accountPhone], ' '),
+            bookingText: compactText([booking.id, `Booking #${booking.id}`], ' '),
+            aliases: [searchText],
+            context: createStaffContext({
+                booking: booking.id,
+                customer: booking.user_id || booking.customer_account?.id,
+                customerQuery: contact || account,
+            }),
+            record: booking,
+        };
+    });
+
+    return [...pageEntries, ...bookingEntries]
+        .filter((entry, index, list) => list.findIndex((candidate) => candidate.id === entry.id) === index)
+        .filter((entry) => !query || matchesNavbarQuery(entry, query))
+        .filter((entry) => matchesNavbarAdvancedFilters(entry, accountingNavbarFilters, query))
+        .slice(0, 10);
+}, [accountingNavbarBookingMatches, accountingNavbarFilters, accountingNavbarPageEntries, accountingNavbarSearch]);
+const accountingNavbarFilterCount = Object.values(accountingNavbarFilters).filter((value) => value !== 'all').length;
+
+const selectAccountingNavbarResult = (result) => {
+    if (!result) return;
+
+    if (result.kind === 'page') {
+        setActiveTab(result.tab);
+    } else {
+        const searchText = result.searchText || accountingNavbarSearch.trim();
+        setAccountingStaffContext(result.context || createStaffContext({ customerQuery: searchText }));
+        setAccountingContextPanelOpen(true);
+        setPaymentSegment('all_active');
+        setBookingPaymentFilter('all');
+        setBookingSearchQuery(searchText);
+        setBookingPage(1);
+        setActiveTab('payments');
+    }
+
+    setAccountingNavbarSearch('');
+    setAccountingNavbarSearchOpen(false);
+};
+
+const clearAccountingContext = useCallback(() => {
+    clearAccountingStaffContext();
+    setAccountingContextPanelOpen(false);
+}, [clearAccountingContext]);
+
+const handleBookingSearchChange = useCallback((event) => {
+    const value = event.target.value;
+    setBookingSearchQuery(value);
+    if (!value.trim()) {
+        clearAccountingContext();
+    }
+}, [clearAccountingContext]);
+
+const handleReconciliationSearchChange = useCallback((event) => {
+    const value = event.target.value;
+    setReconciliationSearch(value);
+    if (!value.trim()) {
+        clearAccountingContext();
+    }
+}, [clearAccountingContext]);
+
+const handleRefundSearchChange = useCallback((event) => {
+    const value = event.target.value;
+    setRefundSearch(value);
+    if (!value.trim()) {
+        clearAccountingContext();
+    }
+}, [clearAccountingContext]);
+
+const handleLedgerClientSearchChange = useCallback((event) => {
+    const value = event.target.value;
+    setLedgerFilter((current) => ({ ...current, clientSearch: value }));
+    if (!value.trim()) {
+        clearAccountingContext();
+    }
+}, [clearAccountingContext]);
+
+const financeNextActions = useMemo(() => ([
+    {
+        id: 'verify-payments',
+        priority: dashboardSummary.pending > 0 ? 'action' : 'info',
+        title: 'Verify customer payments',
+        description: dashboardSummary.pending > 0 ? `${dashboardSummary.pending} payment records need review.` : 'No payments are waiting for verification.',
+        badge: dashboardSummary.pending,
+        primaryLabel: 'Open',
+        tone: dashboardSummary.pending > 0 ? 'warn' : 'good',
+        onOpen: () => {
+            setPaymentSegment('needs_verification');
+            setActiveTab('payments');
+        },
+    },
+    {
+        id: 'overdue-balances',
+        priority: dashboardSummary.overdue > 0 ? 'urgent' : 'info',
+        title: 'Follow up overdue balances',
+        description: dashboardSummary.overdue > 0 ? `${dashboardSummary.overdue} balances are past due.` : 'No overdue balances today.',
+        badge: dashboardSummary.overdue,
+        primaryLabel: 'Open',
+        tone: dashboardSummary.overdue > 0 ? 'danger' : 'good',
+        onOpen: () => {
+            setPaymentSegment('overdue');
+            setActiveTab('payments');
+        },
+    },
+    {
+        id: 'payment-exceptions',
+        priority: dashboardSummary.exceptions > 0 ? 'urgent' : 'info',
+        title: 'Resolve payment issues',
+        description: dashboardSummary.exceptions > 0 ? `${dashboardSummary.exceptions} payment records need attention.` : 'Online and staff payment records are aligned.',
+        badge: dashboardSummary.exceptions,
+        primaryLabel: 'Open',
+        tone: dashboardSummary.exceptions > 0 ? 'danger' : 'good',
+        onOpen: () => {
+            setPaymentSegment('exceptions');
+            setActiveTab('payments');
+        },
+    },
+    {
+        id: 'refund-queue',
+        priority: dashboardSummary.refunds > 0 ? 'followup' : 'info',
+        title: 'Process refund cases',
+        description: dashboardSummary.refunds > 0 ? `${dashboardSummary.refunds} refund cases are waiting.` : 'No refund cases are waiting.',
+        badge: dashboardSummary.refunds,
+        primaryLabel: 'Open',
+        tone: dashboardSummary.refunds > 0 ? 'warn' : 'good',
+        onOpen: () => setActiveTab('refunds'),
+    },
+]), [dashboardSummary.exceptions, dashboardSummary.overdue, dashboardSummary.pending, dashboardSummary.refunds]);
+
+const accountingContextBookings = useMemo(() => {
+    if (!hasAccountingStaffContext) return [];
+    const search = normalizeSearch(accountingContextSearchText);
+
+    return bookings.filter((booking) => {
+        if (accountingStaffContext.booking && String(booking.id) === String(accountingStaffContext.booking)) return true;
+        if (accountingStaffContext.customerId && String(booking.user_id || booking.customer_account?.id || '') === String(accountingStaffContext.customerId)) return true;
+        if (!search) return false;
+
+        return normalizeSearch([
+            `booking #${booking.id}`,
+            booking.id,
+            bookingContactName(booking),
+            bookingContactEmail(booking),
+            bookingContactPhone(booking),
+            customerAccountName(booking),
+            customerAccountEmail(booking),
+            customerAccountPhone(booking),
+            eventDisplayName(booking),
+        ].filter(Boolean).join(' ')).includes(search);
+    }).slice(0, 6);
+}, [accountingContextSearchText, accountingStaffContext, bookings, hasAccountingStaffContext]);
+
+const accountingContextPayments = useMemo(() => (
+    accountingContextBookings.flatMap((booking) => (
+        (booking.payments || []).map((payment) => ({ booking, payment }))
+    ))
+), [accountingContextBookings]);
+
+const accountingContextIdentity = useMemo(() => {
+    const primary = accountingContextBookings[0] || {};
+    return {
+        accountName: customerAccountName(primary) || accountingStaffContext.customerQuery || 'Customer context',
+        accountEmail: customerAccountEmail(primary),
+        accountPhone: customerAccountPhone(primary),
+        contactName: bookingContactName(primary) || accountingStaffContext.customerQuery,
+        contactEmail: bookingContactEmail(primary),
+        contactPhone: bookingContactPhone(primary),
+        hasDifferentContact: primary.id ? hasDifferentBookingContact(primary) : false,
+    };
+}, [accountingContextBookings, accountingStaffContext.customerQuery]);
+
+const accountingContextBalance = useMemo(() => (
+    accountingContextBookings.reduce((summary, booking) => {
+        const total = toMoneyNumber(booking.totalCost ?? booking.total_cost ?? booking.total);
+        const paid = (booking.payments || [])
+            .filter((payment) => isPaidStatus(payment.status))
+            .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
+        return {
+            total: summary.total + total,
+            paid: summary.paid + paid,
+            remaining: summary.remaining + Math.max(total - paid, 0),
+        };
+    }, { total: 0, paid: 0, remaining: 0 })
+), [accountingContextBookings]);
+
+const openAccountingContextTab = useCallback((tab, searchText = accountingContextSearchText) => {
+    if (tab === 'refunds') {
+        setRefundSegment('all');
+        setRefundSearch(searchText);
+        setRefundPage(1);
+    } else if (tab === 'reconciliation') {
+        setReconciliationSearch(searchText);
+        setReconciliationTypeFilter('all');
+        setReconciliationPage(1);
+    } else if (tab === 'ledger') {
+        setLedgerFilter((current) => ({ ...current, clientSearch: searchText }));
+        setLedgerPage(1);
+    } else if (tab !== 'history') {
+        setPaymentSegment('all_active');
+        setBookingPaymentFilter('all');
+        setBookingSearchQuery(searchText);
+        setBookingPage(1);
+    }
+
+    setActiveTab(tab);
+    setAccountingContextPanelOpen(false);
+}, [accountingContextSearchText, setActiveTab]);
+
+const renderAccountingContextPanel = () => {
+    if (!hasAccountingStaffContext || !accountingContextPanelOpen) return null;
+    const primaryBooking = accountingContextBookings[0];
+    const searchLabel = accountingContextSearchText || accountingStaffContext.customerQuery || accountingStaffContext.booking || 'Current context';
+    const accountName = accountingContextIdentity.accountName === 'Customer account' ? searchLabel : accountingContextIdentity.accountName;
+
+    return (
+        <div className="staff-context-drawer-shell" role="dialog" aria-modal="true" aria-label="Accounting customer context">
+            <button type="button" className="staff-context-drawer-backdrop" onClick={() => setAccountingContextPanelOpen(false)} aria-label="Close customer context" />
+            <aside className="staff-context-drawer">
+                <header className="staff-context-drawer-head">
+                    <div>
+                        <p>Customer context</p>
+                        <h3>{accountName}</h3>
+                        <span>{searchLabel}</span>
+                    </div>
+                    <button type="button" onClick={() => setAccountingContextPanelOpen(false)}>Close</button>
+                </header>
+                <div className="staff-context-drawer-body">
+                    <section className="staff-context-card">
+                        <span>Account</span>
+                        <strong>{accountName}</strong>
+                        <p>{accountingContextIdentity.accountEmail || 'No account email in loaded records'}</p>
+                        {accountingContextIdentity.accountPhone && <p>{accountingContextIdentity.accountPhone}</p>}
+                    </section>
+                    {accountingContextIdentity.hasDifferentContact && (
+                        <section className="staff-context-card">
+                            <span>Booking contact</span>
+                            <strong>{accountingContextIdentity.contactName}</strong>
+                            <p>{accountingContextIdentity.contactEmail || 'No booking email'}</p>
+                            {accountingContextIdentity.contactPhone && <p>{accountingContextIdentity.contactPhone}</p>}
+                        </section>
+                    )}
+                    <section className="staff-context-card staff-context-balance-card">
+                        <span>Finance state</span>
+                        <strong>{'P' + accountingContextBalance.remaining.toLocaleString()} remaining</strong>
+                        <p>{'P' + accountingContextBalance.paid.toLocaleString()} paid from {'P' + accountingContextBalance.total.toLocaleString()} total.</p>
+                        <p>{accountingContextPayments.length} payment milestone(s) in loaded records.</p>
+                    </section>
+                    <section className="staff-context-card">
+                        <span>Related bookings</span>
+                        {accountingContextBookings.length ? (
+                            <div className="staff-context-record-list">
+                                {accountingContextBookings.map((booking) => (
+                                    <button key={booking.id} type="button" onClick={() => { setSelectedFinanceBooking(booking); openAccountingContextTab('payments'); }}>
+                                        <strong>Booking #{booking.id} - {eventDisplayName(booking)}</strong>
+                                        <p>{formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests / {booking.payment_state || booking.status || 'Payment record'}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p>No loaded finance record matches this context yet. Keep the filter applied or search all payments.</p>
+                        )}
+                    </section>
+                    <section className="staff-context-actions">
+                        <button type="button" onClick={() => openAccountingContextTab('payments')}>Open payments</button>
+                        <button type="button" onClick={() => openAccountingContextTab('reconciliation')}>Open reconciliation</button>
+                        <button type="button" onClick={() => openAccountingContextTab('refunds')}>Open refunds</button>
+                        <button type="button" onClick={() => openAccountingContextTab('ledger')}>Open ledger</button>
+                        <button type="button" onClick={() => openAccountingContextTab('history')}>Open history</button>
+                        {primaryBooking && (
+                            <button type="button" onClick={() => setSelectedFinanceBooking(primaryBooking)}>Payment details</button>
+                        )}
+                        <button type="button" className="is-muted" onClick={clearAccountingContext}>Clear context</button>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    );
+};
+
+const todayQueues = useMemo(() => {
+    const pendingBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'needs_verification')).slice(0, 4);
+    const overdueBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'overdue')).slice(0, 4);
+    const upcomingBookings = bookings.filter((booking) => paymentMatchesSegment(booking, 'upcoming')).slice(0, 4);
+
+    return {
+        urgent: [...reconciliationItems.slice(0, 3), ...overdueBookings].slice(0, 5),
+        pendingBookings,
+        upcomingBookings,
+        refunds: refundQueue.slice(0, 4),
+    };
+}, [bookings, reconciliationItems, refundQueue]);
+
+const exceptionLabels = {
+    checkout_started_unpaid: 'Customer started checkout but did not pay',
+    provider_paid_not_local: 'Online payment needs staff review',
+    pending_past_due: 'Payment is past due',
+    missing_paymongo_payment_id_for_refund: 'Refund needs original payment reference',
+    webhook_mismatch: 'Online payment details do not match',
+};
+
+const getReconciliationAction = (item) => {
+    const exceptions = item.exceptions || [];
+
+    if (exceptions.includes('provider_paid_not_local')) {
+        return {
+            label: 'Verify payment',
+            detail: 'Online payment exists. Confirm it, then mark the record paid.',
+            tone: 'primary',
+            onClick: () => handleVerify(item.id, 'Verify'),
+        };
+    }
+
+    if (exceptions.includes('checkout_started_unpaid') || exceptions.includes('pending_past_due')) {
+        return {
+            label: remindingPaymentId === item.id ? 'Sending...' : 'Send reminder',
+            detail: 'Customer has not completed this payment.',
+            tone: 'warn',
+            disabled: remindingPaymentId === item.id,
+            onClick: () => handleSendReminder(item.id),
+        };
+    }
+
+    if (exceptions.includes('missing_paymongo_payment_id_for_refund')) {
+        return {
+            label: 'Open refunds',
+            detail: 'Refund processing needs the original payment reference.',
+            tone: 'danger',
+            onClick: () => setActiveTab('refunds'),
+        };
+    }
+
+    return {
+        label: 'Review ledger',
+        detail: 'Compare the payment record against online payment details.',
+        tone: 'muted',
+        onClick: () => {
+            setPaymentSegment('exceptions');
+            setActiveTab('payments');
+        },
+    };
+};
+
+const paginate = (items, pageNumber, pageSize) => {
+    const start = (pageNumber - 1) * pageSize;
+    return items.slice(start, start + pageSize);
+};
+
+const filteredReconciliationItems = useMemo(() => {
+    const needle = reconciliationSearch.trim().toLowerCase();
+
+    return reconciliationItems.filter((item) => {
+        const exceptions = item.exceptions || [];
+        const haystack = [
+            item.id,
             item.booking_id,
             bookingContactName(item),
             bookingContactEmail(item),
             customerAccountName(item),
-            item.event_date,
-            ].join(' ').toLowerCase().includes(needle);
-        });
-    }, [refundQueue, refundSearch, refundSegment]);
+            item.payment_type,
+            item.status,
+            item.paymongo_checkout_session_id,
+            item.paymongo_payment_id,
+            item.paymongo_reference_number,
+        ].join(' ').toLowerCase();
 
-    const refundSegments = [
-        { id: 'all', label: 'All refunds' },
-        { id: 'needs_review', label: 'Needs review' },
-        { id: 'provider', label: 'Provider refund' },
-        { id: 'manual', label: 'Manual handling' },
-        { id: 'completed', label: 'Completed' },
-    ];
+        if (needle && !haystack.includes(needle)) return false;
+        if (reconciliationTypeFilter !== 'all' && !exceptions.includes(reconciliationTypeFilter)) return false;
 
-    const pagedRefundQueue = useMemo(() => {
-        return paginate(filteredRefundQueue, refundPage, refundPerPage);
-    }, [filteredRefundQueue, refundPage, refundPerPage]);
+        return true;
+    });
+}, [reconciliationItems, reconciliationSearch, reconciliationTypeFilter]);
 
-    const renderPaymentActions = (payment, booking) => {
-        const statusInfo = staffPaymentStatus(payment.status, payment.due_date);
-        const isPending = payment.status === 'Pending';
+const pagedReconciliationItems = useMemo(() => {
+    return paginate(filteredReconciliationItems, reconciliationPage, reconciliationPerPage);
+}, [filteredReconciliationItems, reconciliationPage, reconciliationPerPage]);
 
-        if (isPending) {
-            return (
-                <div className="flex flex-wrap justify-end gap-2">
-                    <button type="button" onClick={() => handleVerify(payment.id, 'Verify')} className="staff-button-primary px-3 py-2 text-xs">Verify</button>
-                    <button type="button" onClick={() => handleVerify(payment.id, 'Reject')} className="staff-button-danger px-3 py-2 text-xs">Reject</button>
-                    <button
-                        type="button"
-                        onClick={() => handleSendReminder(payment.id)}
-                        disabled={remindingPaymentId === payment.id}
-                        className="staff-button-secondary px-3 py-2 text-xs"
-                    >
-                        {remindingPaymentId === payment.id ? 'Sending...' : 'Remind'}
-                    </button>
-                </div>
-            );
-        }
+const filteredRefundQueue = useMemo(() => {
+    const needle = refundSearch.trim().toLowerCase();
+    return refundQueue.filter((item) => {
+        const status = String(item.refund_status || '').toLowerCase();
+        const matchesSegment = refundSegment === 'all'
+            ? true
+            : refundSegment === 'completed'
+            ? ['reviewed', 'refunded', 'completed'].some((value) => status.includes(value))
+            : refundSegment === 'manual'
+                ? status.includes('manual') || status.includes('failed')
+                : refundSegment === 'provider'
+                    ? status.includes('progress') || status.includes('approved') || status.includes('processing')
+                    : !['reviewed', 'refunded', 'completed'].some((value) => status.includes(value));
 
-        if (isPaidStatus(payment.status)) {
-            return (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                    <StaffStatusBadge tone={statusInfo.tone === 'success' ? 'good' : 'muted'}>{statusInfo.label}</StaffStatusBadge>
-                    <button type="button" onClick={() => setReceiptModal({ isOpen: true, payment, booking })} className="staff-row-action">Receipt</button>
-                </div>
-            );
-        }
+        if (!matchesSegment) return false;
+        if (!needle) return true;
 
-        return <span className="text-xs font-bold text-slate-400">No action</span>;
-    };
+        return [
+        item.booking_id,
+        bookingContactName(item),
+        bookingContactEmail(item),
+        customerAccountName(item),
+        item.event_date,
+        ].join(' ').toLowerCase().includes(needle);
+    });
+}, [refundQueue, refundSearch, refundSegment]);
 
-    const renderVerificationDrawer = () => {
-        if (!selectedFinanceBooking) return null;
+const refundSegments = [
+    { id: 'all', label: 'All refunds' },
+    { id: 'needs_review', label: 'Needs review' },
+    { id: 'provider', label: 'Provider refund' },
+    { id: 'manual', label: 'Manual handling' },
+    { id: 'completed', label: 'Completed' },
+];
 
-        const booking = selectedFinanceBooking;
-        const totalCost = toMoneyNumber(booking.totalCost);
-        const paidAmount = (booking.payments || [])
-            .filter((payment) => isPaidStatus(payment.status))
-            .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
-        const remainingBalance = Math.max(totalCost - paidAmount, 0);
+const pagedRefundQueue = useMemo(() => {
+    return paginate(filteredRefundQueue, refundPage, refundPerPage);
+}, [filteredRefundQueue, refundPage, refundPerPage]);
 
+const renderPaymentActions = (payment, booking) => {
+    const statusInfo = staffPaymentStatus(payment.status, payment.due_date);
+    const isPending = payment.status === 'Pending';
+
+    if (isPending) {
         return (
-            <EventDetailDrawer
-                isOpen={Boolean(selectedFinanceBooking)}
-                booking={booking}
-                role="accounting"
-                eyebrow="Payment review"
-                title={`Booking #${booking.id}`}
-                onClose={() => setSelectedFinanceBooking(null)}
-                footer={(
+            <div className="flex flex-wrap justify-end gap-2">
+                <button type="button" onClick={() => handleVerify(payment.id, 'Verify')} className="staff-button-primary px-3 py-2 text-xs">Verify</button>
+                <button type="button" onClick={() => handleVerify(payment.id, 'Reject')} className="staff-button-danger px-3 py-2 text-xs">Reject</button>
+                <button
+                    type="button"
+                    onClick={() => handleSendReminder(payment.id)}
+                    disabled={remindingPaymentId === payment.id}
+                    className="staff-button-secondary px-3 py-2 text-xs"
+                >
+                    {remindingPaymentId === payment.id ? 'Sending...' : 'Remind'}
+                </button>
+            </div>
+        );
+    }
+
+    if (isPaidStatus(payment.status)) {
+        return (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                <StaffStatusBadge tone={statusInfo.tone === 'success' ? 'good' : 'muted'}>{statusInfo.label}</StaffStatusBadge>
+                <button type="button" onClick={() => setReceiptModal({ isOpen: true, payment, booking })} className="staff-row-action">Receipt</button>
+            </div>
+        );
+    }
+
+    return <span className="text-xs font-bold text-slate-400">No action</span>;
+};
+
+const renderVerificationDrawer = () => {
+    if (!selectedFinanceBooking) return null;
+
+    const booking = selectedFinanceBooking;
+    const totalCost = toMoneyNumber(booking.totalCost);
+    const paidAmount = (booking.payments || [])
+        .filter((payment) => isPaidStatus(payment.status))
+        .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
+    const remainingBalance = Math.max(totalCost - paidAmount, 0);
+
+    return (
+        <EventDetailDrawer
+            isOpen={Boolean(selectedFinanceBooking)}
+            booking={booking}
+            role="accounting"
+            eyebrow="Payment review"
+            title={`Booking #${booking.id}`}
+            onClose={() => setSelectedFinanceBooking(null)}
+            footer={(
+                <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={() => setEditPaymentModal({ isOpen: true, payment: booking.payments?.[0] || null, booking })}
@@ -1266,247 +1328,152 @@ const DashboardAccounting = () => {
                     >
                         Edit payment terms
                     </button>
-                )}
-            >
-                <div className="grid gap-3 sm:grid-cols-3">
-                        <section className="staff-detail-card">
-                            <p className="staff-detail-label">Total</p>
-                            <p className="staff-detail-value">{'P' + totalCost.toLocaleString()}</p>
-                        </section>
-                        <section className="staff-detail-card">
-                            <p className="staff-detail-label">Paid</p>
-                            <p className="staff-detail-value text-emerald-700">{'P' + paidAmount.toLocaleString()}</p>
-                        </section>
-                        <section className="staff-detail-card">
-                            <p className="staff-detail-label">Balance</p>
-                            <p className={`staff-detail-value ${remainingBalance > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{'P' + remainingBalance.toLocaleString()}</p>
-                        </section>
+                    <button
+                        type="button"
+                        onClick={() => { setDiscountForm({ discount_type: 'fixed', discount_value: 0 }); setDiscountModal({ open: true, data: booking }); }}
+                        className="staff-button-secondary"
+                    >
+                        Apply discount
+                    </button>
                 </div>
+            )}
+        >
+            <div className="grid gap-3 sm:grid-cols-3">
                     <section className="staff-detail-card">
-                        <div className="mb-3 flex items-center justify-between">
-                            <div>
-                                <p className="staff-detail-label">Payment schedule</p>
-                                <p className="staff-section-copy">Verify submitted payments, send reminders, or inspect receipts.</p>
-                            </div>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="staff-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tier</th>
-                                        <th className="text-left">Amount</th>
-                                        <th>Due</th>
-                                        <th>Status</th>
-                                        <th className="text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(booking.payments || []).map((payment) => {
-                                        const typeInfo = PAYMENT_TYPE_LABELS[payment.payment_type] || { label: payment.payment_type, pct: '', icon: '-' };
-                                        const statusInfo = staffPaymentStatus(payment.status, payment.due_date);
-                                        return (
-                                            <tr key={payment.id}>
-                                                <td>
-                                                    <p className="font-black text-slate-950">{typeInfo.label}</p>
-                                                    <p className="text-xs font-bold text-slate-400">{typeInfo.pct} of total</p>
-                                                </td>
-                                                <td className="text-left font-black text-slate-950">{'P' + toMoneyNumber(payment.amount).toLocaleString()}</td>
-                                                <td>{formatAccountingDate(payment.due_date, '-')}</td>
-                                                <td><StaffStatusBadge tone={statusInfo.tone === 'success' ? 'good' : statusInfo.tone === 'danger' ? 'danger' : 'warn'}>{statusInfo.label}</StaffStatusBadge></td>
-                                                <td className="text-right">{renderPaymentActions(payment, booking)}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                        <p className="staff-detail-label">Total</p>
+                        <p className="staff-detail-value">{'P' + totalCost.toLocaleString()}</p>
                     </section>
-            </EventDetailDrawer>
-        );
-    };
-
-    const paymentSegments = [
-        { id: 'needs_verification', label: 'Needs verification', count: paymentQueueCounts.needs_verification },
-        { id: 'overdue', label: 'Overdue', count: paymentQueueCounts.overdue },
-        { id: 'exceptions', label: 'Exceptions', count: paymentQueueCounts.exceptions },
-        { id: 'upcoming', label: 'Upcoming due', count: paymentQueueCounts.upcoming },
-        { id: 'all_active', label: 'All active', count: paymentQueueCounts.all_active },
-    ];
-
-    const renderPaymentExceptions = () => (
-        <div className="space-y-4">
-            <div className="staff-filter-bar">
-                <input
-                    value={reconciliationSearch}
-                    onChange={handleReconciliationSearchChange}
-                    className="staff-control"
-                    placeholder="Search booking, customer, or payment reference"
-                />
-                <select value={reconciliationTypeFilter} onChange={(event) => setReconciliationTypeFilter(event.target.value)} className="staff-control">
-                    <option value="all">All issue types</option>
-                    {Object.entries(exceptionLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
+                    <section className="staff-detail-card">
+                        <p className="staff-detail-label">Paid</p>
+                        <p className="staff-detail-value text-emerald-700">{'P' + paidAmount.toLocaleString()}</p>
+                    </section>
+                    <section className="staff-detail-card">
+                        <p className="staff-detail-label">Balance</p>
+                        <p className={`staff-detail-value ${remainingBalance > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{'P' + remainingBalance.toLocaleString()}</p>
+                    </section>
             </div>
-            {loading && reconciliationItems.length === 0 ? (
-                <StaffSkeleton variant="panel" rows={3} label="Loading payment exceptions" />
-            ) : filteredReconciliationItems.length === 0 ? (
-                <StaffEmptyState title="No payment exceptions" message="Online checkout, due dates, and staff payment records are aligned." />
-            ) : (
-                <>
-                    <StaffWorkTable className="custom-scrollbar">
+                <section className="staff-detail-card">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div>
+                            <p className="staff-detail-label">Payment schedule</p>
+                            <p className="staff-section-copy">Verify submitted payments, send reminders, or inspect receipts.</p>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
                         <table className="staff-table">
                             <thead>
                                 <tr>
-                                    <th>Payment</th>
-                                <th>Booking contact</th>
-                                    <th>Provider references</th>
-                                    <th>Issue</th>
-                                    <th className="text-right">Next action</th>
+                                    <th>Tier</th>
+                                    <th className="text-left">Amount</th>
+                                    <th>Due</th>
+                                    <th>Status</th>
+                                    <th className="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagedReconciliationItems.map((item) => {
-                                    const nextAction = getReconciliationAction(item);
-
+                                {(booking.payments || []).map((payment) => {
+                                    const typeInfo = PAYMENT_TYPE_LABELS[payment.payment_type] || { label: payment.payment_type, pct: '', icon: '-' };
+                                    const statusInfo = staffPaymentStatus(payment.status, payment.due_date);
                                     return (
-                                        <tr key={item.id}>
+                                        <tr key={payment.id}>
                                             <td>
-                                                <p className="font-black text-slate-950">Payment #{item.id}</p>
-                                                <p className="text-xs font-bold text-slate-400">Booking #{item.booking_id} / {item.payment_type || 'Payment'} / {item.status}</p>
+                                                <p className="font-black text-slate-950">{typeInfo.label}</p>
+                                                <p className="text-xs font-bold text-slate-400">{typeInfo.pct} of total</p>
                                             </td>
-                                            <td>
-                                                <p className="font-black text-slate-950">{bookingContactName(item)}</p>
-                                                <p className="text-xs font-bold text-slate-400">{formatAccountingDate(item.event_date)}</p>
-                                            </td>
-                                            <td>
-                                                <div className="space-y-1 text-xs font-semibold text-slate-500">
-                                                    <p>Checkout: <span className="font-mono text-slate-800">{item.paymongo_checkout_session_id || '-'}</span></p>
-                                                    <p>Payment: <span className="font-mono text-slate-800">{item.paymongo_payment_id || '-'}</span></p>
-                                                    <p>Customer ref: <span className="font-mono text-slate-800">{item.paymongo_reference_number || '-'}</span></p>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(item.exceptions || []).map((exception) => (
-                                                        <StaffStatusBadge key={exception} tone="danger">{exceptionLabels[exception] || exception}</StaffStatusBadge>
-                                                    ))}
-                                                </div>
-                                            </td>
-                                            <td className="text-right">
-                                                <div className="staff-recon-action">
-                                                    <p>{nextAction.detail}</p>
-                                                    <button
-                                                        type="button"
-                                                        disabled={nextAction.disabled}
-                                                        onClick={nextAction.onClick}
-                                                        className={`staff-row-action ${nextAction.tone === 'primary' ? 'staff-row-action-primary' : ''} ${nextAction.tone === 'danger' ? 'staff-row-action-danger' : ''} ${nextAction.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        {nextAction.label}
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            <td className="text-left font-black text-slate-950">{'P' + toMoneyNumber(payment.amount).toLocaleString()}</td>
+                                            <td>{formatAccountingDate(payment.due_date, '-')}</td>
+                                            <td><StaffStatusBadge tone={statusInfo.tone === 'success' ? 'good' : statusInfo.tone === 'danger' ? 'danger' : 'warn'}>{statusInfo.label}</StaffStatusBadge></td>
+                                            <td className="text-right">{renderPaymentActions(payment, booking)}</td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
-                    </StaffWorkTable>
-                    <StaffPagination page={reconciliationPage} perPage={reconciliationPerPage} total={filteredReconciliationItems.length} onPageChange={setReconciliationPage} onPerPageChange={setReconciliationPerPage} />
-                </>
-            )}
-        </div>
+                    </div>
+                </section>
+        </EventDetailDrawer>
     );
+};
 
-    const renderPaymentsWorkspace = () => {
-        const visibleBookings = paymentSegment === 'exceptions'
-            ? []
-            : bookings.filter((booking) => paymentMatchesSegment(booking));
+const paymentSegments = [
+    { id: 'needs_verification', label: 'Needs verification', count: paymentQueueCounts.needs_verification },
+    { id: 'overdue', label: 'Overdue', count: paymentQueueCounts.overdue },
+    { id: 'exceptions', label: 'Exceptions', count: paymentQueueCounts.exceptions },
+    { id: 'upcoming', label: 'Upcoming due', count: paymentQueueCounts.upcoming },
+    { id: 'all_active', label: 'All active', count: paymentQueueCounts.all_active },
+];
 
-        return (
-        <div className="staff-work-surface">
-            <div className="staff-surface-head">
-                <div>
-                    <p className="marketing-kicker">Payments workspace</p>
-                    <h3 className="mt-1 text-lg font-black text-slate-950">Finance actions and payment records</h3>
-                    <p className="staff-section-copy">Verify payments, chase overdue balances, resolve provider issues, and open receipts from one place.</p>
-                </div>
-                {loading && <StaffStatusBadge tone="muted">Loading</StaffStatusBadge>}
-            </div>
-            <div className="staff-tab-strip">
-                {paymentSegments.map((segment) => (
-                    <button
-                        key={segment.id}
-                        type="button"
-                        onClick={() => setPaymentSegment(segment.id)}
-                        className={`staff-tab-pill ${paymentSegment === segment.id ? 'is-active' : ''}`}
-                    >
-                        {segment.label}
-                        {Number(segment.count || 0) > 0 && <span>{segment.count}</span>}
-                    </button>
-                ))}
-            </div>
-            <StaffOpsSearchBar
-                value={bookingSearchQuery}
-                onChange={handleBookingSearchChange}
-                placeholder="Search booking contact or booking number"
-            >
-                <select value={bookingSortOrder} onChange={(e) => setBookingSortOrder(e.target.value)} className="staff-control">
-                    <option value="eventDateSoonest">Event date soonest</option>
-                    <option value="eventDateLatest">Event date latest</option>
-                    <option value="bookingNewest">Booking newest</option>
-                    <option value="bookingOldest">Booking oldest</option>
-                    <option value="clientAZ">Booking contact A-Z</option>
-                    <option value="clientZA">Booking contact Z-A</option>
-                </select>
-                <select value={bookingPaymentFilter} onChange={(e) => setBookingPaymentFilter(e.target.value)} className="staff-control">
-                    <option value="all">All payments</option>
-                    <option value="pending">Pending</option>
-                    <option value="complete">Complete</option>
-                </select>
-            </StaffOpsSearchBar>
-            {paymentSegment === 'exceptions' ? renderPaymentExceptions() : loading && visibleBookings.length === 0 ? (
-                <StaffSkeleton rows={6} />
-            ) : visibleBookings.length === 0 ? (
-                <StaffEmptyState title="No payment records found" message="Try another segment or clear filters to see active finance records." />
-            ) : (
-                <StaffWorkTable>
+const renderPaymentExceptions = () => (
+    <div className="space-y-4">
+        <div className="staff-filter-bar">
+            <input
+                value={reconciliationSearch}
+                onChange={handleReconciliationSearchChange}
+                className="staff-control"
+                placeholder="Search booking, customer, or payment reference"
+            />
+            <select value={reconciliationTypeFilter} onChange={(event) => setReconciliationTypeFilter(event.target.value)} className="staff-control">
+                <option value="all">All issue types</option>
+                {Object.entries(exceptionLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+        </div>
+        {loading && reconciliationItems.length === 0 ? (
+            <StaffSkeleton variant="panel" rows={3} label="Loading payment exceptions" />
+        ) : filteredReconciliationItems.length === 0 ? (
+            <StaffEmptyState title="No payment exceptions" message="Online checkout, due dates, and staff payment records are aligned." />
+        ) : (
+            <>
+                <StaffWorkTable className="custom-scrollbar">
                     <table className="staff-table">
                         <thead>
                             <tr>
-                                <th>Booking</th>
-                                <th>Booking contact</th>
-                                <th>Event</th>
-                                <th className="text-left">Total</th>
-                                <th className="text-left">Paid</th>
-                                <th>Status</th>
-                                <th className="text-right">Actions</th>
+                                <th>Payment</th>
+                            <th>Booking contact</th>
+                                <th>Provider references</th>
+                                <th>Issue</th>
+                                <th className="text-right">Next action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {visibleBookings.map((booking) => {
-                                const progress = getBookingProgress(booking.payments);
-                                const totalCost = toMoneyNumber(booking.totalCost);
-                                const paidAmount = (booking.payments || [])
-                                    .filter((payment) => isPaidStatus(payment.status))
-                                    .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
-                                const hasPending = (booking.payments || []).some((payment) => payment.status === 'Pending');
+                            {pagedReconciliationItems.map((item) => {
+                                const nextAction = getReconciliationAction(item);
+
                                 return (
-                                    <tr key={booking.id}>
-                                        <td className="font-black text-[#720101]">#{booking.id}</td>
+                                    <tr key={item.id}>
                                         <td>
-                                            <p className="font-black text-slate-950">{eventDisplayName(booking)}</p>
-                                            <p className="text-xs font-semibold text-slate-500">{bookingContactName(booking)}</p>
-                                            <p className="text-xs font-bold text-slate-400">{bookingContactEmail(booking) || 'No contact info'}</p>
-                                            {hasDifferentBookingContact(booking) && (
-                                                <p className="text-xs font-bold text-amber-700">Account: {customerAccountName(booking)}</p>
-                                            )}
+                                            <p className="font-black text-slate-950">Payment #{item.id}</p>
+                                            <p className="text-xs font-bold text-slate-400">Booking #{item.booking_id} / {item.payment_type || 'Payment'} / {item.status}</p>
                                         </td>
-                                        <td>{formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests</td>
-                                        <td className="text-left font-black text-slate-950">{'P' + totalCost.toLocaleString()}</td>
-                                        <td className="text-left font-black text-emerald-700">{'P' + paidAmount.toLocaleString()}</td>
-                                        <td><StaffStatusBadge tone={hasPending ? 'warn' : 'good'}>{progress.verified}/{progress.total} verified</StaffStatusBadge></td>
+                                        <td>
+                                            <p className="font-black text-slate-950">{bookingContactName(item)}</p>
+                                            <p className="text-xs font-bold text-slate-400">{formatAccountingDate(item.event_date)}</p>
+                                        </td>
+                                        <td>
+                                            <div className="space-y-1 text-xs font-semibold text-slate-500">
+                                                <p>Checkout: <span className="font-mono text-slate-800">{item.paymongo_checkout_session_id || '-'}</span></p>
+                                                <p>Payment: <span className="font-mono text-slate-800">{item.paymongo_payment_id || '-'}</span></p>
+                                                <p>Customer ref: <span className="font-mono text-slate-800">{item.paymongo_reference_number || '-'}</span></p>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(item.exceptions || []).map((exception) => (
+                                                    <StaffStatusBadge key={exception} tone="danger">{exceptionLabels[exception] || exception}</StaffStatusBadge>
+                                                ))}
+                                            </div>
+                                        </td>
                                         <td className="text-right">
-                                            <button type="button" onClick={() => setSelectedFinanceBooking(booking)} className="staff-row-action">Open</button>
+                                            <div className="staff-recon-action">
+                                                <p>{nextAction.detail}</p>
+                                                <button
+                                                    type="button"
+                                                    disabled={nextAction.disabled}
+                                                    onClick={nextAction.onClick}
+                                                    className={`staff-row-action ${nextAction.tone === 'primary' ? 'staff-row-action-primary' : ''} ${nextAction.tone === 'danger' ? 'staff-row-action-danger' : ''} ${nextAction.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                >
+                                                    {nextAction.label}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -1514,358 +1481,496 @@ const DashboardAccounting = () => {
                         </tbody>
                     </table>
                 </StaffWorkTable>
-            )}
-            {bookingPagination && bookingPagination.lastPage > 1 && (
-                <StaffPagination
-                    page={bookingPagination.currentPage}
-                    perPage={25}
-                    total={bookingPagination.total}
-                    onPageChange={setBookingPage}
-                />
-            )}
-            {renderVerificationDrawer()}
-        </div>
-        );
-    };
+                <StaffPagination page={reconciliationPage} perPage={reconciliationPerPage} total={filteredReconciliationItems.length} onPageChange={setReconciliationPage} onPerPageChange={setReconciliationPerPage} />
+            </>
+        )}
+    </div>
+);
 
-    if (loading && activeTab === 'today' && !accountingSummary) {
-        return (
-            <StaffWorkspaceSkeleton
-                title="Accounting Workspace"
-                roleLabel="Finance team"
-                label="Preparing accounting workspace"
-                navGroups={[
-                    { label: 'Daily work', items: ['To-Dos', 'Payments', 'Refunds', 'Ledger & Receipts', 'Settings', 'Event History'] },
-                ]}
-                rows={5}
-            />
-        );
-    }
+const renderPaymentsWorkspace = () => {
+    const visibleBookings = paymentSegment === 'exceptions'
+        ? []
+        : bookings.filter((booking) => paymentMatchesSegment(booking));
 
     return (
-        <StaffWorkspaceLayout
+    <div className="staff-work-surface">
+        <div className="staff-surface-head">
+            <div>
+                <p className="marketing-kicker">Payments workspace</p>
+                <h3 className="mt-1 text-lg font-black text-slate-950">Finance actions and payment records</h3>
+                <p className="staff-section-copy">Verify payments, chase overdue balances, resolve provider issues, and open receipts from one place.</p>
+            </div>
+            {loading && <StaffStatusBadge tone="muted">Loading</StaffStatusBadge>}
+        </div>
+        <div className="staff-tab-strip">
+            {paymentSegments.map((segment) => (
+                <button
+                    key={segment.id}
+                    type="button"
+                    onClick={() => setPaymentSegment(segment.id)}
+                    className={`staff-tab-pill ${paymentSegment === segment.id ? 'is-active' : ''}`}
+                >
+                    {segment.label}
+                    {Number(segment.count || 0) > 0 && <span>{segment.count}</span>}
+                </button>
+            ))}
+        </div>
+        <StaffOpsSearchBar
+            value={bookingSearchQuery}
+            onChange={handleBookingSearchChange}
+            placeholder="Search booking contact or booking number"
+        >
+            <select value={bookingSortOrder} onChange={(e) => setBookingSortOrder(e.target.value)} className="staff-control">
+                <option value="eventDateSoonest">Event date soonest</option>
+                <option value="eventDateLatest">Event date latest</option>
+                <option value="bookingNewest">Booking newest</option>
+                <option value="bookingOldest">Booking oldest</option>
+                <option value="clientAZ">Booking contact A-Z</option>
+                <option value="clientZA">Booking contact Z-A</option>
+            </select>
+            <select value={bookingPaymentFilter} onChange={(e) => setBookingPaymentFilter(e.target.value)} className="staff-control">
+                <option value="all">All payments</option>
+                <option value="pending">Pending</option>
+                <option value="complete">Complete</option>
+            </select>
+        </StaffOpsSearchBar>
+        {paymentSegment === 'exceptions' ? renderPaymentExceptions() : loading && visibleBookings.length === 0 ? (
+            <StaffSkeleton rows={6} />
+        ) : visibleBookings.length === 0 ? (
+            <StaffEmptyState title="No payment records found" message="Try another segment or clear filters to see active finance records." />
+        ) : (
+            <StaffWorkTable>
+                <table className="staff-table">
+                    <thead>
+                        <tr>
+                            <th>Booking</th>
+                            <th>Booking contact</th>
+                            <th>Event</th>
+                            <th className="text-left">Total</th>
+                            <th className="text-left">Paid</th>
+                            <th>Status</th>
+                            <th className="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {visibleBookings.map((booking) => {
+                            const progress = getBookingProgress(booking.payments);
+                            const totalCost = toMoneyNumber(booking.totalCost);
+                            const paidAmount = (booking.payments || [])
+                                .filter((payment) => isPaidStatus(payment.status))
+                                .reduce((sum, payment) => sum + toMoneyNumber(payment.amount), 0);
+                            const hasPending = (booking.payments || []).some((payment) => payment.status === 'Pending');
+                            return (
+                                <tr key={booking.id}>
+                                    <td className="font-black text-[#720101]">#{booking.id}</td>
+                                    <td>
+                                        <p className="font-black text-slate-950">{eventDisplayName(booking)}</p>
+                                        <p className="text-xs font-semibold text-slate-500">{bookingContactName(booking)}</p>
+                                        <p className="text-xs font-bold text-slate-400">{bookingContactEmail(booking) || 'No contact info'}</p>
+                                        {hasDifferentBookingContact(booking) && (
+                                            <p className="text-xs font-bold text-amber-700">Account: {customerAccountName(booking)}</p>
+                                        )}
+                                    </td>
+                                    <td>{formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests</td>
+                                    <td className="text-left font-black text-slate-950">{'P' + totalCost.toLocaleString()}</td>
+                                    <td className="text-left font-black text-emerald-700">{'P' + paidAmount.toLocaleString()}</td>
+                                    <td><StaffStatusBadge tone={hasPending ? 'warn' : 'good'}>{progress.verified}/{progress.total} verified</StaffStatusBadge></td>
+                                    <td className="text-right">
+                                        <button type="button" onClick={() => setSelectedFinanceBooking(booking)} className="staff-row-action">Open</button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </StaffWorkTable>
+        )}
+        {bookingPagination && bookingPagination.lastPage > 1 && (
+            <StaffPagination
+                page={bookingPagination.currentPage}
+                perPage={25}
+                total={bookingPagination.total}
+                onPageChange={setBookingPage}
+            />
+        )}
+        {renderVerificationDrawer()}
+    </div>
+    );
+};
+
+if (loading && activeTab === 'today' && !accountingSummary) {
+    return (
+        <StaffWorkspaceSkeleton
             title="Accounting Workspace"
             roleLabel="Finance team"
-            username={user && user.username}
-            active={activeTab}
-            onNavigate={setActiveTab}
-            onLogout={handleLogout}
-            roleKey="accounting"
-            workspaceClassName="staff-role-shell accounting-page"
-            topNav={{
-                logo: logoImg,
-                logoAlt: 'ECS',
-                badge: 'Accounting',
-                searchSlot: (
-                    <StaffNavbarSearch
-                        value={accountingNavbarSearch}
-                        onChange={setAccountingNavbarSearch}
-                        onClear={() => {
-                            setAccountingNavbarSearch('');
-                            setAccountingNavbarBookingMatches([]);
-                        }}
-                        isOpen={accountingNavbarSearchOpen && !accountingNavbarFilterOpen}
-                        onOpenChange={(open) => {
-                            setAccountingNavbarSearchOpen(open);
-                            if (!open) setAccountingNavbarFilterOpen(false);
-                        }}
-                        results={accountingNavbarResults}
-                        loading={accountingNavbarSearchLoading}
-                        onSelect={selectAccountingNavbarResult}
-                        placeholder="Search payments, customers, contacts, booking IDs, or pages..."
-                        label="Search accounting workspace"
-                        emptyText="No accounting pages, booking contacts, customer accounts, or booking IDs found."
-                        trailingControl={(
-                            <button
-                                type="button"
-                                className={`staff-navbar-search-filter ${accountingNavbarFilterOpen || accountingNavbarFilterCount > 0 ? 'is-active' : ''}`}
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => {
-                                    setAccountingNavbarFilterOpen((open) => !open);
-                                    setAccountingNavbarSearchOpen(true);
-                                }}
-                                aria-label="Open search filters"
-                                aria-expanded={accountingNavbarFilterOpen}
-                            >
-                                <Filter aria-hidden="true" />
-                                {accountingNavbarFilterCount > 0 && <span>{accountingNavbarFilterCount}</span>}
-                            </button>
-                        )}
-                        panelSlot={accountingNavbarFilterOpen ? (
-                            <div className="staff-navbar-search-filter-popover" role="dialog" aria-label="Search filters">
-                                <div className="staff-navbar-search-filter-heading">
-                                    <strong>Search filters</strong>
-                                    <button
-                                        type="button"
-                                        onMouseDown={(event) => event.preventDefault()}
-                                        onClick={() => setAccountingNavbarFilters({ type: 'all', scope: 'all' })}
-                                    >
-                                        Reset
-                                    </button>
-                                </div>
-                                <label>
-                                    <span>Show</span>
-                                    <select
-                                        value={accountingNavbarFilters.type}
-                                        onChange={(event) => setAccountingNavbarFilters((filters) => ({ ...filters, type: event.target.value }))}
-                                    >
-                                        <option value="all">Everything</option>
-                                        <option value="page">Pages</option>
-                                        <option value="booking">Payment and booking records</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    <span>Search in</span>
-                                    <select
-                                        value={accountingNavbarFilters.scope}
-                                        onChange={(event) => setAccountingNavbarFilters((filters) => ({ ...filters, scope: event.target.value }))}
-                                    >
-                                        <option value="all">All details</option>
-                                        <option value="name">Names and page labels</option>
-                                        <option value="contact">Email or phone</option>
-                                        <option value="booking">Booking number</option>
-                                    </select>
-                                </label>
+            label="Preparing accounting workspace"
+            navGroups={[
+                { label: 'Daily work', items: ['To-Dos', 'Payments', 'Refunds', 'Ledger & Receipts', 'Settings', 'Event History'] },
+            ]}
+            rows={5}
+        />
+    );
+}
+
+return (
+    <StaffWorkspaceLayout
+        title="Accounting Workspace"
+        roleLabel="Finance team"
+        username={user && user.username}
+        active={activeTab}
+        onNavigate={setActiveTab}
+        onLogout={handleLogout}
+        roleKey="accounting"
+        workspaceClassName="staff-role-shell accounting-page"
+        topNav={{
+            logo: logoImg,
+            logoAlt: 'ECS',
+            badge: 'Accounting',
+            searchSlot: (
+                <StaffNavbarSearch
+                    value={accountingNavbarSearch}
+                    onChange={setAccountingNavbarSearch}
+                    onClear={() => {
+                        setAccountingNavbarSearch('');
+                        setAccountingNavbarBookingMatches([]);
+                    }}
+                    isOpen={accountingNavbarSearchOpen && !accountingNavbarFilterOpen}
+                    onOpenChange={(open) => {
+                        setAccountingNavbarSearchOpen(open);
+                        if (!open) setAccountingNavbarFilterOpen(false);
+                    }}
+                    results={accountingNavbarResults}
+                    loading={accountingNavbarSearchLoading}
+                    onSelect={selectAccountingNavbarResult}
+                    placeholder="Search payments, customers, contacts, booking IDs, or pages..."
+                    label="Search accounting workspace"
+                    emptyText="No accounting pages, booking contacts, customer accounts, or booking IDs found."
+                    trailingControl={(
+                        <button
+                            type="button"
+                            className={`staff-navbar-search-filter ${accountingNavbarFilterOpen || accountingNavbarFilterCount > 0 ? 'is-active' : ''}`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                                setAccountingNavbarFilterOpen((open) => !open);
+                                setAccountingNavbarSearchOpen(true);
+                            }}
+                            aria-label="Open search filters"
+                            aria-expanded={accountingNavbarFilterOpen}
+                        >
+                            <Filter aria-hidden="true" />
+                            {accountingNavbarFilterCount > 0 && <span>{accountingNavbarFilterCount}</span>}
+                        </button>
+                    )}
+                    panelSlot={accountingNavbarFilterOpen ? (
+                        <div className="staff-navbar-search-filter-popover" role="dialog" aria-label="Search filters">
+                            <div className="staff-navbar-search-filter-heading">
+                                <strong>Search filters</strong>
+                                <button
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() => setAccountingNavbarFilters({ type: 'all', scope: 'all' })}
+                                >
+                                    Reset
+                                </button>
                             </div>
-                        ) : null}
-                    />
-                ),
-                notificationVariant: 'light',
-            }}
-            navGroups={withNavCounts(ACCOUNTING_WORKSPACE_NAV_GROUPS, {
-                today: dashboardSummary.pending + dashboardSummary.overdue + dashboardSummary.exceptions + dashboardSummary.refunds,
-                payments: dashboardSummary.pending + dashboardSummary.overdue + dashboardSummary.exceptions,
-                reconciliation: dashboardSummary.exceptions,
-                refunds: dashboardSummary.refunds,
-            })}
-        >
-                <StaffPageHeader
-                    eyebrow={activeTab === 'today' ? 'To-Dos' : 'Finance workflow'}
-                    title={activeTab === 'today' ? 'Your priority work' : tabMeta[activeTab]}
-                    metrics={[
-                        { label: 'Bookings', value: dashboardSummary.bookings },
-                        { label: 'Pending', value: dashboardSummary.pending },
-                        { label: 'Overdue', value: dashboardSummary.overdue },
-                        { label: 'Issues', value: dashboardSummary.exceptions },
-                        { label: 'Refunds', value: dashboardSummary.refunds },
-                    ]}
+                            <label>
+                                <span>Show</span>
+                                <select
+                                    value={accountingNavbarFilters.type}
+                                    onChange={(event) => setAccountingNavbarFilters((filters) => ({ ...filters, type: event.target.value }))}
+                                >
+                                    <option value="all">Everything</option>
+                                    <option value="page">Pages</option>
+                                    <option value="booking">Payment and booking records</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Search in</span>
+                                <select
+                                    value={accountingNavbarFilters.scope}
+                                    onChange={(event) => setAccountingNavbarFilters((filters) => ({ ...filters, scope: event.target.value }))}
+                                >
+                                    <option value="all">All details</option>
+                                    <option value="name">Names and page labels</option>
+                                    <option value="contact">Email or phone</option>
+                                    <option value="booking">Booking number</option>
+                                </select>
+                            </label>
+                        </div>
+                    ) : null}
                 />
+            ),
+            notificationVariant: 'light',
+        }}
+        navGroups={withNavCounts(ACCOUNTING_WORKSPACE_NAV_GROUPS, {
+            today: dashboardSummary.pending + dashboardSummary.overdue + dashboardSummary.exceptions + dashboardSummary.refunds,
+            payments: dashboardSummary.pending + dashboardSummary.overdue + dashboardSummary.exceptions,
+            reconciliation: dashboardSummary.exceptions,
+            refunds: dashboardSummary.refunds,
+        })}
+    >
+            <StaffPageHeader
+                eyebrow={activeTab === 'today' ? 'To-Dos' : 'Finance workflow'}
+                title={activeTab === 'today' ? 'Your priority work' : tabMeta[activeTab]}
+                metrics={[
+                    { label: 'Bookings', value: dashboardSummary.bookings },
+                    { label: 'Pending', value: dashboardSummary.pending },
+                    { label: 'Overdue', value: dashboardSummary.overdue },
+                    { label: 'Issues', value: dashboardSummary.exceptions },
+                    { label: 'Refunds', value: dashboardSummary.refunds },
+                ]}
+            />
 
-                {activeTab === 'today' && (
-                    <div className="staff-ops-workspace">
-                        <NextActionPanel
-                            eyebrow="To-Dos"
-                            title="Finance actions"
-                            description="Payment verification, overdue reminders, provider exceptions, and refund cases appear here."
-                            actions={financeNextActions.filter((action) => action.priority !== 'info').slice(0, 8)}
-                            emptyTitle="No finance actions waiting"
-                            emptyMessage="Payment reviews, overdue balances, refunds, and reconciliation issues will appear here."
-                        />
-                    </div>
-                )}
+            {activeTab === 'today' && (
+                <div className="staff-ops-workspace">
+                    <NextActionPanel
+                        eyebrow="To-Dos"
+                        title="Finance actions"
+                        description="Payment verification, overdue reminders, provider exceptions, and refund cases appear here."
+                        actions={financeNextActions.filter((action) => action.priority !== 'info').slice(0, 8)}
+                        emptyTitle="No finance actions waiting"
+                        emptyMessage="Payment reviews, overdue balances, refunds, and reconciliation issues will appear here."
+                    />
+                </div>
+            )}
 
-                {activeTab === 'payments' && renderPaymentsWorkspace()}
+            {activeTab === 'payments' && renderPaymentsWorkspace()}
 
-                {false && activeTab === 'bookings' && (
-                    <div className="marketing-panel p-5 lg:p-6">
-                        {loading ? (
-                            <StaffSkeleton rows={6} label="Loading payment records" />
-                        ) : bookings.length === 0 ? (
-                            <div className="p-6 text-center text-slate-500">No bookings found.</div>
-                        ) : (
-                            <div>
-                                <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
-                                    <div className="flex-1 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                                        <div className="relative w-full max-w-md">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Search by client name or ID..." 
-                                                value={bookingSearchQuery}
-                                                onChange={(e) => setBookingSearchQuery(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border border-[#720101]/10 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm text-slate-700"
-                                            />
-                                            <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                        </div>
-                                        <select
-                                            value={bookingSortOrder}
-                                            onChange={(e) => setBookingSortOrder(e.target.value)}
-                                            className="w-full sm:w-auto border border-[#720101]/10 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm bg-white text-slate-700"
-                                        >
-                                            <option value="eventDateSoonest">Event Date (Soonest First)</option>
-                                            <option value="eventDateLatest">Event Date (Latest First)</option>
-                                            <option value="bookingNewest">Booking Date (Newest First)</option>
-                                            <option value="bookingOldest">Booking Date (Oldest First)</option>
-                                            <option value="clientAZ">Client Name (A-Z)</option>
-                                            <option value="clientZA">Client Name (Z-A)</option>
-                                        </select>
-                                        <select
-                                            value={bookingPaymentFilter}
-                                            onChange={(e) => setBookingPaymentFilter(e.target.value)}
-                                            className="w-full sm:w-auto border border-[#720101]/10 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm bg-white text-slate-700"
-                                        >
-                                            <option value="all">All Payments</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="complete">Complete</option>
-                                        </select>
+            {false && activeTab === 'bookings' && (
+                <div className="marketing-panel p-5 lg:p-6">
+                    {loading ? (
+                        <StaffSkeleton rows={6} label="Loading payment records" />
+                    ) : bookings.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500">No bookings found.</div>
+                    ) : (
+                        <div>
+                            <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+                                <div className="flex-1 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                                    <div className="relative w-full max-w-md">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search by client name or ID..." 
+                                            value={bookingSearchQuery}
+                                            onChange={(e) => setBookingSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-[#720101]/10 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm text-slate-700"
+                                        />
+                                        <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                     </div>
+                                    <select
+                                        value={bookingSortOrder}
+                                        onChange={(e) => setBookingSortOrder(e.target.value)}
+                                        className="w-full sm:w-auto border border-[#720101]/10 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm bg-white text-slate-700"
+                                    >
+                                        <option value="eventDateSoonest">Event Date (Soonest First)</option>
+                                        <option value="eventDateLatest">Event Date (Latest First)</option>
+                                        <option value="bookingNewest">Booking Date (Newest First)</option>
+                                        <option value="bookingOldest">Booking Date (Oldest First)</option>
+                                        <option value="clientAZ">Client Name (A-Z)</option>
+                                        <option value="clientZA">Client Name (Z-A)</option>
+                                    </select>
+                                    <select
+                                        value={bookingPaymentFilter}
+                                        onChange={(e) => setBookingPaymentFilter(e.target.value)}
+                                        className="w-full sm:w-auto border border-[#720101]/10 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#720101]/20 focus:border-[#720101]/30 text-sm bg-white text-slate-700"
+                                    >
+                                        <option value="all">All Payments</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="complete">Complete</option>
+                                    </select>
                                 </div>
-                                {(() => {
-                                    const filteredBookings = bookings;
+                            </div>
+                            {(() => {
+                                const filteredBookings = bookings;
 
-                                    if (filteredBookings.length === 0) {
-                                        return <div className="p-12 text-center text-slate-500 bg-[#fffaf3] border border-amber-100 rounded-xl">No bookings match your search.</div>;
-                                    }
+                                if (filteredBookings.length === 0) {
+                                    return <div className="p-12 text-center text-slate-500 bg-[#fffaf3] border border-amber-100 rounded-xl">No bookings match your search.</div>;
+                                }
+
+                                return (
+                                    <div className="space-y-3">
+                                        {filteredBookings.map(function (booking) {
+                                    var progress = getBookingProgress(booking.payments);
+                                    var isExpanded = expandedBooking === booking.id;
+                                    var totalCost = toMoneyNumber(booking.totalCost);
+                                    var paidAmount = (booking.payments || [])
+                                        .filter(function (p) { return isPaidStatus(p.status); })
+                                        .reduce(function (sum, p) { return sum + toMoneyNumber(p.amount); }, 0);
+                                    var remainingBalance = Math.max(totalCost - paidAmount, 0);
 
                                     return (
-                                        <div className="space-y-3">
-                                            {filteredBookings.map(function (booking) {
-                                        var progress = getBookingProgress(booking.payments);
-                                        var isExpanded = expandedBooking === booking.id;
-                                        var totalCost = toMoneyNumber(booking.totalCost);
-                                        var paidAmount = (booking.payments || [])
-                                            .filter(function (p) { return isPaidStatus(p.status); })
-                                            .reduce(function (sum, p) { return sum + toMoneyNumber(p.amount); }, 0);
-                                        var remainingBalance = Math.max(totalCost - paidAmount, 0);
-
-                                        return (
-                                            <div key={booking.id} className="bg-white rounded-xl border border-[#720101]/10 overflow-hidden hover:border-[#720101]/20 transition-colors">
-                                                <div
-                                                    className="px-5 py-4 cursor-pointer hover:bg-[#fffaf3] transition-colors"
-                                                    onClick={() => setExpandedBooking(isExpanded ? null : booking.id)}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="min-w-[5.4rem] rounded-lg border border-[#720101]/10 bg-[#fffaf3] px-3 py-2">
-                                                                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Booking</p>
-                                                                <p className="text-sm font-black text-[#720101]">{'#' + booking.id}</p>
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="font-bold text-slate-950">
-                                                                    {booking.client_full_name || booking.username}
-                                                                </h3>
-                                                                <p className="text-sm text-slate-500">
-                                                                    {formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests
-                                                                </p>
-                                                            </div>
+                                        <div key={booking.id} className="bg-white rounded-xl border border-[#720101]/10 overflow-hidden hover:border-[#720101]/20 transition-colors">
+                                            <div
+                                                className="px-5 py-4 cursor-pointer hover:bg-[#fffaf3] transition-colors"
+                                                onClick={() => setExpandedBooking(isExpanded ? null : booking.id)}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="min-w-[5.4rem] rounded-lg border border-[#720101]/10 bg-[#fffaf3] px-3 py-2">
+                                                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Booking</p>
+                                                            <p className="text-sm font-black text-[#720101]">{'#' + booking.id}</p>
                                                         </div>
-                                                        <div className="flex items-center gap-6">
-                                                            <div className="text-right">
-                                                                <p className="text-xs text-slate-400 uppercase tracking-wider">Total Cost</p>
-                                                                <p className="text-lg font-black text-slate-950">{'P' + totalCost.toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-xs text-slate-400 uppercase tracking-wider">Payments</p>
-                                                                <p className="text-sm font-semibold">
-                                                                    <span className="text-emerald-700">{progress.verified}</span>
-                                                                    <span className="text-slate-400">{'/' + progress.total}</span>
-                                                                    <span className="text-slate-400 text-xs ml-1">verified</span>
-                                                                </p>
-                                                            </div>
-                                                            <svg
-                                                                className={'w-5 h-5 text-slate-400 transition-transform duration-200' + (isExpanded ? ' rotate-180' : '')}
-                                                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                            >
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                            </svg>
+                                                        <div>
+                                                            <h3 className="font-bold text-slate-950">
+                                                                {booking.client_full_name || booking.username}
+                                                            </h3>
+                                                            <p className="text-sm text-slate-500">
+                                                                {formatAccountingDate(booking.event_date)} / {booking.pax || 0} guests
+                                                            </p>
                                                         </div>
                                                     </div>
-
-                                                    <div className="mt-3 w-full bg-amber-50 rounded-full h-2">
-                                                        <div
-                                                            className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                                            style={{ width: (totalCost > 0 ? (paidAmount / totalCost) * 100 : 0) + '%' }}
-                                                        ></div>
-                                                    </div>
-                                                    <div className="flex justify-between mt-1 text-xs text-slate-400">
-                                                        <span>{'Paid: P' + paidAmount.toLocaleString()}</span>
-                                                        <span>{'Balance: P' + remainingBalance.toLocaleString()}</span>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="text-right">
+                                                            <p className="text-xs text-slate-400 uppercase tracking-wider">Total Cost</p>
+                                                            <p className="text-lg font-black text-slate-950">{'P' + totalCost.toLocaleString()}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-xs text-slate-400 uppercase tracking-wider">Payments</p>
+                                                            <p className="text-sm font-semibold">
+                                                                <span className="text-emerald-700">{progress.verified}</span>
+                                                                <span className="text-slate-400">{'/' + progress.total}</span>
+                                                                <span className="text-slate-400 text-xs ml-1">verified</span>
+                                                            </p>
+                                                        </div>
+                                                        <svg
+                                                            className={'w-5 h-5 text-slate-400 transition-transform duration-200' + (isExpanded ? ' rotate-180' : '')}
+                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        >
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
                                                     </div>
                                                 </div>
 
-                                                {isExpanded && (
-                                                    <div className="border-t border-[#720101]/10 px-6 py-4 bg-[#fffaf3] animate-fadeIn">
-                                                        <div className="mb-4 flex flex-wrap gap-4 text-sm text-slate-600">
-                                                            {booking.client_email && (
-                                                                <span className="flex items-center gap-1">
-                                                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                                    {booking.client_email}
-                                                                </span>
-                                                            )}
-                                                            {booking.client_phone && (
-                                                                <span className="flex items-center gap-1">
-                                                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                                                    {booking.client_phone}
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                <div className="mt-3 w-full bg-amber-50 rounded-full h-2">
+                                                    <div
+                                                        className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                                        style={{ width: (totalCost > 0 ? (paidAmount / totalCost) * 100 : 0) + '%' }}
+                                                    ></div>
+                                                </div>
+                                                <div className="flex justify-between mt-1 text-xs text-slate-400">
+                                                    <span>{'Paid: P' + paidAmount.toLocaleString()}</span>
+                                                    <span>{'Balance: P' + remainingBalance.toLocaleString()}</span>
+                                                </div>
+                                            </div>
 
-                                                        <div className="overflow-x-auto">
-                                                            <table className="w-full text-sm">
-                                                                <thead>
-                                                                    <tr className="text-xs uppercase text-slate-400 border-b border-amber-100">
-                                                                        <th className="text-left py-2 pr-4">Payment Tier</th>
-                                                                        <th className="text-left py-2 px-4">Amount</th>
-                                                                        <th className="text-center py-2 px-4">Due Date</th>
-                                                                        <th className="text-center py-2 px-4">Status</th>
-                                                                        <th className="text-right py-2 pl-4">Actions</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {booking.payments.map(function (payment) {
-                                                                        var typeInfo = PAYMENT_TYPE_LABELS[payment.payment_type] || { label: payment.payment_type, pct: '', icon: '-' };
-                                                                        var badge = getStatusBadge(payment.status, payment.due_date);
+                                            {isExpanded && (
+                                                <div className="border-t border-[#720101]/10 px-6 py-4 bg-[#fffaf3] animate-fadeIn">
+                                                    <div className="mb-4 flex flex-wrap gap-4 text-sm text-slate-600">
+                                                        {booking.client_email && (
+                                                            <span className="flex items-center gap-1">
+                                                                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                                {booking.client_email}
+                                                            </span>
+                                                        )}
+                                                        {booking.client_phone && (
+                                                            <span className="flex items-center gap-1">
+                                                                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                                                {booking.client_phone}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                                                        return (
-                                                                            <tr key={payment.id} className="border-b border-amber-100/70 last:border-b-0">
-                                                                                <td className="py-3 pr-4">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#720101]/10 text-sm font-bold text-[#720101]">{typeInfo.icon}</span>
-                                                                                        <div>
-                                                                                            <p className="font-bold text-slate-950">{typeInfo.label}</p>
-                                                                                            <p className="text-xs text-slate-400">{typeInfo.pct + ' of total'}</p>
-                                                                                        </div>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-sm">
+                                                            <thead>
+                                                                <tr className="text-xs uppercase text-slate-400 border-b border-amber-100">
+                                                                    <th className="text-left py-2 pr-4">Payment Tier</th>
+                                                                    <th className="text-left py-2 px-4">Amount</th>
+                                                                    <th className="text-center py-2 px-4">Due Date</th>
+                                                                    <th className="text-center py-2 px-4">Status</th>
+                                                                    <th className="text-right py-2 pl-4">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {booking.payments.map(function (payment) {
+                                                                    var typeInfo = PAYMENT_TYPE_LABELS[payment.payment_type] || { label: payment.payment_type, pct: '', icon: '-' };
+                                                                    var badge = getStatusBadge(payment.status, payment.due_date);
+
+                                                                    return (
+                                                                        <tr key={payment.id} className="border-b border-amber-100/70 last:border-b-0">
+                                                                            <td className="py-3 pr-4">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#720101]/10 text-sm font-bold text-[#720101]">{typeInfo.icon}</span>
+                                                                                    <div>
+                                                                                        <p className="font-bold text-slate-950">{typeInfo.label}</p>
+                                                                                        <p className="text-xs text-slate-400">{typeInfo.pct + ' of total'}</p>
                                                                                     </div>
-                                                                                </td>
-                                                                                <td className="text-left py-3 px-4">
-                                                                                    <span className="font-bold text-slate-950">{'P' + (payment.amount ? payment.amount.toLocaleString() : '0')}</span>
-                                                                                </td>
-                                                                                <td className="text-center py-3 px-4">
-                                                                                    <span className="text-slate-600">{formatAccountingDate(payment.due_date, '-')}</span>
-                                                                                </td>
-                                                                                <td className="text-center py-3 px-4">
-                                                                                    <span className={'staff-status ' + badge.cls}>
-                                                                                        {badge.text}
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="text-right py-3 pl-4">
-                                                                                    {payment.status === 'Pending' ? (
-                                                                                        <div className="flex justify-end gap-2">
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="text-left py-3 px-4">
+                                                                                <span className="font-bold text-slate-950">{'P' + (payment.amount ? payment.amount.toLocaleString() : '0')}</span>
+                                                                            </td>
+                                                                            <td className="text-center py-3 px-4">
+                                                                                <span className="text-slate-600">{formatAccountingDate(payment.due_date, '-')}</span>
+                                                                            </td>
+                                                                            <td className="text-center py-3 px-4">
+                                                                                <span className={'staff-status ' + badge.cls}>
+                                                                                    {badge.text}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="text-right py-3 pl-4">
+                                                                                {payment.status === 'Pending' ? (
+                                                                                    <div className="flex justify-end gap-2">
+                                                                                        <button
+                                                                                            onClick={function (e) { e.stopPropagation(); handleVerify(payment.id, 'Verify'); }}
+                                                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors"
+                                                                                        >
+                                                                                            Verify
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={function (e) { e.stopPropagation(); handleVerify(payment.id, 'Reject'); }}
+                                                                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors"
+                                                                                        >
+                                                                                            Reject
+                                                                                        </button>
+                                                                                        {(payment.status === 'Pending' || new Date(payment.due_date) < new Date()) && (
                                                                                             <button
-                                                                                                onClick={function (e) { e.stopPropagation(); handleVerify(payment.id, 'Verify'); }}
-                                                                                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors"
+                                                                                                onClick={function (e) { e.stopPropagation(); handleSendReminder(payment.id); }}
+                                                                                                disabled={remindingPaymentId === payment.id}
+                                                                                                className={"bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" + (remindingPaymentId === payment.id ? ' opacity-75 cursor-not-allowed' : '')}
                                                                                             >
-                                                                                                Verify
+                                                                                                {remindingPaymentId === payment.id ? (
+                                                                                                    <>
+                                                                                                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                                                                                        Sending...
+                                                                                                    </>
+                                                                                                ) : (
+                                                                                                    <>
+                                                                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                                                                                        Remind
+                                                                                                    </>
+                                                                                                )}
                                                                                             </button>
-                                                                                            <button
-                                                                                                onClick={function (e) { e.stopPropagation(); handleVerify(payment.id, 'Reject'); }}
-                                                                                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors"
-                                                                                            >
-                                                                                                Reject
-                                                                                            </button>
-                                                                                            {(payment.status === 'Pending' || new Date(payment.due_date) < new Date()) && (
-                                                                                                <button
-                                                                                                    onClick={function (e) { e.stopPropagation(); handleSendReminder(payment.id); }}
-                                                                                                    disabled={remindingPaymentId === payment.id}
-                                                                                                    className={"bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" + (remindingPaymentId === payment.id ? ' opacity-75 cursor-not-allowed' : '')}
-                                                                                                >
-                                                                                                    {remindingPaymentId === payment.id ? (
-                                                                                                        <>
-                                                                                                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                                                                                            Sending...
-                                                                                                        </>
-                                                                                                    ) : (
-                                                                                                        <>
-                                                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ) : isPaidStatus(payment.status) ? (
+                                                                                    <div className="flex justify-end items-center gap-3">
+                                                                                        <span className="text-emerald-700 text-xs font-bold">{staffPaymentStatus(payment.status, payment.due_date).label}</span>
+                                                                                        <button
+                                                                                            onClick={function (e) { e.stopPropagation(); setReceiptModal({ isOpen: true, payment: payment, booking: booking }); }}
+                                                                                            className="text-[#720101] hover:text-[#4d0101] text-xs font-bold underline flex items-center gap-1"
+                                                                                        >
+                                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                                                            Receipt
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <span className="text-slate-400 text-xs">-</span>
+                                                                                )}
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div className="mt-4 pt-3 border-t border-amber-100 flex justify-between items-center">
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditPaymentModal({ isOpen: true, payment: booking.payments?.[0] || null, booking })}
+                                                                className="bg-[#720101]/10 hover:bg-[#720101]/15 text-[#720101] px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5 uppercase tracking-wide"
+                                                            >
                                                                                                             Remind
                                                                                                         </>
                                                                                                     )}
@@ -2461,6 +2566,57 @@ const DashboardAccounting = () => {
                 onCancel={() => setRefundActionPrompt({ isOpen: false, bookingId: null, refundCaseId: null, action: '', title: '', message: '', busy: false })}
                 onConfirm={submitRefundAction}
             />
+            {/* Discount Modal */}
+            {discountModal.open && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDiscountModal({ open: false, data: null })}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                            <h3 className="text-lg font-bold text-slate-900">Apply Booking Discount</h3>
+                            <p className="text-xs text-slate-500 mt-1">{discountModal.data?.client_full_name || discountModal.data?.username}'s Event (#BK-{discountModal.data?.id.toString().padStart(4, '0')})</p>
+                        </div>
+                        <form onSubmit={handleDiscountSubmit} className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Discount Type</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className={`border rounded-lg p-3 flex cursor-pointer transition-colors ${discountForm.discount_type === 'fixed' ? 'bg-amber-50 border-amber-600 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                            <input type="radio" name="discount_type" value="fixed" checked={discountForm.discount_type === 'fixed'} onChange={() => setDiscountForm({ ...discountForm, discount_type: 'fixed' })} className="hidden" />
+                                            <div className="font-bold text-sm text-center w-full">Fixed Amount (₱)</div>
+                                        </label>
+                                        <label className={`border rounded-lg p-3 flex cursor-pointer transition-colors ${discountForm.discount_type === 'percentage' ? 'bg-amber-50 border-amber-600 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                            <input type="radio" name="discount_type" value="percentage" checked={discountForm.discount_type === 'percentage'} onChange={() => setDiscountForm({ ...discountForm, discount_type: 'percentage' })} className="hidden" />
+                                            <div className="font-bold text-sm text-center w-full">Percentage (%)</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">Discount Value</label>
+                                    <div className="relative">
+                                        {discountForm.discount_type === 'fixed' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₱</span>}
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            value={discountForm.discount_value}
+                                            onChange={e => setDiscountForm({ ...discountForm, discount_value: parseFloat(e.target.value) || 0 })}
+                                            className={`w-full ${discountForm.discount_type === 'fixed' ? 'pl-8' : 'px-4'} py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-amber-600 outline-none transition-all text-lg font-bold`}
+                                        />
+                                        {discountForm.discount_type === 'percentage' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">%</span>}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex justify-end gap-3">
+                                <button type="button" onClick={() => setDiscountModal({ open: false, data: null })} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                                <button type="submit" disabled={discountLoading} className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70">
+                                    {discountLoading ? <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : null}
+                                    Apply Discount
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {toast && (
                 <div className="pointer-events-none fixed bottom-5 right-5 z-50 animate-slideUp">
