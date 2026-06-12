@@ -440,6 +440,15 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                 method: upfrontPayment.method,
                 reference: upfrontPayment.reference,
             } : null,
+            wants_tasting: Boolean(bookingData.wantsTasting),
+            tasting: bookingData.wantsTasting ? {
+                guest_name: bookingData.tasting_guest_name || bookingData.client_full_name || customer?.full_name || customer?.username,
+                guest_email: bookingData.tasting_guest_email || bookingData.client_email || customer?.email,
+                guest_phone: bookingData.tasting_guest_phone || bookingData.client_phone || customer?.phone,
+                preferred_date: bookingData.tasting_preferred_date,
+                preferred_time: bookingData.tasting_preferred_time,
+                notes: bookingData.tasting_notes,
+            } : null,
         };
 
         setIsSubmitting(true);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FoodTasting;
 use App\Models\User;
+use App\Services\FoodTastingScheduleService;
 use App\Services\OperationalBroadcastService;
 use App\Support\ResourceVersion;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class FoodTastingController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'guest_name' => 'required|string',
             'guest_email' => 'required|email',
             'guest_phone' => 'nullable|string',
@@ -34,17 +35,19 @@ class FoodTastingController extends Controller
             'website' => 'nullable|prohibited',
         ]);
 
+        FoodTastingScheduleService::validateCustomerSlot($data['preferred_date'], $data['preferred_time']);
+
         $userId = Auth::check() ? Auth::id() : null;
-        $duplicateUser = $this->findDuplicateUser($request->guest_email, $request->guest_phone);
+        $duplicateUser = $this->findDuplicateUser($data['guest_email'], $data['guest_phone'] ?? null);
 
         $tasting = FoodTasting::create([
             'user_id' => $userId,
-            'guest_name' => $request->guest_name,
-            'guest_email' => $request->guest_email,
-            'guest_phone' => $request->guest_phone,
-            'preferred_date' => $request->preferred_date,
-            'preferred_time' => $request->preferred_time,
-            'notes' => $request->notes,
+            'guest_name' => $data['guest_name'],
+            'guest_email' => $data['guest_email'],
+            'guest_phone' => $data['guest_phone'] ?? null,
+            'preferred_date' => $data['preferred_date'],
+            'preferred_time' => $data['preferred_time'],
+            'notes' => $data['notes'] ?? null,
             'duplicate_user_id' => $duplicateUser?->id,
         ]);
         app(OperationalBroadcastService::class)
@@ -70,11 +73,25 @@ class FoodTastingController extends Controller
         return response()->json($tastings);
     }
 
+    public function availability(Request $request)
+    {
+        $data = $request->validate([
+            'year' => ['required', 'integer', 'min:2024', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
+
+        return response()->json([
+            'capacity' => FoodTastingScheduleService::DAILY_CAPACITY,
+            'capacity_statuses' => FoodTastingScheduleService::CAPACITY_STATUSES,
+            'full_dates' => FoodTastingScheduleService::fullDatesForMonth((int) $data['year'], (int) $data['month']),
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $tasting = FoodTasting::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
 
-        $request->validate([
+        $data = $request->validate([
             'guest_name' => 'required|string',
             'guest_email' => 'required|email',
             'guest_phone' => 'nullable|string',
@@ -83,9 +100,9 @@ class FoodTastingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $tasting->update($request->only([
-            'guest_name', 'guest_email', 'guest_phone', 'preferred_date', 'preferred_time', 'notes',
-        ]));
+        FoodTastingScheduleService::validateCustomerSlot($data['preferred_date'], $data['preferred_time'], $tasting->id);
+
+        $tasting->update($data);
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('food_tastings', 'food_tasting', $tasting->id, 'updated', 'Food tasting request updated.');
 
@@ -361,7 +378,7 @@ class FoodTastingController extends Controller
             'client_name' => $tasting->guest_name ?: $tasting->user?->full_name ?: $tasting->user?->username,
             'client_email' => $tasting->guest_email ?: $tasting->user?->email,
             'client_phone' => $tasting->guest_phone ?: $tasting->user?->phone,
-            'preferred_date' => $tasting->preferred_date,
+            'preferred_date' => $tasting->preferred_date?->toDateString(),
             'preferred_time' => $tasting->preferred_time,
             'status' => $tasting->status,
             'notes' => $tasting->notes,

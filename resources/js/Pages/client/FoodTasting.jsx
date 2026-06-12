@@ -8,6 +8,8 @@ import StaffPreviewBanner from '../../Components/common/StaffPreviewBanner';
 import ClientNavbar from '../../Components/common/ClientNavbar';
 import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
+import FoodTastingSchedulePicker from '../../Components/client/FoodTastingSchedulePicker';
+import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
 
 const FoodTasting = () => {
     const { user } = useAuth();
@@ -30,22 +32,7 @@ const FoodTasting = () => {
         const { name, value } = e.target;
         let newErrors = { ...errors };
 
-        if (name === 'preferred_date' && value) {
-            const dateObj = new Date(value);
-            const day = dateObj.getDay();
-            if (day >= 1 && day <= 4) {
-                newErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
-            } else {
-                delete newErrors.preferred_date;
-            }
-        } else if (name === 'preferred_time' && value) {
-            const [hours, minutes] = value.split(':').map(Number);
-            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
-                newErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
-            } else {
-                delete newErrors.preferred_time;
-            }
-        } else if (newErrors[name]) {
+        if (newErrors[name]) {
             delete newErrors[name];
         }
 
@@ -53,10 +40,14 @@ const FoodTasting = () => {
         setErrors(newErrors);
     };
 
-    const getMinDate = () => {
-        const today = new Date();
-        today.setDate(today.getDate() + 3);
-        return today.toISOString().split('T')[0];
+    const handleScheduleChange = (updates) => {
+        setFormData((current) => ({ ...current, ...updates }));
+        setErrors((current) => {
+            const next = { ...current };
+            if (updates.preferred_date !== undefined) delete next.preferred_date;
+            if (updates.preferred_time !== undefined) delete next.preferred_time;
+            return next;
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -64,15 +55,13 @@ const FoodTasting = () => {
         setLoading(true);
         setMessage(null);
         let nextErrors = {};
-        if (formData.preferred_date) {
-            const day = new Date(formData.preferred_date).getDay();
-            if (day >= 1 && day <= 4) nextErrors.preferred_date = 'Food tastings are only available Friday to Sunday.';
+        if (!formData.preferred_date) {
+            nextErrors.preferred_date = 'Choose a preferred food tasting date.';
         }
-        if (formData.preferred_time) {
-            const [hours, minutes] = formData.preferred_time.split(':').map(Number);
-            if (hours < 11 || hours > 15 || (hours === 15 && minutes > 0)) {
-                nextErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
-            }
+        if (!formData.preferred_time) {
+            nextErrors.preferred_time = 'Choose a preferred food tasting time.';
+        } else if (!isFoodTastingTimeAllowed(formData.preferred_time)) {
+            nextErrors.preferred_time = 'Food tastings are only available between 11:00 AM and 3:00 PM.';
         }
 
         if (Object.keys(nextErrors).length > 0) {
@@ -151,8 +140,7 @@ const FoodTasting = () => {
                                             Heads up!
                                         </p>
                                         <p className="mt-1 text-sm text-blue-800">
-                                            The dishes that will be served are good for 4 pax only. Please also note there is a maximum of 6 bookings per day.
-                                            Food tastings require at least 3 days lead time, and are only available Friday to Sunday, between 11:00 AM and 3:00 PM.
+                                            Food tasting servings are prepared for up to 4 pax. You may bring more guests, but please expect the tasting portions to be good for 4 pax only.
                                         </p>
                                     </div>
 
@@ -223,31 +211,13 @@ const FoodTasting = () => {
                                             <FieldError message={errors.guest_phone} />
                                         </label>
                                         <div className="hidden md:block"></div>
-                                        <label>
-                                            <span className="booking-field-label">Preferred date</span>
-                                            <input
-                                                type="date"
-                                                name="preferred_date"
-                                                min={getMinDate()}
-                                                value={formData.preferred_date}
-                                                onChange={handleChange}
-                                                required
-                                                className="booking-input"
-                                            />
-                                            <FieldError message={errors.preferred_date} />
-                                        </label>
-                                        <label>
-                                            <span className="booking-field-label">Preferred time</span>
-                                            <input
-                                                type="time"
-                                                name="preferred_time"
-                                                value={formData.preferred_time}
-                                                onChange={handleChange}
-                                                required
-                                                className="booking-input"
-                                            />
-                                            <FieldError message={errors.preferred_time} />
-                                        </label>
+                                        <FoodTastingSchedulePicker
+                                            dateValue={formData.preferred_date}
+                                            timeValue={formData.preferred_time}
+                                            onChange={handleScheduleChange}
+                                            errors={errors}
+                                            disabled={loading}
+                                        />
                                         <label className="md:col-span-2">
                                             <span className="booking-field-label">Notes</span>
                                             <textarea

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { RefreshCw, Search } from 'lucide-react';
+import { Edit3, RefreshCw, Search } from 'lucide-react';
 import useLiveResource from '../../hooks/useLiveResource';
 import csrfFetch from '../../utils/csrf';
 import { operationalChannelsForUser } from '../../utils/liveChannels';
@@ -8,6 +8,7 @@ import { LiveSyncIndicator, SoftRefreshBoundary, UpdatedRowPulse } from '../comm
 import StaffEmptyState from '../staff/StaffEmptyState';
 import StaffPagination from '../staff/StaffPagination';
 import StaffSkeleton from '../staff/StaffSkeleton';
+import { TASTING_TIME_OPTIONS, isFoodTastingDay, minFoodTastingDate } from '../../utils/foodTastingSchedule';
 
 const STATUS_OPTIONS = ['All', 'Pending', 'Contacted', 'Approved', 'Confirmed', 'Completed', 'Cancelled', 'Rescheduled', 'Archived', 'Spam'];
 const STATUS_FILTER_OPTIONS = [
@@ -23,11 +24,107 @@ const formatDate = (value) => {
     return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const standardWindowWarning = (date, time) => {
+    if (!date && !time) return '';
+    const warnings = [];
+    if (date) {
+        if (date < minFoodTastingDate()) warnings.push('less than 3 days lead time');
+        if (!isFoodTastingDay(date)) warnings.push('outside Friday to Sunday');
+    }
+    if (time && !TASTING_TIME_OPTIONS.some((option) => option.value === time)) {
+        warnings.push('outside 11:00 AM to 3:00 PM slots');
+    }
+    return warnings.length ? `Outside standard customer-facing window: ${warnings.join(', ')}.` : '';
+};
+
+const StaffScheduleModal = ({ row, saving, onClose, onSave }) => {
+    const [form, setForm] = useState(() => ({
+        status: row?.status || 'Pending',
+        preferred_date: row?.preferred_date || '',
+        preferred_time: row?.preferred_time || '',
+        notes: row?.notes || '',
+        outcome_notes: row?.outcome_notes || '',
+    }));
+
+    useEffect(() => {
+        setForm({
+            status: row?.status || 'Pending',
+            preferred_date: row?.preferred_date || '',
+            preferred_time: row?.preferred_time || '',
+            notes: row?.notes || '',
+            outcome_notes: row?.outcome_notes || '',
+        });
+    }, [row?.id]);
+
+    if (!row) return null;
+
+    const warning = standardWindowWarning(form.preferred_date, form.preferred_time);
+
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="border-b border-slate-100 bg-[#fffaf3] px-6 py-5">
+                    <p className="marketing-kicker">Food tasting schedule</p>
+                    <h3 className="mt-1 text-xl font-black text-slate-950">Edit tasting request</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">{row.client_name || 'Guest'} / {row.client_email || 'No email'}</p>
+                </div>
+                <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+                    <label>
+                        <span className="booking-field-label">Status</span>
+                        <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))} className="staff-control w-full">
+                            {STATUS_OPTIONS.filter((status) => status !== 'All').map((status) => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                    </label>
+                    <label>
+                        <span className="booking-field-label">Preferred date</span>
+                        <input type="date" value={form.preferred_date || ''} onChange={(event) => setForm((current) => ({ ...current, preferred_date: event.target.value }))} className="staff-control w-full" />
+                    </label>
+                    <label>
+                        <span className="booking-field-label">Preferred time</span>
+                        <select value={form.preferred_time || ''} onChange={(event) => setForm((current) => ({ ...current, preferred_time: event.target.value }))} className="staff-control w-full">
+                            <option value="">Time pending</option>
+                            {TASTING_TIME_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                    </label>
+                    <div className="self-end">
+                        {warning ? (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
+                                {warning} Staff can still save this as an operational exception.
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold leading-5 text-emerald-700">
+                                This schedule fits the standard customer-facing tasting window.
+                            </div>
+                        )}
+                    </div>
+                    <label className="sm:col-span-2">
+                        <span className="booking-field-label">Customer notes</span>
+                        <textarea rows="3" value={form.notes || ''} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} className="booking-note-field !mt-2" />
+                    </label>
+                    <label className="sm:col-span-2">
+                        <span className="booking-field-label">Outcome notes</span>
+                        <textarea rows="3" value={form.outcome_notes || ''} onChange={(event) => setForm((current) => ({ ...current, outcome_notes: event.target.value }))} className="booking-note-field !mt-2" />
+                    </label>
+                </div>
+                <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end">
+                    <button type="button" onClick={onClose} disabled={saving} className="staff-row-action">
+                        Cancel
+                    </button>
+                    <button type="button" onClick={() => onSave(row, form)} disabled={saving} className="staff-row-action staff-row-action-primary">
+                        {saving ? 'Saving...' : 'Save schedule'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
     const { auth } = usePage().props;
     const isAdminSurface = surfaceMode === 'admin-full';
     const [rows, setRows] = useState([]);
     const [savingId, setSavingId] = useState(null);
+    const [editingRow, setEditingRow] = useState(null);
     const [filters, setFilters] = useState({
         search: '',
         ownership: 'all',
@@ -136,6 +233,28 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.message || payload.error || 'Could not update tasting.');
             notify('Food tasting updated.');
+            tastingResource.markChanged(row.id);
+            loadRows({ silent: true });
+        } catch (error) {
+            notify(error.message || 'Could not update tasting.', 'error');
+        } finally {
+            setSavingId(null);
+        }
+    };
+
+    const saveSchedule = async (row, form) => {
+        setSavingId(row.id);
+        try {
+            const response = await csrfFetch(`/api/marketing/food-tastings/${row.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.message || payload.error || 'Could not update tasting.');
+            notify('Food tasting schedule updated.');
+            setRows((current) => current.map((item) => item.id === row.id ? (payload.tasting || item) : item));
+            setEditingRow(null);
             tastingResource.markChanged(row.id);
             loadRows({ silent: true });
         } catch (error) {
@@ -307,6 +426,12 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                                                         Claim
                                                     </button>
                                                 )}
+                                                {row.can_edit && (
+                                                    <button type="button" disabled={savingId === row.id} onClick={() => setEditingRow(row)} className="staff-row-action">
+                                                        <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
+                                                        Edit schedule
+                                                    </button>
+                                                )}
                                                 {row.can_edit && row.handled_by && (
                                                     <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'release', 'Food tasting released.')} className="staff-row-action">
                                                         Release
@@ -352,6 +477,12 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                     perPageOptions={[10, 25, 50]}
                 />
             )}
+            <StaffScheduleModal
+                row={editingRow}
+                saving={Boolean(editingRow && savingId === editingRow.id)}
+                onClose={() => setEditingRow(null)}
+                onSave={saveSchedule}
+            />
         </section>
     );
 };

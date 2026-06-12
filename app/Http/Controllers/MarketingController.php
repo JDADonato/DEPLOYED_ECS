@@ -7,6 +7,7 @@ use App\Mail\BookingLiveStatusUpdate;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\BookingReviewTask;
+use App\Models\FoodTasting;
 use App\Models\Payment;
 use App\Models\User;
 use App\Notifications\BookingLiveStatusNotification;
@@ -17,6 +18,7 @@ use App\Services\BookingValidationService;
 use App\Services\ConversionEventService;
 use App\Services\EmailDeliveryService;
 use App\Services\EventPreparationService;
+use App\Services\FoodTastingScheduleService;
 use App\Services\NotificationRecipientService;
 use App\Services\OperationalBroadcastService;
 use App\Services\PaymentCalculationService;
@@ -246,6 +248,13 @@ class MarketingController extends Controller
             'upfront_payment.tranches.*' => ['string', 'in:Reservation,DownPayment,Final'],
             'upfront_payment.method' => ['required_with:upfront_payment', 'string', 'max:50'],
             'upfront_payment.reference' => ['nullable', 'string', 'max:255'],
+            'wants_tasting' => ['nullable', 'boolean'],
+            'tasting.guest_name' => ['required_if:wants_tasting,true', 'nullable', 'string', 'max:255'],
+            'tasting.guest_email' => ['required_if:wants_tasting,true', 'nullable', 'email', 'max:255'],
+            'tasting.guest_phone' => ['nullable', 'string', 'max:40'],
+            'tasting.preferred_date' => ['required_if:wants_tasting,true', 'nullable', 'date'],
+            'tasting.preferred_time' => ['required_if:wants_tasting,true', 'nullable', 'string', 'max:30'],
+            'tasting.notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         try {
@@ -265,6 +274,13 @@ class MarketingController extends Controller
                         'recalculated_total' => $expectedTotal,
                     ], 422);
                 }
+            }
+
+            if (! empty($data['wants_tasting'])) {
+                FoodTastingScheduleService::validateCustomerSlot(
+                    $data['tasting']['preferred_date'] ?? '',
+                    $data['tasting']['preferred_time'] ?? ''
+                );
             }
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -311,6 +327,24 @@ class MarketingController extends Controller
                     'expires_at' => now()->addHours(24),
                 ]);
 
+                if (! empty($data['wants_tasting'])) {
+                    $tastingData = $data['tasting'] ?? [];
+                    $duplicateUser = $this->findDuplicateUser($tastingData['guest_email'] ?? $customer->email, $tastingData['guest_phone'] ?? $customer->phone);
+
+                    $tasting = FoodTasting::create([
+                        'user_id' => $customer->id,
+                        'guest_name' => $tastingData['guest_name'] ?? $booking->client_full_name,
+                        'guest_email' => $tastingData['guest_email'] ?? $booking->client_email,
+                        'guest_phone' => $tastingData['guest_phone'] ?? $booking->client_phone,
+                        'preferred_date' => $tastingData['preferred_date'],
+                        'preferred_time' => $tastingData['preferred_time'],
+                        'notes' => $tastingData['notes'] ?? null,
+                        'handled_by' => $actor->id,
+                        'duplicate_user_id' => $duplicateUser?->id,
+                    ]);
+
+                    $booking->forceFill(['food_tasting_id' => $tasting->id])->save();
+                }
 
                 foreach ([
                     'Confirm date and capacity',
@@ -420,6 +454,11 @@ class MarketingController extends Controller
                 ->sendToRoles(['Admin', 'Marketing', 'Accounting'], new NewBookingNotification($booking), 'assisted_booking_created');
         } catch (\Throwable) {
             // Notifications should not undo the booking that was already created.
+        }
+
+        if ($booking->food_tasting_id) {
+            app(OperationalBroadcastService::class)
+                ->staffQueueChanged('food_tastings', 'food_tasting', $booking->food_tasting_id, 'created', 'New assisted food tasting request.');
         }
 
         $checkoutUrl = null;
@@ -1233,5 +1272,28 @@ class MarketingController extends Controller
                 'message' => $exception->getMessage(),
             ]);
         }
+    }
+
+    private function findDuplicateUser(?string $email, ?string $phone): ?User
+    {
+        $email = filled($email) ? strtolower(trim($email)) : null;
+        $phone = filled($phone) ? preg_replace('/\D+/', '', $phone) : null;
+
+        if (! $email && ! $phone) {
+            return null;
+        }
+
+        return User::query()
+            ->where('role', 'Client')
+            ->where(function ($query) use ($email, $phone) {
+                if ($email) {
+                    $query->orWhereRaw('LOWER(email) = ?', [$email]);
+                }
+                if ($phone) {
+                    $query->orWhere('phone', $phone);
+                }
+            })
+            ->orderByRaw("CASE WHEN account_status IS NULL OR account_status = 'active' THEN 0 ELSE 1 END")
+            ->first();
     }
 }

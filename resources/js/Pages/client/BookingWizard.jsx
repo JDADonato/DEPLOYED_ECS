@@ -311,7 +311,7 @@ const BookingWizard = ({ initialEventTypes = [] }) => {
             }
         }
 
-        if (merged.wantsTasting && (!merged.tasting_guest_name || !merged.tasting_guest_email || !merged.tasting_preferred_date)) {
+        if (merged.wantsTasting && (!merged.tasting_guest_name || !merged.tasting_guest_email || !merged.tasting_preferred_date || !merged.tasting_preferred_time)) {
             showModal('error', 'Missing tasting details', 'Please complete the required food tasting information.');
             setCurrentStep(7);
             return;

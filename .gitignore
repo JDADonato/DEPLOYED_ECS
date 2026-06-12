@@ -28,3 +28,11 @@ Homestead.yaml
 Thumbs.db
 /php/
 composer.phar
+
+# Paper revision / thesis diagram artifacts
+/ECS_Functional_Decomposition_Diagram.drawio
+/ECS_Level_0_Context_Diagram.drawio
+/ECS_PAPER_REVISION_AUDIT.docx
+/ECS_PAPER_REVISION_AUDIT.md
+/ECS_PAPER_REVISION_AUDIT.tex
+/SYSTEM_DIAGRAMS.drawio

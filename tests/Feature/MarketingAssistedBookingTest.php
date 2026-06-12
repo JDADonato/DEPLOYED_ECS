@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\BusinessRule;
+use App\Models\FoodTasting;
 use App\Models\User;
+use Carbon\Carbon;
 use App\Notifications\CustomerAssistedBookingInviteNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -21,6 +23,7 @@ class MarketingAssistedBookingTest extends TestCase
 
         Config::set('mail.default', 'array');
         Config::set('queue.default', 'sync');
+        Carbon::setTestNow(Carbon::parse('2026-06-01 09:00:00'));
 
         BusinessRule::create([
             'minimum_lead_days' => 7,
@@ -35,6 +38,12 @@ class MarketingAssistedBookingTest extends TestCase
             'downpayment_due_days' => 30,
             'final_payment_due_days' => 10,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     public function test_marketing_can_create_assisted_booking_for_existing_customer(): void
@@ -132,6 +141,39 @@ class MarketingAssistedBookingTest extends TestCase
         $this->assertNotEmpty($response->json('temporary_password'));
 
         Notification::assertSentTo($customer, CustomerAssistedBookingInviteNotification::class);
+    }
+
+    public function test_assisted_booking_with_tasting_creates_and_links_food_tasting(): void
+    {
+        Notification::fake();
+
+        $marketing = $this->user('Marketing');
+        $customer = $this->user('Client', ['full_name' => 'Tasting Client']);
+
+        $response = $this->actingAs($marketing)
+            ->postJson('/api/marketing/bookings/assisted', $this->payload([
+                'customer_mode' => 'existing',
+                'customer_id' => $customer->id,
+                'wants_tasting' => true,
+                'tasting' => [
+                    'guest_name' => 'Tasting Client',
+                    'guest_email' => 'tasting-client@example.test',
+                    'guest_phone' => '09170000000',
+                    'preferred_date' => '2026-06-05',
+                    'preferred_time' => '11:00',
+                    'notes' => 'Vegetarian options please.',
+                ],
+            ]))
+            ->assertCreated();
+
+        $booking = Booking::findOrFail($response->json('booking.id'));
+        $this->assertNotNull($booking->food_tasting_id);
+
+        $tasting = FoodTasting::findOrFail($booking->food_tasting_id);
+        $this->assertSame($customer->id, $tasting->user_id);
+        $this->assertSame($marketing->id, $tasting->handled_by);
+        $this->assertSame('2026-06-05', $tasting->preferred_date->toDateString());
+        $this->assertSame('11:00', $tasting->preferred_time);
     }
 
     public function test_walk_in_without_email_still_creates_booking_and_warns_staff(): void

@@ -195,6 +195,7 @@ Route::get('/api/menu-items', [AdminController::class, 'getMenuItems'])->middlew
 
 // Public food tasting (guests can submit without auth)
 Route::post('/api/food-tasting', [FoodTastingController::class, 'store'])->middleware('throttle:5,1');
+Route::get('/api/food-tasting/availability', [FoodTastingController::class, 'availability'])->middleware('cache.headers:public;max_age=30;etag');
 
 // Booking availability is public (calendar needs it without auth sometimes)
 Route::get('/api/bookings/availability/{date}', [BookingController::class, 'checkAvailability'])->middleware('cache.headers:public;max_age=60;etag');
