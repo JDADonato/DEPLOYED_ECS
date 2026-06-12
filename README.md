@@ -17,7 +17,7 @@ The app is built for four main roles:
 | --- | --- |
 | Backend | Laravel 12, PHP 8.2+ |
 | Frontend | React 19, Inertia.js, Tailwind CSS |
-| Database | PostgreSQL, usually Supabase for shared testing |
+| Database | MySQL/MariaDB, hosted on Hostinger |
 | Payments | PayMongo checkout and webhooks |
 | Realtime | Laravel Reverb, Laravel Echo, Pusher protocol |
 | Email/Jobs | Laravel notifications and queue workers |
@@ -72,13 +72,12 @@ APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://127.0.0.1:8080
 
-DB_CONNECTION=pgsql
-DB_HOST=your-supabase-host
-DB_PORT=6543
-DB_DATABASE=postgres
-DB_USERNAME=your-username
+DB_CONNECTION=mysql
+DB_HOST=your-hostinger-mysql-host
+DB_PORT=3306
+DB_DATABASE=u684782056_ecs_production
+DB_USERNAME=u684782056_ecs_app
 DB_PASSWORD=your-password
-DB_SSLMODE=require
 
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
@@ -91,7 +90,7 @@ MAIL_FROM_NAME="${APP_NAME}"
 VITE_REVERB_ENABLED=false
 ```
 
-For shared Supabase testing, use port `6543` unless the team lead gives you a different connection mode.
+For production and deployment checks, use the Hostinger MySQL database values from the real server `.env`. Do not commit the real password.
 
 Run pending migrations against the configured database:
 
@@ -99,7 +98,7 @@ Run pending migrations against the configured database:
 .\php\php.exe artisan migrate
 ```
 
-Use `migrate` when setting up a new laptop or device that connects to an existing shared Supabase database. It applies only missing database structure changes, such as new tables, columns, and indexes. It does not delete bookings, accounts, or analytics records.
+Use `migrate` when setting up a new laptop or device that connects to an existing shared Hostinger MySQL database. It applies only missing database structure changes, such as new tables, columns, and indexes. It does not delete bookings, accounts, or analytics records.
 
 Only run migrations with seeders when the database is brand new or intentionally empty:
 
@@ -107,7 +106,7 @@ Only run migrations with seeders when the database is brand new or intentionally
 .\php\php.exe artisan migrate --seed
 ```
 
-`--seed` runs the baseline data setup for default accounts, event types, menu items, packages, and business rules. It is not required every time you set up another device against the same Supabase database.
+`--seed` runs the baseline data setup for default accounts, event types, menu items, packages, and business rules. It is not required every time you set up another device against the same Hostinger MySQL database.
 
 Build once to verify frontend dependencies:
 
@@ -204,7 +203,7 @@ Only do this on a local database that you own. This deletes existing app data.
 .\php\php.exe artisan migrate:fresh --seed
 ```
 
-Do not run `migrate:fresh` against a shared Supabase database unless the whole group agrees. It will drop tables and remove everyone else's test data.
+Do not run `migrate:fresh` against the Hostinger/shared database unless the whole group agrees. It will drop tables and remove everyone else's test data.
 
 ### Reset A Test Staff Password
 
@@ -376,7 +375,7 @@ Admin users can override completion blockers only with an override reason. The o
 - Operational lifecycle preservation: customer history hiding, catalog archiving, payment schedule voiding, refund case actions, guest lead/tasting lifecycle states, and upload ownership/cleanup.
 - Live operational UI with Reverb hints, cached polling fallback, quiet sync states, compact notification feedback, and notification sound opt-in.
 - Admin full-surface workspace pattern, collapsible staff sidebar, role-local settings, and reusable operational UI components.
-- Security headers, CSP report mode for development, production preflight checks, PostgreSQL guardrails, and environment diagnostics.
+- Security headers, CSP report mode for development, production preflight checks, database guardrails, and environment diagnostics.
 
 ## Documentation Map
 
@@ -505,7 +504,7 @@ VITE_REVERB_ENABLED=false
 
 If realtime is needed, run the app through `.\composer.bat run dev` so Reverb starts on port `8085`.
 
-### Boolean database errors on PostgreSQL
+### Database connection or migration errors
 
 Make sure the latest code is pulled and migrations are applied:
 
@@ -514,7 +513,7 @@ git pull
 .\php\php.exe artisan migrate
 ```
 
-The app casts boolean fields for PostgreSQL, but old code or missing migrations can still cause `boolean = integer` or datatype mismatch errors.
+Production uses Hostinger MySQL/MariaDB. If imports fail, make sure the SQL dump does not include provider-specific statements that Hostinger rejects, such as `GTID_PURGED` or `SQL_LOG_BIN`.
 
 ### Emails say queued but no inbox message arrives
 
@@ -595,7 +594,7 @@ git push
 - Point the web server document root to `public/`.
 - Keep `APP_DEBUG=false`.
 - Use HTTPS and set `SESSION_SECURE_COOKIE=true`.
-- Use `DB_CONNECTION=pgsql` for the production PostgreSQL database.
+- Use `DB_CONNECTION=mysql` for the production Hostinger MySQL/MariaDB database.
 - Run migrations with `--force`.
 - Run the production preflight scan before launch:
 
