@@ -183,8 +183,8 @@ class AccountingController extends Controller
     public function applyDiscount(Request $request, int $id)
     {
         $request->validate([
-            'discount_value' => 'nullable|numeric|min:0',
-            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'required|numeric|min:0.01',
+            'discount_type' => 'required|in:fixed,percentage',
         ]);
 
         $booking = Booking::with('payments')->find($id);
@@ -198,36 +198,41 @@ class AccountingController extends Controller
             ->filter(fn ($payment) => in_array($payment->status, $lockedStatuses, true))
             ->sum(fn ($payment) => (float) $payment->amount);
 
-        if (is_null($booking->budget)) {
-            $currentTotal = $booking->total_cost ?? 0;
-            if ($booking->discount_type === 'percentage' && $booking->discount_value > 0 && $booking->discount_value < 100) {
-                $originalAmount = $currentTotal / (1 - ($booking->discount_value / 100));
-            } else {
-                $originalAmount = $currentTotal + ($booking->discount_value ?? 0);
-            }
+        // Compute the original pre-discount total cost.
+        // We need to reverse any existing discount to get back to the true original.
+        $currentTotal = (float) ($booking->total_cost ?? 0);
+        $existingDiscountValue = (float) ($booking->discount_value ?? 0);
+        $existingDiscountType = $booking->discount_type;
+
+        if ($existingDiscountValue > 0 && $existingDiscountType === 'percentage' && $existingDiscountValue < 100) {
+            // Reverse percentage: if total = original * (1 - pct/100), then original = total / (1 - pct/100)
+            $originalAmount = $currentTotal / (1 - ($existingDiscountValue / 100));
+        } elseif ($existingDiscountValue > 0 && $existingDiscountType === 'fixed') {
+            // Reverse fixed: original = total + fixed_discount
+            $originalAmount = $currentTotal + $existingDiscountValue;
         } else {
-            $originalAmount = $booking->budget;
-        }
-        $discountValue = (float) ($request->discount_value ?? 0);
-        $discountType = $request->discount_type ?? 'fixed';
-
-        if ($discountValue <= 0) {
-            return response()->json(['error' => 'Discount value must be greater than zero.'], 422);
+            // No existing discount
+            $originalAmount = $currentTotal;
         }
 
+        $discountValue = (float) $request->discount_value;
+        $discountType = $request->discount_type;
+
+        // Apply the new discount on the original (pre-discount) amount
         if ($discountType === 'percentage') {
+            if ($discountValue >= 100) {
+                return response()->json(['error' => 'Percentage discount must be less than 100%.'], 422);
+            }
             $deduction = $originalAmount * ($discountValue / 100);
             $newTotalCost = $originalAmount - $deduction;
             $appliedDiscount = $deduction;
-        } elseif ($discountType === 'fixed') {
+        } else {
+            // Fixed discount
             $newTotalCost = $originalAmount - $discountValue;
             $appliedDiscount = $discountValue;
-        } else {
-            $newTotalCost = $originalAmount;
-            $appliedDiscount = 0;
         }
 
-        $newTotalCost = max(0, $newTotalCost);
+        $newTotalCost = round(max(0, $newTotalCost), 2);
 
         // Safety: don't allow discount to reduce total below already-paid amount
         if ($newTotalCost < $totalPaid) {
@@ -243,14 +248,16 @@ class AccountingController extends Controller
         // Recalculate pending payments
         app(\App\Services\PaymentCalculationService::class)->syncPendingTranches($booking);
 
-        // Notify customer
+        // Notify customer (dispatch synchronously to avoid queue worker dependency)
         if ($appliedDiscount > 0) {
-            $booking->user->notify(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost));
+            $booking->user->notifyNow(new \App\Notifications\DiscountAppliedNotification($booking, $appliedDiscount, $newTotalCost));
         }
 
         return response()->json([
             'message' => 'Discount applied successfully',
             'new_total_cost' => $newTotalCost,
+            'original_amount' => round($originalAmount, 2),
+            'discount_applied' => round($appliedDiscount, 2),
             'payments' => $booking->fresh(['payments'])->payments,
         ]);
     }
