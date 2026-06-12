@@ -162,7 +162,7 @@ const FoodTasting = () => {
                                 </section>
 
                                 <section className="booking-choice-area">
-                                    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <form onSubmit={handleSubmit} className="food-tasting-form grid grid-cols-1 gap-3 md:grid-cols-2">
                                         <input type="text" name="website" value={formData.website} onChange={handleChange} tabIndex="-1" autoComplete="off" className="hidden" aria-hidden="true" />
                                         
                                         <div className="md:col-span-2">

@@ -166,7 +166,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                     </div>
 
                     {showTasting && (
-                        <div ref={formRef} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div ref={formRef} className="food-tasting-form mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                             <div className="md:col-span-2">
                                 <FormErrorSummary errors={errors} />
                             </div>

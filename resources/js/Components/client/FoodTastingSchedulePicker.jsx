@@ -119,7 +119,7 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
                         <CalendarDays className="h-4 w-4" aria-hidden="true" />
                         Preferred date
                     </div>
-                    <p className="food-tasting-picker-help">Food tastings are available Friday to Sunday with at least 3 days lead time. Fully booked dates are unavailable.</p>
+                    <p className="food-tasting-picker-help">Friday-Sunday only, at least 3 days ahead. Full dates are disabled.</p>
                     <div className="booking-calendar food-tasting-calendar">
                         <div className="booking-calendar-header">
                             <button type="button" onClick={() => setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} disabled={disabled} aria-label="Previous month">
@@ -159,7 +159,7 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
                         <Clock className="h-4 w-4" aria-hidden="true" />
                         Preferred time
                     </div>
-                    <p className="food-tasting-picker-help">Available tasting times are from 11:00 AM to 3:00 PM.</p>
+                    <p className="food-tasting-picker-help">Available from 11:00 AM to 3:00 PM.</p>
                     <div className="food-tasting-time-grid" role="group" aria-label="Preferred food tasting time">
                         {TASTING_TIME_OPTIONS.map((option) => (
                             <button

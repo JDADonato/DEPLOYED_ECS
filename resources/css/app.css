@@ -736,27 +736,71 @@
     width: 100%;
   }
 
+  .food-tasting-form {
+    align-items: start;
+  }
+
+  .food-tasting-form .booking-field-label {
+    margin-top: .45rem;
+    margin-bottom: .35rem;
+  }
+
+  .food-tasting-form .booking-input {
+    border-radius: .85rem;
+    padding: .72rem .9rem;
+  }
+
+  .food-tasting-form label.flex.items-center {
+    min-height: 3.35rem;
+    border-radius: .85rem;
+    padding-block: .75rem;
+  }
+
   .food-tasting-picker-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(16rem, .85fr);
-    gap: 1rem;
+    gap: .85rem;
   }
 
   .food-tasting-picker-help {
-    margin-top: .35rem;
+    margin-top: .2rem;
     color: #64748b;
-    font-size: .8rem;
+    font-size: .76rem;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.35;
   }
 
   .food-tasting-calendar .booking-calendar-grid button {
     display: inline-flex;
-    min-height: 2.65rem;
+    min-height: 2.15rem;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: .1rem;
+  }
+
+  .food-tasting-calendar {
+    margin-top: .5rem;
+    border-radius: .95rem;
+    padding: .55rem;
+  }
+
+  .food-tasting-calendar .booking-calendar-header {
+    margin-bottom: .45rem;
+  }
+
+  .food-tasting-calendar .booking-calendar-header strong {
+    font-size: .95rem;
+  }
+
+  .food-tasting-calendar .booking-calendar-header button {
+    height: 1.75rem;
+    width: 1.75rem;
+  }
+
+  .food-tasting-calendar .booking-calendar-weekdays,
+  .food-tasting-calendar .booking-calendar-grid {
+    gap: .2rem;
   }
 
   .food-tasting-calendar .booking-calendar-grid button small {
@@ -772,16 +816,16 @@
   }
 
   .food-tasting-time-grid {
-    margin-top: .75rem;
+    margin-top: .6rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .55rem;
+    gap: .45rem;
   }
 
   .food-tasting-time-option {
-    min-height: 2.8rem;
+    min-height: 2.45rem;
     border: 1px solid rgba(114,1,1,.1);
-    border-radius: .85rem;
+    border-radius: .75rem;
     background: #fff;
     color: #334155;
     font-size: .82rem;
