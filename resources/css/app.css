@@ -770,6 +770,10 @@
     line-height: 1.35;
   }
 
+  .food-tasting-picker-label {
+    color: #0f172a;
+  }
+
   .food-tasting-calendar .booking-calendar-grid button {
     display: inline-flex;
     min-height: 2.15rem;

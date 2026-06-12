@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     formatDateInput,
     isFoodTastingDateAllowed,
@@ -115,10 +115,7 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
         <div className="food-tasting-picker md:col-span-2">
             <div className="food-tasting-picker-grid">
                 <div>
-                    <div className="booking-field-label inline-flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                        Preferred date
-                    </div>
+                    <div className="booking-field-label food-tasting-picker-label">Preferred date</div>
                     <p className="food-tasting-picker-help">Friday-Sunday only, at least 3 days ahead. Full dates are disabled.</p>
                     <div className="booking-calendar food-tasting-calendar">
                         <div className="booking-calendar-header">
@@ -155,10 +152,7 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
                 </div>
 
                 <div>
-                    <div className="booking-field-label inline-flex items-center gap-2">
-                        <Clock className="h-4 w-4" aria-hidden="true" />
-                        Preferred time
-                    </div>
+                    <div className="booking-field-label food-tasting-picker-label">Preferred time</div>
                     <p className="food-tasting-picker-help">Available from 11:00 AM to 3:00 PM.</p>
                     <div className="food-tasting-time-grid" role="group" aria-label="Preferred food tasting time">
                         {TASTING_TIME_OPTIONS.map((option) => (
