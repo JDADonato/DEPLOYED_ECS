@@ -451,17 +451,18 @@ const DashboardAccounting = () => {
             });
 
             if (res.ok) {
+                clearSmartCacheForPrefix(smartCacheKey('accounting:'));
                 setToast({ message: "Discount applied successfully", type: "success" });
                 setDiscountModal({ open: false, data: null });
                 setDiscountConfirm(false);
-                if (activeTab === 'bookings') fetchBookings();
+                if (activeTab === 'bookings') fetchBookings({ force: true });
                 if (selectedFinanceBooking) {
                     const data = await res.json();
                     setSelectedFinanceBooking({...selectedFinanceBooking, totalCost: data.new_total_cost, total_cost: data.new_total_cost, payments: data.payments});
-                    if (activeTab !== 'bookings') fetchBookings(); // refresh payments if not on bookings tab
+                    if (activeTab !== 'bookings') fetchBookings({ force: true }); // refresh payments if not on bookings tab
                 } else {
                     // Always try to fetch updated data
-                    fetchBookings();
+                    fetchBookings({ force: true });
                 }
             } else {
                 const err = await res.json().catch(() => ({}));

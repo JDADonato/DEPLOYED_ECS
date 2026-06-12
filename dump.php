@@ -5,4 +5,6 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 $booking = \App\Models\Booking::find(3174);
-file_put_contents('test_db_output.json', json_encode($booking->toArray()));
+echo "Booking 3174 Data:\n";
+echo json_encode($booking->only(['id', 'total_cost', 'discount_value', 'discount_type']));
+echo "\n";
