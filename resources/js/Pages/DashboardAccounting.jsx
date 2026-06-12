@@ -435,6 +435,7 @@ const DashboardAccounting = () => {
 
     const handleDiscountSubmit = async (e) => {
         e.preventDefault();
+        if (!window.confirm("Are you sure you want to apply this discount? This will recalculate the pending payments.")) return;
         setDiscountLoading(true);
         try {
             const res = await fetch(`/api/accounting/bookings/${discountModal.data.id}/discount`, {

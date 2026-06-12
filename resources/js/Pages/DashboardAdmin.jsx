@@ -5095,6 +5095,7 @@ const DashboardAdmin = () => {
 
     const handleDiscountSubmit = async (e) => {
         e.preventDefault();
+        if (!window.confirm("Are you sure you want to apply this discount? This will recalculate the pending payments.")) return;
         setDiscountLoading(true);
         try {
             // Session auth - no token needed
