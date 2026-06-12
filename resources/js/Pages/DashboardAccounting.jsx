@@ -2496,10 +2496,12 @@ const DashboardAccounting = () => {
             <ConfirmModal
                 isOpen={refundConfirm.isOpen}
                 title={`${refundConfirm.action === 'retry_provider_refund' ? 'Retry provider refund' : 'Process refund'} for booking #${refundConfirm.bookingId || ''}?`}
-                description={getRefundWarningDescription(refundConfirm.action, refundConfirm.refundAmount)}
-                confirmText={refundConfirm.action === 'retry_provider_refund' ? "Retry Refund" : "Yes, process refund"}
+                message={refundConfirm.action === 'retry_provider_refund'
+                    ? `Accounting will retry the PayMongo refund for ${'P' + Number(refundConfirm.refundAmount || 0).toLocaleString()} and keep the case in review if the provider fails again.`
+                    : `Accounting will create a refund case, retain the non-refundable reservation fee, and refund ${'P' + Number(refundConfirm.refundAmount || 0).toLocaleString()} where payment references are available.`}
+                confirmText={refundConfirm.action === 'retry_provider_refund' ? 'Retry Refund' : 'Process Refund'}
                 cancelText="Cancel"
-                isDestructive={true}
+                tone="danger"
                 busy={refundProcessing}
                 onCancel={() => setRefundConfirm({ isOpen: false, bookingId: null, refundAmount: 0, action: 'process', refundCaseId: null })}
                 onConfirm={submitProcessRefund}
@@ -2507,10 +2509,10 @@ const DashboardAccounting = () => {
             <ConfirmModal
                 isOpen={discountConfirm}
                 title={`Apply discount to booking #${discountModal.data?.id}?`}
-                description="This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?"
+                message="This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?"
                 confirmText="Yes, apply discount"
                 cancelText="Cancel"
-                isDestructive={false}
+                tone="default"
                 busy={discountLoading}
                 onCancel={() => setDiscountConfirm(false)}
                 onConfirm={confirmDiscountSubmit}

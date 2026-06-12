@@ -5099,10 +5099,10 @@ const DashboardAdmin = () => {
             isOpen: true,
             title: `Apply discount to booking #${discountModal.data?.id}?`,
             message: "This will recalculate the pending payments and adjust the overall event balance. Are you sure you want to proceed?",
-            isDestructive: false,
+            tone: 'default',
             confirmText: 'Yes, apply discount',
-            action: async () => {
-                setDiscountLoading(true);
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, busy: true }));
                 try {
                     const res = await fetch(`/api/admin/bookings/${discountModal.data.id}/discount`, {
                         method: 'POST',
@@ -5117,6 +5117,7 @@ const DashboardAdmin = () => {
                         setDiscountModal({ open: false, data: null });
                         bustAdminCache(ADMIN_BOOKINGS_URL, '/api/admin/analytics');
                         fetchBookings();
+                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
                     } else {
                         const err = await res.json().catch(() => ({}));
                         showToast(getErrorMessage(err, "Could not apply discount"), 'error');
@@ -5125,7 +5126,7 @@ const DashboardAdmin = () => {
                     console.error(error);
                     showToast("Could not apply discount. Please try again.", 'error');
                 } finally {
-                    setDiscountLoading(false);
+                    setConfirmDialog(prev => ({ ...prev, busy: false }));
                 }
             }
         });
