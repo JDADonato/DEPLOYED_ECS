@@ -43,8 +43,8 @@ The project includes convenience wrappers (`.\composer.bat`, `.\refresh.bat`) th
 Clone and enter the repository:
 
 ```powershell
-git clone https://github.com/JDADonato/OPTIMIZED_ECS.git
-cd DAREVECS-main
+git clone https://github.com/JDADonato/DEPLOYED_ECS.git
+cd DEPLOYED_ECS
 ```
 
 Install dependencies:
@@ -330,6 +330,35 @@ After seeding, local demo accounts are created with the default password shown d
 
 New staff/admin accounts created through Admin use generated temporary passwords instead of a shared default password.
 
+## Booking Completion And Feedback Workflow
+
+The production booking lifecycle separates live event tracking from official post-event completion:
+
+| Stage | Owner | System behavior |
+| --- | --- | --- |
+| Booking submitted | Customer | Booking enters Marketing as `Pending` / `Submitted`; Marketing/Admin receive a new inquiry notification |
+| Booking reviewed | Marketing | Staff claim/review the booking, request details if needed, then approve or reject |
+| Booking confirmed | Marketing | Booking becomes `Confirmed` / `Approved For Reservation`; default preparation tasks are created; customer is notified |
+| Payment clearance | Accounting | PayMongo/manual payments are monitored until active payment terms are paid or verified |
+| Event preparation | Marketing, Accounting, Service prep/Admin | Preparation tasks track final menu, headcount, payment clearance, venue access, service sheet, crew, equipment, transport, setup layout, and tasting outcome |
+| Live service tracking | Marketing/staff | `live_status` moves through `Not Started`, `On the Way`, `Preparing`, `Serving`, and `Completed`; this updates the customer but does not close the booking |
+| Official completion | Marketing, Admin override if needed | `Complete event` runs completion blockers before setting booking `status` and `review_status` to `Completed` |
+| Feedback request | System | Successful completion creates one feedback request and sends the customer an email/in-app notification linking to `/dashboard/client?target=feedback-request-panel` |
+| Feedback review | Marketing/Admin | Low ratings create follow-up work; testimonial-approved high ratings can be reviewed as candidates |
+| Final close | Marketing/Admin/Accounting | Event History can close events only when post-event status is `Ready to Close` |
+
+Completion blockers are enforced in the backend through the booking completion service. A booking cannot be officially completed unless:
+
+- The booking is currently `Confirmed`.
+- The event date is today or in the past.
+- Live status is `Completed`.
+- Active payments are paid or verified.
+- No open refund/payment blockers remain.
+- Preparation tasks are complete.
+- A linked customer account exists so feedback can be requested.
+
+Admin users can override completion blockers only with an override reason. The old stale-booking cleanup command no longer turns unapproved past inquiries into completed events; it only normalizes bookings that were already completed but stuck with an old review status.
+
 ## Important Features
 
 - Customer booking flow with event details, menu planning, payment schedule, receipts, chat, and feedback.
@@ -341,6 +370,7 @@ New staff/admin accounts created through Admin use generated temporary passwords
 - Branded server-generated PDFs for receipts, prep lists, calendar reports, and reports.
 - Modern staff chat with compact inbox queues, cached thread reopening, optimistic sending, moderation feedback, customer helper shortcuts, remembered conversation/filter selection, message grouping, and CSRF-safe requests.
 - Notification center with New/Read tabs, explicit mark-read/delete-read actions, time grouping, and customer-aware redirects.
+- Guarded booking completion workflow with feedback-request email/in-app notifications, post-event review states, and final event closure.
 - Account safety features including deactivation, reactivation, temporary password reset, forced password change, forgot password, OTP hashing, and audit entries.
 - Detailed System & Audit trail that records who acted, what changed, where it happened, the affected record, changed fields, device, and network context without storing sensitive values.
 - Operational lifecycle preservation: customer history hiding, catalog archiving, payment schedule voiding, refund case actions, guest lead/tasting lifecycle states, and upload ownership/cleanup.
