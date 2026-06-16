@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import csrfFetch from '../../utils/csrf';
 import StaffSkeleton from '../staff/StaffSkeleton';
+import { Percent, Clock, Briefcase, Truck, Building, Receipt, FileText, Settings, ShieldAlert, Zap } from 'lucide-react';
 
 const defaultRules = {
     reservation_fee_percentage: 10,
@@ -14,6 +15,10 @@ const defaultRules = {
     december_surcharge_rate: 0.10,
     transport_fee: 1500,
     labor_surcharge: 2000,
+    service_charge_rate: 0.10,
+    contingency_surcharge_rate: 0.10,
+    vat_rate: 0.12,
+    extra_service_hours_fee: 5000,
 };
 
 const numberField = (value) => value === null || value === undefined ? '' : String(value);
@@ -81,6 +86,10 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                 december_surcharge_rate: Number(rules.december_surcharge_rate),
                 transport_fee: Number(rules.transport_fee),
                 labor_surcharge: Number(rules.labor_surcharge),
+                service_charge_rate: Number(rules.service_charge_rate),
+                contingency_surcharge_rate: Number(rules.contingency_surcharge_rate),
+                vat_rate: Number(rules.vat_rate),
+                extra_service_hours_fee: Number(rules.extra_service_hours_fee),
             };
             const response = await csrfFetch('/api/admin/surcharge-rules', {
                 method: 'PUT',
@@ -104,83 +113,115 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
 
     const total = Number(rules.reservation_fee_percentage || 0) + Number(rules.downpayment_percentage || 0) + Number(rules.final_payment_percentage || 0);
 
-    return (
-        <div className="flex flex-col gap-6">
-        <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-5'}>
-            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p className="admin-kicker">Finance configuration</p>
-                    <h3 className="mt-1 text-lg font-black text-slate-950">Payment rules</h3>
-                    <p className="mt-1 text-sm font-semibold text-slate-500">Control booking payment tranche percentages and due-date windows.</p>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-black ${Math.round(total * 100) / 100 === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                    Total {total.toFixed(2)}%
+    const SurchargeInput = ({ field, label, icon: Icon, type = 'percent' }) => (
+        <label className="group flex flex-col gap-1.5 p-4 rounded-2xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-[#720101] focus-within:bg-[#720101]/5 hover:bg-slate-100">
+            <div className="flex items-center gap-2 text-slate-500 group-focus-within:text-[#720101]">
+                <Icon size={16} />
+                <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+            </div>
+            <div className="relative mt-1">
+                <input
+                    type="number"
+                    min="0"
+                    step={type === 'percent' ? '0.01' : '1'}
+                    value={numberField(rules[field])}
+                    onChange={(event) => updateField(field, event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-8 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
+                />
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    {type === 'percent' ? '%' : '₱'}
                 </span>
             </div>
+        </label>
+    );
 
-            <form onSubmit={saveRules} className="grid gap-4 lg:grid-cols-3">
-                {[
-                    ['reservation_fee_percentage', 'Reservation fee %'],
-                    ['downpayment_percentage', 'Down payment %'],
-                    ['final_payment_percentage', 'Final payment %'],
-                    ['reservation_validity_hours', 'Reservation validity hours'],
-                    ['downpayment_due_days', 'Down payment due days'],
-                    ['final_payment_due_days', 'Final payment due days'],
-                ].map(([field, label]) => (
-                    <label key={field} className="block">
-                        <span className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</span>
-                        <input
-                            type="number"
-                            min="0"
-                            step={field.includes('percentage') ? '0.01' : '1'}
-                            value={numberField(rules[field])}
-                            onChange={(event) => updateField(field, event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
-                        />
-                    </label>
-                ))}
-                <div className="flex items-end lg:col-span-3">
-                    <button type="submit" disabled={saving} className="admin-button-primary px-5 py-3 text-sm font-black">
-                        {saving ? 'Saving...' : 'Save payment rules'}
-                    </button>
+    return (
+        <div className="flex flex-col gap-8">
+            <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-6'}>
+                <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-5">
+                    <div>
+                        <div className="flex items-center gap-2 text-[#720101]">
+                            <Receipt size={20} />
+                            <p className="admin-kicker !mb-0">Tranches & Terms</p>
+                        </div>
+                        <h3 className="mt-2 text-xl font-black text-slate-950">Payment Schedule</h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-500">Control booking payment tranche percentages and due-date windows.</p>
+                    </div>
+                    <span className={`rounded-full px-4 py-1.5 text-sm font-black shadow-sm ${Math.round(total * 100) / 100 === 100 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                        Total {total.toFixed(2)}%
+                    </span>
                 </div>
-            </form>
-        </section>
 
-        <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-5'}>
-            <div className="mb-4">
-                <p className="admin-kicker">Finance configuration</p>
-                <h3 className="mt-1 text-lg font-black text-slate-950">Surcharge & Fees</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-500">Configure global rates for logistical surcharges and seasonal fees.</p>
-            </div>
+                <form onSubmit={saveRules} className="grid gap-5 lg:grid-cols-3">
+                    <SurchargeInput field="reservation_fee_percentage" label="Reservation Fee %" icon={Percent} />
+                    <SurchargeInput field="downpayment_percentage" label="Down Payment %" icon={Percent} />
+                    <SurchargeInput field="final_payment_percentage" label="Final Payment %" icon={Percent} />
+                    <SurchargeInput field="reservation_validity_hours" label="Reservation Validity (Hours)" icon={Clock} type="flat" />
+                    <SurchargeInput field="downpayment_due_days" label="Down Payment Due (Days)" icon={Clock} type="flat" />
+                    <SurchargeInput field="final_payment_due_days" label="Final Payment Due (Days)" icon={Clock} type="flat" />
+                    
+                    <div className="flex items-end lg:col-span-3 mt-2 border-t border-slate-100 pt-5">
+                        <button type="submit" disabled={saving} className="admin-button-primary px-6 py-3 text-sm font-black flex items-center gap-2 shadow-sm">
+                            {saving ? 'Saving...' : 'Save Payment Schedule'}
+                        </button>
+                    </div>
+                </form>
+            </section>
 
-            <form onSubmit={saveSurcharges} className="grid gap-4 lg:grid-cols-3">
-                {[
-                    ['location_surcharge_rate', 'Location Surcharge Rate (0.00 - 1.00)'],
-                    ['floor_surcharge_rate', 'High-Rise Floor Rate (0.00 - 1.00)'],
-                    ['december_surcharge_rate', 'December Peak Rate (0.00 - 1.00)'],
-                    ['transport_fee', 'Default Transport Fee (PHP)'],
-                    ['labor_surcharge', 'Default Labor Surcharge (PHP)'],
-                ].map(([field, label]) => (
-                    <label key={field} className="block">
-                        <span className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</span>
-                        <input
-                            type="number"
-                            min="0"
-                            step={field.includes('rate') ? '0.01' : '1'}
-                            value={numberField(rules[field])}
-                            onChange={(event) => updateField(field, event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
-                        />
-                    </label>
-                ))}
-                <div className="flex items-end lg:col-span-3">
-                    <button type="submit" disabled={savingSurcharges} className="admin-button-primary px-5 py-3 text-sm font-black">
-                        {savingSurcharges ? 'Saving...' : 'Save surcharges'}
-                    </button>
+            <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-6'}>
+                <div className="mb-6 border-b border-slate-100 pb-5">
+                    <div className="flex items-center gap-2 text-[#720101]">
+                        <Settings size={20} />
+                        <p className="admin-kicker !mb-0">Global Adjustments</p>
+                    </div>
+                    <h3 className="mt-2 text-xl font-black text-slate-950">Additional Fees & Surcharges</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">Configure global rates for extra services, statutory fees, and logistical surcharges.</p>
                 </div>
-            </form>
-        </section>
+
+                <form onSubmit={saveSurcharges} className="space-y-8">
+                    <div>
+                        <h4 className="mb-4 text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                            <FileText size={16} className="text-slate-400" />
+                            Statutory & Core Fees
+                        </h4>
+                        <div className="grid gap-5 lg:grid-cols-3">
+                            <SurchargeInput field="service_charge_rate" label="Service Charge Rate" icon={Briefcase} type="percent" />
+                            <SurchargeInput field="vat_rate" label="Value Added Tax (VAT)" icon={Percent} type="percent" />
+                            <SurchargeInput field="contingency_surcharge_rate" label="Contingency Rate" icon={ShieldAlert} type="percent" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="mb-4 text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                            <Clock size={16} className="text-slate-400" />
+                            Service Extrapolations
+                        </h4>
+                        <div className="grid gap-5 lg:grid-cols-3">
+                            <SurchargeInput field="extra_service_hours_fee" label="Extra Service Hours" icon={Zap} type="flat" />
+                            <SurchargeInput field="december_surcharge_rate" label="December Peak Surcharge" icon={Percent} type="percent" />
+                            <SurchargeInput field="labor_surcharge" label="Default Labor Surcharge" icon={Briefcase} type="flat" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="mb-4 text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                            <Truck size={16} className="text-slate-400" />
+                            Logistics & Mobility
+                        </h4>
+                        <div className="grid gap-5 lg:grid-cols-3">
+                            <SurchargeInput field="location_surcharge_rate" label="Out-of-Town Surcharge" icon={Truck} type="percent" />
+                            <SurchargeInput field="floor_surcharge_rate" label="High-Rise Floor Surcharge" icon={Building} type="percent" />
+                            <SurchargeInput field="transport_fee" label="Default Transport Fee" icon={Truck} type="flat" />
+                        </div>
+                    </div>
+
+                    <div className="flex items-end mt-2 border-t border-slate-100 pt-5">
+                        <button type="submit" disabled={savingSurcharges} className="admin-button-primary px-6 py-3 text-sm font-black flex items-center gap-2 shadow-sm">
+                            {savingSurcharges ? 'Saving...' : 'Save All Fees & Surcharges'}
+                        </button>
+                    </div>
+                </form>
+            </section>
         </div>
     );
 };

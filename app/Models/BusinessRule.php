@@ -24,6 +24,10 @@ class BusinessRule extends Model
         'december_surcharge_rate',
         'transport_fee',
         'labor_surcharge',
+        'service_charge_rate',
+        'contingency_surcharge_rate',
+        'vat_rate',
+        'extra_service_hours_fee',
     ];
 
     protected function casts(): array
@@ -45,6 +49,10 @@ class BusinessRule extends Model
             'december_surcharge_rate' => 'decimal:2',
             'transport_fee' => 'decimal:2',
             'labor_surcharge' => 'decimal:2',
+            'service_charge_rate' => 'decimal:2',
+            'contingency_surcharge_rate' => 'decimal:2',
+            'vat_rate' => 'decimal:2',
+            'extra_service_hours_fee' => 'decimal:2',
         ];
     }
 

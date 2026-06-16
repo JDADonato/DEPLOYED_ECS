@@ -64,7 +64,7 @@ const summarizeBookingCosts = (data = {}) => {
         ? Math.round((baseEventCost + serviceCharge + vatFee + locationSurcharge + highRiseFee + decemberSurcharge) * (data.package_security_rate || 0))
         : 0;
     const cashBond = data.package_security_type === 'cash_bond' ? (data.package_cash_bond || 0) : 0;
-    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * 5000;
+    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * (data.package_extra_service_hours_fee !== undefined ? Number(data.package_extra_service_hours_fee) : 5000);
     const laborSurcharge = serviceCharge + vatFee + highRiseFee + decemberSurcharge + contingencyFee + cashBond + overtimeFee;
 
     return {

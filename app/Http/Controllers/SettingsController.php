@@ -103,6 +103,10 @@ class SettingsController extends Controller
             'december_surcharge_rate' => 'required|numeric|min:0|max:1',
             'transport_fee' => 'required|numeric|min:0',
             'labor_surcharge' => 'required|numeric|min:0',
+            'service_charge_rate' => 'required|numeric|min:0|max:1',
+            'contingency_surcharge_rate' => 'required|numeric|min:0|max:1',
+            'vat_rate' => 'required|numeric|min:0|max:1',
+            'extra_service_hours_fee' => 'required|numeric|min:0',
         ]);
 
         $rule = $this->activeBusinessRule();

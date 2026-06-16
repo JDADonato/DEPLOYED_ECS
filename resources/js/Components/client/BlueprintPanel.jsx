@@ -79,6 +79,7 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
         package_december_surcharge = 0,
         package_location_surcharge_rate = 0.20,
         package_floor_surcharge_rate = 0.03,
+        package_extra_service_hours_fee = 5000,
         menuExtraFee = 0,
     } = bookingData;
     const selectedDishCount = Object.values(selectedDishes).reduce((sum, arr) => sum + (arr?.length || 0), 0);
@@ -156,7 +157,7 @@ const BlueprintPanel = ({ bookingData, collapsed = false, deferCatalog = false, 
         return Math.round((menuTotal + packageServiceCharge + packageVat + locationSurcharge + floorSurcharge + decemberSurcharge) * package_security_rate);
     }, [package_security_type, package_security_rate, menuTotal, packageServiceCharge, packageVat, locationSurcharge, floorSurcharge, decemberSurcharge]);
     const cashBond = package_security_type === 'cash_bond' ? package_cash_bond : 0;
-    const overtimeFee = useMemo(() => Math.max(0, duration - 4) * 5000, [duration]);
+    const overtimeFee = useMemo(() => Math.max(0, duration - 4) * package_extra_service_hours_fee, [duration, package_extra_service_hours_fee]);
     const totalEstimate = menuTotal + packageServiceCharge + packageVat + locationSurcharge + floorSurcharge + decemberSurcharge + contingencyFee + cashBond + overtimeFee;
     const paymentSchedule = useMemo(() => paymentScheduleForDate(date, totalEstimate), [date, totalEstimate]);
     const totalDishCount = selectedDishCount;

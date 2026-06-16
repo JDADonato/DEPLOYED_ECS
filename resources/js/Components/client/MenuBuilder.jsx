@@ -64,12 +64,12 @@ const CATEGORY_LIMITS = {
     drink: 99
 };
 
-const GLOBAL_PAYMENT_TERMS = [
-    '10% reservation fee, non-refundable',
-    '70% down payment due one month before the event',
-    '20% balance due 10 days before the event',
-    '+20% service charge outside Metro Manila',
-    '+3% service charge for basement or upper-floor venues'
+const getGlobalPaymentTerms = (rules) => [
+    `${rules?.reservation_fee_percentage || 10}% reservation fee, non-refundable`,
+    `${rules?.downpayment_percentage || 70}% down payment due one month before the event`,
+    `${rules?.final_payment_percentage || 20}% balance due 10 days before the event`,
+    `+${(rules?.location_surcharge_rate || 0.20) * 100}% service charge outside Metro Manila`,
+    `+${(rules?.floor_surcharge_rate || 0.03) * 100}% service charge for basement or upper-floor venues`
 ];
 
 const STANDARD_PREMIUM_INCLUSIONS = [
@@ -423,8 +423,8 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
     const packageCards = configuredPackageCards.length ? configuredPackageCards : fallbackPackageCards;
     const hasPackagePricing = Boolean(bookingData.package_pricing_type || bookingData.package_base_price || bookingData.package_flat_price);
     const packageTerms = [
-        ...GLOBAL_PAYMENT_TERMS,
-        packageCategory.pricingNote,
+        ...getGlobalPaymentTerms(businessRules),
+        ...(packageCategory.terms || []),
         packageCategory.security.label,
     ];
     const packageContextFields = {
@@ -435,14 +435,15 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
         package_security_type: bookingData.event_security_type || packageCategory.security.type,
         package_security_label: bookingData.event_security_label || packageCategory.security.label,
         package_security_description: bookingData.event_security_description || packageCategory.security.description,
-        package_security_rate: packageCategory.security.rate || 0,
+        package_security_rate: businessRules?.contingency_surcharge_rate !== undefined ? Number(businessRules.contingency_surcharge_rate) : (packageCategory.security.rate || 0),
         package_cash_bond: packageCategory.security.amount || 0,
-        package_service_charge_rate: packageCategory.serviceChargeRate || 0,
-        package_vat_rate: packageCategory.vatRate || 0,
+        package_service_charge_rate: businessRules?.service_charge_rate !== undefined ? Number(businessRules.service_charge_rate) : (packageCategory.serviceChargeRate || 0),
+        package_vat_rate: businessRules?.vat_rate !== undefined ? Number(businessRules.vat_rate) : (packageCategory.vatRate || 0),
         package_december_surcharge: businessRules?.december_surcharge_rate !== undefined ? Number(businessRules.december_surcharge_rate) : (packageCategory.decemberSurcharge || 0),
         package_kids_meal_price: packageCategory.kidsMealPrice || 0,
         package_location_surcharge_rate: businessRules?.location_surcharge_rate !== undefined ? Number(businessRules.location_surcharge_rate) : 0.20,
         package_floor_surcharge_rate: businessRules?.floor_surcharge_rate !== undefined ? Number(businessRules.floor_surcharge_rate) : 0.03,
+        package_extra_service_hours_fee: businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000,
     };
 
     const budgetMinimum = useMemo(() => {
@@ -747,8 +748,8 @@ const MenuBuilder = ({ bookingData, updateBooking, onNext, onBack, mode = 'full'
             ...packageContextFields,
             package_category: record.package_category || packageContextFields.package_category,
             package_amenities: record.amenities?.length ? record.amenities : packageContextFields.package_amenities,
-            package_terms: record.applicable_setups?.length ? [...GLOBAL_PAYMENT_TERMS, ...record.applicable_setups, record.security_label || packageContextFields.package_security_label] : packageContextFields.package_terms,
-            package_security_type: securityType,
+            package_terms: record.applicable_setups?.length ? [...getGlobalPaymentTerms(businessRules), ...record.applicable_setups, record.security_label || packageContextFields.package_security_label] : packageContextFields.package_terms,
+            package_security_type: record.security_type || packageContextFields.package_security_type,
             package_security_label: record.security_label || packageContextFields.package_security_label,
             package_security_description: record.security_description || packageContextFields.package_security_description,
             package_security_rate: securityType === 'contingency' ? 0.10 : 0,
