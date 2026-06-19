@@ -238,6 +238,7 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
     const [markAllProcessing, setMarkAllProcessing] = useState(false);
     const [deleteReadProcessing, setDeleteReadProcessing] = useState(false);
     const [removingNotificationIds, setRemovingNotificationIds] = useState(() => new Set());
+    const [markingNotificationIds, setMarkingNotificationIds] = useState(() => new Set());
     const dropdownRef = useRef(null);
     const previousUnreadRef = useRef(0);
     const liveChannels = useMemo(() => operationalChannelsForUser(auth?.user), [auth?.user?.id, auth?.user?.role]);
@@ -383,6 +384,32 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
             notificationsResource.refetch({ silent: false, force: true, reason: 'mutation-error' });
         } finally {
             setRemovingNotificationIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    };
+
+    const markNotificationAsRead = async (id) => {
+        const target = notifications.find(notification => notification.id === id);
+        if (target?.read_at || markingNotificationIds.has(id)) return;
+
+        setMarkingNotificationIds(prev => new Set(prev).add(id));
+        const readAt = new Date().toISOString();
+        try {
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: readAt } : n));
+            
+            const res = await csrfFetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+            if (!res.ok) throw new Error('Mark as read failed');
+
+            unreadResource.refetch({ silent: true, force: true, reason: 'mutation' });
+            notificationsResource.refetch({ silent: true, force: true, reason: 'mutation' });
+        } catch (e) {
+            console.error('Failed to mark notification as read');
+            notificationsResource.refetch({ silent: false, force: true, reason: 'mutation-error' });
+        } finally {
+            setMarkingNotificationIds(prev => {
                 const next = new Set(prev);
                 next.delete(id);
                 return next;
@@ -639,7 +666,7 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
                                                 tabIndex={destination ? 0 : undefined}
                                                 onClick={() => destination && openNotificationDestination(notification)}
                                                 onKeyDown={(event) => destination && handleNotificationKeyDown(event, notification)}
-                                                className={`flex items-start gap-2.5 px-2.5 py-2.5 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#720101]/20 ${destination ? 'cursor-pointer' : ''} ${index > 0 ? 'border-t border-black/[.14]' : ''} ${removingNotificationIds.has(notification.id) ? '-translate-y-1 scale-[.98] opacity-0' : 'translate-y-0 scale-100 opacity-100'} ${!notification.read_at ? 'bg-[#fff7e8] hover:bg-[#fff1d8]' : 'hover:bg-slate-50'}`}
+                                                className={`flex items-start gap-2.5 px-2.5 py-2.5 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#720101]/20 ${destination ? 'cursor-pointer' : ''} ${index > 0 ? 'border-t border-black/[.14]' : ''} ${(removingNotificationIds.has(notification.id) || markingNotificationIds.has(notification.id)) ? '-translate-y-1 scale-[.98] opacity-50' : 'translate-y-0 scale-100 opacity-100'} ${!notification.read_at ? 'bg-[#fff7e8] hover:bg-[#fff1d8]' : 'hover:bg-slate-50'}`}
                                             >
                                                 {getIcon(notification.type)}
                                                 <div className="min-w-0 flex-1">
@@ -680,9 +707,21 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
                                                         </svg>
                                                     </button>
                                                 ) : (
-                                                    <span className="mt-1 rounded-full bg-[#720101] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
-                                                        Unread
-                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            markNotificationAsRead(notification.id);
+                                                        }}
+                                                        disabled={markingNotificationIds.has(notification.id)}
+                                                        className="mt-1 flex items-center gap-1 rounded-full bg-[#720101] px-2 py-0.5 transition-colors hover:bg-red-800 disabled:pointer-events-none"
+                                                        aria-label="Mark as read"
+                                                        title="Mark as read"
+                                                    >
+                                                        <span className="text-[9px] font-black uppercase tracking-wider text-white">
+                                                            Mark Read
+                                                        </span>
+                                                    </button>
                                                 )}
                                             </div>
                                         );
