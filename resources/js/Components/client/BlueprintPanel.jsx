@@ -82,7 +82,7 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
         package_december_surcharge = 0,
         package_location_surcharge_rate = businessRules?.location_surcharge_rate ?? 0.20,
         package_floor_surcharge_rate = businessRules?.floor_surcharge_rate ?? 0.03,
-        package_extra_service_hours_fee = 5000,
+        package_extra_service_hours_fee = businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000,
         menuExtraFee = 0,
     } = bookingData;
     const selectedDishCount = Object.values(selectedDishes).reduce((sum, arr) => sum + (arr?.length || 0), 0);
