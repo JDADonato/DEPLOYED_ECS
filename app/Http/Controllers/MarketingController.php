@@ -1329,7 +1329,7 @@ class MarketingController extends Controller
         }
 
         try {
-            Mail::to($email)->queue(new BookingLiveStatusUpdate($booking, $liveStatus, Auth::user()));
+            Mail::to($email)->send(new BookingLiveStatusUpdate($booking, $liveStatus, Auth::user()));
         } catch (\Throwable $exception) {
             Log::warning('Live status email delivery failed.', [
                 'booking_id' => $booking->id,

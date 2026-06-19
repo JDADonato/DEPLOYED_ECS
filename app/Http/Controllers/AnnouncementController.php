@@ -178,9 +178,9 @@ class AnnouncementController extends Controller
     public function sendTest(Request $request, Announcement $announcement)
     {
         $data = $request->validate(['email' => 'required|email']);
-        Mail::to($data['email'])->queue(new AnnouncementEmail($announcement));
+        Mail::to($data['email'])->send(new AnnouncementEmail($announcement));
 
-        return response()->json(['message' => 'Test email queued.']);
+        return response()->json(['message' => 'Test email sent.']);
     }
 
     public function preview(Announcement $announcement)

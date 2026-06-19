@@ -110,7 +110,7 @@ class AnnouncementService
             }
 
             try {
-                Mail::to($user->email)->queue(new AnnouncementEmail($announcement));
+                Mail::to($user->email)->send(new AnnouncementEmail($announcement));
                 $recipient->update([
                     'email' => $user->email,
                     'status' => 'sent',
