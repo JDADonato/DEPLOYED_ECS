@@ -1006,14 +1006,6 @@ const ProfileEdit = () => {
                         <aside className="w-full shrink-0 border-b border-slate-200 bg-[#fafafa] lg:w-[320px] lg:border-b-0 lg:border-r">
                             <div className="flex h-full flex-col">
                                 <div className="border-b border-slate-100 bg-white p-6">
-                                    <button 
-                                        type="button" 
-                                        onClick={() => window.history.back()} 
-                                        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition-colors hover:text-slate-900"
-                                    >
-                                        <ArrowLeft className="h-4 w-4" />
-                                        Back
-                                    </button>
                                     <div className="flex items-center gap-4">
                                         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-slate-50 bg-[#720101] text-2xl font-black text-white shadow-sm">
                                             {avatarPreview ? <img src={avatarPreview} alt={`${displayName} profile`} className="h-full w-full object-cover" /> : initial}
@@ -1075,7 +1067,17 @@ const ProfileEdit = () => {
                             </div>
                         </aside>
 
-                        <div className="min-w-0 flex-1 bg-white p-5 sm:p-6 lg:px-8 lg:pb-8 lg:pt-0">
+                        <div className="min-w-0 flex-1 bg-white p-5 sm:p-6 lg:p-8">
+                            <div className="mb-2 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => window.history.back()}
+                                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Back
+                                </button>
+                            </div>
                             <section>
                                 {activeTab === 'overview' && renderOverview()}
                                 {activeTab === 'personal' && renderPersonal()}
