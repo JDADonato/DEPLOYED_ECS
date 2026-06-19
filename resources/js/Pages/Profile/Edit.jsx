@@ -74,7 +74,17 @@ const PanelHeader = ({ eyebrow, title, text, action }) => (
             <h2 className="mt-0.5 font-display text-2xl font-bold text-slate-950">{title}</h2>
             {text && <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-slate-500">{text}</p>}
         </div>
-        {action && <div className="flex items-center">{action}</div>}
+        <div className="flex items-center gap-3">
+            {action && <div>{action}</div>}
+            <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+            </button>
+        </div>
     </div>
 );
 
@@ -1068,16 +1078,6 @@ const ProfileEdit = () => {
                         </aside>
 
                         <div className="min-w-0 flex-1 bg-white p-5 sm:p-6 lg:p-8">
-                            <div className="mb-2 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => window.history.back()}
-                                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900"
-                                >
-                                    <ArrowLeft className="h-4 w-4" />
-                                    Back
-                                </button>
-                            </div>
                             <section>
                                 {activeTab === 'overview' && renderOverview()}
                                 {activeTab === 'personal' && renderPersonal()}
