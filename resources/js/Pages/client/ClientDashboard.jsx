@@ -427,7 +427,9 @@ const HistoryPanel = ({ bookings }) => {
                                 </div>
                                 <div className="rounded-2xl border border-gray-100 p-4 sm:col-span-2">
                                     <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Venue</p>
-                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.venue_address_line || 'Not provided'}</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-900">
+                                        {[selectedBooking.venue_building_details, selectedBooking.venue_address_line, selectedBooking.venue_street, selectedBooking.venue_city, selectedBooking.venue_province, selectedBooking.venue_zip_code].filter(Boolean).join(', ') || 'Not provided'}
+                                    </p>
                                 </div>
                             </div>
 
