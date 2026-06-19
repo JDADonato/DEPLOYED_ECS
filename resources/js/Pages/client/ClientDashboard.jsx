@@ -332,7 +332,7 @@ const LiveStatusTracker = ({ booking }) => {
     );
 };
 
-const HistoryPanel = ({ bookings, onHide }) => (
+const HistoryPanel = ({ bookings }) => (
     <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -362,14 +362,6 @@ const HistoryPanel = ({ bookings, onHide }) => (
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
-                                {onHide && (
-                                    <button 
-                                        onClick={() => onHide(booking.id)}
-                                        className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-600 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-700"
-                                    >
-                                        Hide
-                                    </button>
-                                )}
                                 <button onClick={() => router.get('/book')} className="rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
                                     Rebook Event
                                 </button>
@@ -1870,7 +1862,7 @@ const ClientDashboard = () => {
                             <p className="text-[#1a1a1a]/50 mb-6 max-w-md mx-auto">Cancelled or completed events are kept in history. Start a new event or rebook from a past one.</p>
                             <button onClick={() => router.get('/book')} className="bg-[#720101] hover:bg-[#5a0101] text-white font-bold py-3 px-8 rounded-full shadow-md transition-all">Book Your Event</button>
                         </div>
-                        <HistoryPanel bookings={data.historyBookings} />
+                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} />
                     </div>
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-8">
@@ -2415,20 +2407,7 @@ const ClientDashboard = () => {
                                     )}
 
                                     {activeSection === 'history' && (
-                                        <HistoryPanel bookings={data.historyBookings} onHide={(id) => {
-                                            setConfirmModal({
-                                                isOpen: true,
-                                                title: 'Hide event from your history?',
-                                                message: 'This only hides the event from your dashboard history. Eloquente keeps booking, payment, and refund records for business records.',
-                                                confirmText: 'Hide from history',
-                                                onConfirm: () => {
-                                                    closeConfirmModal();
-                                                    fetch(`/api/bookings/${id}/hide-from-history`, { method: 'PATCH' })
-                                                        .then(() => fetchData())
-                                                        .catch(err => setToast({ message: 'Error hiding history.', type: 'error' }));
-                                                },
-                                            });
-                                        }} />
+                                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} />
                                     )}
 
                                     {activeSection === 'menu' && (
