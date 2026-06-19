@@ -417,8 +417,8 @@ const HistoryPanel = ({ bookings }) => {
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="rounded-2xl border border-gray-100 p-4">
                                     <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Package</p>
-                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.package_name || 'Custom'}</p>
-                                    <p className="text-xs font-semibold text-gray-500">{peso(selectedBooking.package_price)}</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.package?.name || 'Custom'}</p>
+                                    <p className="text-xs font-semibold text-gray-500">{selectedBooking.package ? `${peso(selectedBooking.package.base_price_per_head)} / pax` : ''}</p>
                                 </div>
                                 <div className="rounded-2xl border border-gray-100 p-4">
                                     <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Guest Count</p>
