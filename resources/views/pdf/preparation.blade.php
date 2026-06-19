@@ -37,10 +37,9 @@
                 </div>
             </div>
             <div class="grid-cell">
-                <p class="eyebrow">Assigned staff</p>
+                <p class="eyebrow">Event Details</p>
                 <div class="box">
-                    <div class="value">{{ $booking->assignee?->full_name ?: $booking->assignee?->username ?: 'Unassigned' }}</div>
-                    <div class="muted">Serving Staffs: {{ $servingStaffCount }}</div>
+                    <div class="value">Serving Staffs: {{ $servingStaffCount }}</div>
                     <div class="muted">Total {{ $money($booking->total_cost ?? 0) }}</div>
                     <div class="muted">Package {{ $booking->package_id ?: 'Custom' }}</div>
                 </div>

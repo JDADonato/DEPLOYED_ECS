@@ -2194,11 +2194,7 @@ const DashboardMarketing = () => {
                                 Request details
                             </button>
                         )}
-                        {canEdit && (
-                            <button onClick={() => sendBookingReminder(selectedBooking.id)} className="rounded-lg border border-[#720101]/15 bg-white px-3 py-2 text-xs font-black text-[#720101] hover:bg-[#720101]/5">
-                                Send reminder
-                            </button>
-                        )}
+
                         {canEdit && selectedBooking.status === 'Pending' && (
                             <>
                                 <button onClick={() => updateStatus(selectedBooking.id, 'Confirmed')} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100">
@@ -2222,9 +2218,7 @@ const DashboardMarketing = () => {
                                 Complete event
                             </button>
                         )}
-                        <button onClick={() => setPdfPreviewUrl(`/documents/bookings/${selectedBooking.id}/preparation.pdf`)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
-                            Export details
-                        </button>
+
                         <button onClick={() => setActiveTab('messages')} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
                             Open messages
                         </button>
@@ -2905,74 +2899,7 @@ const DashboardMarketing = () => {
                                                         </button>
                                                     </>
                                                 )}
-                                                {canEdit && booking.assigned_to && !['Completed'].includes(booking.status) && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); releaseBooking(booking.id); }}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-1.5 font-bold text-slate-600 transition-colors hover:bg-slate-50"
-                                                    >
-                                                        Unclaim
-                                                    </button>
-                                                )}
-                                                {booking.can_request_transfer && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); requestBookingTransfer(booking.id); }}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#720101]/15 bg-white px-4 py-1.5 font-bold text-[#720101] transition-colors hover:bg-[#720101]/5"
-                                                    >
-                                                        Request transfer
-                                                    </button>
-                                                )}
-                                                {hasPendingTransfer && Number(booking.transfer_requested_by) === Number(user?.id) && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); cancelBookingTransfer(booking.id); }}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-1.5 font-bold text-slate-600 transition-colors hover:bg-slate-50"
-                                                    >
-                                                        Cancel request
-                                                    </button>
-                                                )}
-                                                {canEdit && (
-                                                    <>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); requestClarification(booking.id); }}
-                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#f0aa0b]/40 bg-[#fff7e8] px-4 py-1.5 font-bold text-[#9f6500] transition-colors hover:bg-[#fff0cf]"
-                                                        >
-                                                            {user?.role === 'Admin' && !booking.assigned_to ? 'Override details' : 'Ask details'}
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); sendBookingReminder(booking.id); }}
-                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#720101]/15 bg-white px-4 py-1.5 font-bold text-[#720101] transition-colors hover:bg-[#720101]/5"
-                                                        >
-                                                            Remind customer
-                                                        </button>
-                                                        {canDecideBooking && (
-                                                            <>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); updateStatus(booking.id, 'Confirmed'); }}
-                                                                    disabled={!!updatingBookingIds[booking.id]}
-                                                                    className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-1.5 font-bold text-emerald-700 transition-colors hover:bg-emerald-100${updatingBookingIds[booking.id] ? ' opacity-60 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    {updatingBookingIds[booking.id] === 'Confirmed' ? (
-                                                                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                                                    ) : (
-                                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                                    )}
-                                                                    {user?.role === 'Admin' && !booking.assigned_to ? 'Override approve' : 'Approve'}
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setRejectConfirmBookingId(booking.id); }}
-                                                                    disabled={!!updatingBookingIds[booking.id]}
-                                                                    className={`inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-1.5 font-bold text-rose-700 transition-colors hover:bg-rose-100${updatingBookingIds[booking.id] ? ' opacity-60 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    {updatingBookingIds[booking.id] === 'Cancelled' ? (
-                                                                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                                                    ) : (
-                                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                                    )}
-                                                                    {user?.role === 'Admin' && !booking.assigned_to ? 'Override reject' : 'Reject'}
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </>
-                                                )}
+
                                             </div>
                                         </div>
                                         {canEdit && booking.status === 'Confirmed' && (
