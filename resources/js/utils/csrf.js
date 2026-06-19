@@ -29,7 +29,7 @@ export const csrfFetch = async (url, options = {}) => {
     if (response.status === 419 && !options._retry) {
         options._retry = true;
         // Fetch a new CSRF token
-        await fetch('/session/csrf-token', {
+        await fetch('/api/session/csrf-token', {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
