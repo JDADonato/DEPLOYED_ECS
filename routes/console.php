@@ -18,3 +18,7 @@ Artisan::command('bookings:complete-past-submitted', function () {
 Schedule::command('payments:send-automated-reminders')
     ->dailyAt('09:00')
     ->withoutOverlapping();
+
+Schedule::command('announcements:publish-due')
+    ->everyMinute()
+    ->withoutOverlapping();

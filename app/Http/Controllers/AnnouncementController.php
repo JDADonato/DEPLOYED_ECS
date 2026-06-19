@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\AnnouncementEmail;
+use App\Mail\AnnouncementBroadcastEmail;
 use App\Models\ActionLog;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
@@ -178,7 +178,7 @@ class AnnouncementController extends Controller
     public function sendTest(Request $request, Announcement $announcement)
     {
         $data = $request->validate(['email' => 'required|email']);
-        Mail::to($data['email'])->send(new AnnouncementEmail($announcement));
+        Mail::to($data['email'])->send(new AnnouncementBroadcastEmail($announcement));
 
         return response()->json(['message' => 'Test email sent.']);
     }

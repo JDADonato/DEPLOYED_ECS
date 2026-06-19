@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Mail\AnnouncementEmail;
+use App\Mail\AnnouncementBroadcastEmail;
 use App\Models\Announcement;
 use App\Models\AnnouncementRecipient;
 use App\Models\User;
@@ -110,7 +110,7 @@ class AnnouncementService
             }
 
             try {
-                Mail::to($user->email)->send(new AnnouncementEmail($announcement));
+                Mail::to($user->email)->send(new AnnouncementBroadcastEmail($announcement));
                 $recipient->update([
                     'email' => $user->email,
                     'status' => 'sent',
@@ -118,6 +118,11 @@ class AnnouncementService
                 ]);
                 $count++;
             } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Announcement email failed to send: ' . $e->getMessage(), [
+                    'announcement_id' => $announcement->id,
+                    'user_email' => $user->email,
+                    'trace' => $e->getTraceAsString(),
+                ]);
                 $recipient->update([
                     'email' => $user->email,
                     'status' => 'failed',
