@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import FoodTastingSchedulePicker from './FoodTastingSchedulePicker';
-import Modal from '../common/Modal';
 import ConfirmModal from '../common/ConfirmModal';
 import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
 
@@ -129,45 +128,50 @@ const ClientFoodTastings = ({ tastings, onUpdate, onCancel, router, hideNewReque
                 </div>
             )}
 
-            <Modal 
-                isOpen={editModal.isOpen} 
-                onClose={() => setEditModal({ isOpen: false, tasting: null })}
-                title="Update Tasting Schedule"
-                maxWidth="2xl"
-            >
-                <div className="p-6">
-                    <p className="mb-6 text-sm text-gray-500">
-                        Select a new date and time for your food tasting request. Note that tastings are only available from Friday to Sunday between 11:00 AM and 3:00 PM.
-                    </p>
-                    
-                    <FoodTastingSchedulePicker
-                        dateValue={scheduleData.preferred_date}
-                        timeValue={scheduleData.preferred_time}
-                        onChange={handleScheduleChange}
-                        errors={errors}
-                        disabled={isSubmitting}
-                    />
-                    
-                    <div className="mt-8 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setEditModal({ isOpen: false, tasting: null })}
-                            className="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition-colors"
-                            disabled={isSubmitting}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            onClick={submitUpdate}
-                            disabled={isSubmitting}
-                            className="rounded-xl bg-[#720101] px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95 disabled:opacity-50"
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save Schedule'}
-                        </button>
+            {editModal.isOpen && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-[#720101]/10 bg-white shadow-2xl transform transition-all scale-100 animate-scaleIn">
+                        <div className="p-6">
+                            <div className="mb-6 flex items-center justify-between">
+                                <h3 className="text-xl font-black font-display text-slate-900">Update Tasting Schedule</h3>
+                                <button onClick={() => setEditModal({ isOpen: false, tasting: null })} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            <p className="mb-6 text-sm text-gray-500">
+                                Select a new date and time for your food tasting request. Note that tastings are only available from Friday to Sunday between 11:00 AM and 3:00 PM.
+                            </p>
+                            
+                            <FoodTastingSchedulePicker
+                                dateValue={scheduleData.preferred_date}
+                                timeValue={scheduleData.preferred_time}
+                                onChange={handleScheduleChange}
+                                errors={errors}
+                                disabled={isSubmitting}
+                            />
+                            
+                            <div className="mt-8 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditModal({ isOpen: false, tasting: null })}
+                                    className="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition-colors"
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={submitUpdate}
+                                    disabled={isSubmitting}
+                                    className="rounded-xl bg-[#720101] px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {isSubmitting ? 'Saving...' : 'Save Schedule'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </Modal>
+            )}
 
             <ConfirmModal
                 isOpen={confirmModal.isOpen}

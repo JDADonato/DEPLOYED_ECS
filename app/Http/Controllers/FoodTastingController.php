@@ -390,6 +390,7 @@ class FoodTastingController extends Controller
             'status' => $tasting->status,
             'notes' => $tasting->notes,
             'outcome_notes' => $tasting->outcome_notes,
+            'requested_dishes' => $tasting->requested_dishes,
             'confirmed_at' => $tasting->confirmed_at,
             'completed_at' => $tasting->completed_at,
             'handled_by' => $tasting->handled_by,
