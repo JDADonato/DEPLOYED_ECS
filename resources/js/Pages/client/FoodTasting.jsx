@@ -36,7 +36,7 @@ const FoodTasting = () => {
             const res = await csrfFetch('/api/food-tasting');
             if (res.ok) {
                 const data = await res.json();
-                setTastings(data.tastings || []);
+                setTastings(Array.isArray(data) ? data : (data.tastings || []));
             }
         } catch (error) {
             console.error('Failed to fetch tastings', error);
@@ -168,7 +168,7 @@ const FoodTasting = () => {
                     </RevealOnScroll>
 
                     <RevealOnScroll as="section" delay="rv-d1" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-                        {user && tastings.length > 0 && (
+                        {user && (
                             <div className="mb-12">
                                 <ClientFoodTastings 
                                     tastings={tastings}
