@@ -34,6 +34,11 @@ class AppErrorBoundary extends React.Component {
                 <section className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center">
                     <p className="text-xs font-black uppercase tracking-[0.28em] text-[#9a6a00]">Something went wrong</p>
                     <h1 className="mt-3 text-4xl font-black">This page could not finish loading.</h1>
+                    <p className="mt-4 text-lg font-bold text-red-600 bg-red-50 p-4 rounded-xl border border-red-100">
+                        {this.state.error?.toString()}
+                        <br /><br />
+                        <span className="text-xs font-mono">{this.state.error?.stack}</span>
+                    </p>
                     <p className="mt-4 text-lg font-semibold text-slate-600">
                         Your data was not changed. Refresh the page, or return to your workspace and try again.
                     </p>
