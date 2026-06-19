@@ -1314,9 +1314,9 @@ const DashboardMarketing = () => {
         try {
             const response = await csrfFetch(`/api/settings/menu-items/${item.id}/unarchive`, { method: 'PATCH' });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || data.message || 'Could not unarchive menu item.');
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not restore menu item.');
 
-            toast.success(data.message || 'Menu item unarchived.');
+            toast.success(data.message || 'Menu item restored.');
             bustMarketingSettingsCache();
             fetchMarketingSettings();
         } catch (error) {
@@ -3296,7 +3296,7 @@ const DashboardMarketing = () => {
                                                 {item.is_active !== false ? (
                                                     <button onClick={() => handleArchiveMenuItem(item)} className="mr-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>
                                                 ) : (
-                                                    <button onClick={() => handleUnarchiveMenuItem(item)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Unarchive</button>
+                                                    <button onClick={() => handleUnarchiveMenuItem(item)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Restore</button>
                                                 )}
                                                 <button onClick={() => handleDeleteMenuItem(item)} className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-200">Delete</button>
                                             </td>

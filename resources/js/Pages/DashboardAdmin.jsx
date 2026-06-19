@@ -3571,9 +3571,9 @@ const DashboardAdmin = () => {
     const handleUnarchiveMenuItem = async (id) => {
         setConfirmDialog({
             isOpen: true,
-            title: 'Unarchive menu item?',
+            title: 'Restore menu item?',
             message: 'This will make the dish visible on the customer menu again.',
-            confirmText: 'Unarchive',
+            confirmText: 'Restore',
             tone: 'success',
             onConfirm: () => confirmUnarchiveMenuItem(id),
         });
@@ -3584,12 +3584,12 @@ const DashboardAdmin = () => {
         try {
             const res = await csrfFetch(`/api/admin/menu-items/${id}/unarchive`, { method: 'PATCH' });
             if (res.ok) {
-                showToast('Menu item unarchived successfully');
+                showToast('Menu item restored successfully');
                 bustAdminCache('/api/admin/menu-items', '/api/menu-items', '/api/admin/analytics');
                 fetchCustomMenuItems();
             } else {
                 const data = await res.json();
-                showToast(data.error || 'Failed to unarchive menu item', 'error');
+                showToast(data.error || 'Failed to restore menu item', 'error');
             }
         } catch (e) {
             showToast('An error occurred', 'error');
@@ -8583,7 +8583,7 @@ const DashboardAdmin = () => {
                                                                             {item._isCustom && item.isActive ? (
                                                                                 <button onClick={() => handleArchiveMenuItem(item._dbId)} className="mr-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100">Archive</button>
                                                                             ) : item._isCustom && !item.isActive ? (
-                                                                                <button onClick={() => handleUnarchiveMenuItem(item._dbId)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Unarchive</button>
+                                                                                <button onClick={() => handleUnarchiveMenuItem(item._dbId)} className="mr-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100">Restore</button>
                                                                             ) : null}
                                                                             {item._isCustom && (
                                                                                 <button onClick={() => handleDeleteMenuItem(item._dbId)} className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-200">Delete</button>
