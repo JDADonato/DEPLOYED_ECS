@@ -120,10 +120,11 @@ const appendVersionParam = (url, version, force = false) => {
         const separator = finalUrl.includes('?') ? '&' : '?';
         finalUrl = `${finalUrl}${separator}since_version=${encodeURIComponent(version)}`;
     }
-    if (force) {
-        const separator = finalUrl.includes('?') ? '&' : '?';
-        finalUrl = `${finalUrl}${separator}_cb=${Date.now()}`;
-    }
+    // Always append cache-buster to prevent aggressive browser/CDN caching
+    // even for non-forced requests. We rely exclusively on our internal JS cache
+    // to throttle requests, so network requests should never be intercepted by edge caches.
+    const separator = finalUrl.includes('?') ? '&' : '?';
+    finalUrl = `${finalUrl}${separator}_cb=${Date.now()}`;
     return finalUrl;
 };
 

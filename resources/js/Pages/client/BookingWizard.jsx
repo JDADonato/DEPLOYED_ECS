@@ -12,6 +12,7 @@ import StaffPreviewBanner from '../../Components/common/StaffPreviewBanner';
 import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { getCustomerSafeValidationMessage } from '../../utils/dashboardUtils';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
+import { clearSmartCacheForPrefix } from '../../utils/smartResource';
 
 const totalSteps = 7;
 const CalendarView = lazy(() => import('../../Components/client/CalendarView'));
@@ -383,6 +384,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             clearDraft();
             setShowReviewModal(false);
             setReviewData(null);
+            clearSmartCacheForPrefix('client:dashboard');
             showModal(
                 'success',
                 'Booking Submitted',
