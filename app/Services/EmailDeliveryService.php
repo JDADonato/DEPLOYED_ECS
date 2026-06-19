@@ -149,7 +149,7 @@ class EmailDeliveryService
         }
 
         if ($this->mailIsNotConfigured()) {
-            return $this->result('mail_not_configured', 'Mail is not configured. Please check SMTP settings.');
+            return $this->result('mail_not_configured', 'Mail is not configured. Please check SMTP settings. Host: ' . Config::get('mail.mailers.smtp.host') . ' From: ' . Config::get('mail.from.address'));
         }
 
         try {
@@ -171,7 +171,7 @@ class EmailDeliveryService
                     'message' => $e->getMessage(),
                 ]);
 
-                return $this->result('failed', 'Email could not be delivered because the mail certificate path is invalid.');
+                return $this->result('failed', 'Certificate issue: ' . $e->getMessage());
             }
 
             Log::warning('Mailable delivery failed.', [
@@ -181,7 +181,7 @@ class EmailDeliveryService
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->result('failed', 'Email could not be delivered. Please try again later.');
+            return $this->result('failed', 'Delivery failed: ' . $e->getMessage());
         }
     }
 
