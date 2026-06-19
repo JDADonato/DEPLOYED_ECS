@@ -417,11 +417,11 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
                                 {packageServiceCharge > 0 && <div className="flex justify-between"><span className="text-slate-500">Service charge</span><strong>{money(packageServiceCharge)}</strong></div>}
                                 {packageVat > 0 && <div className="flex justify-between"><span className="text-slate-500">VAT</span><strong>{money(packageVat)}</strong></div>}
                                 {locationSurcharge > 0 && <div className="flex justify-between"><span className="text-slate-500">Outside Metro Manila</span><strong>{money(locationSurcharge)}</strong></div>}
-                                {floorSurcharge > 0 && <div className="flex justify-between"><span className="text-slate-500">Floor service charge</span><strong>{money(floorSurcharge)}</strong></div>}
+                                {floorSurcharge > 0 && <div className="flex justify-between"><span className="text-slate-500">{Math.round((businessRules?.floor_surcharge_rate !== undefined ? businessRules.floor_surcharge_rate : 0.03) * 100)}% high-rise floor surcharge</span><strong>{money(floorSurcharge)}</strong></div>}
                                 {decemberSurcharge > 0 && <div className="flex justify-between"><span className="text-slate-500">December surcharge</span><strong>{money(decemberSurcharge)}</strong></div>}
-                                {contingencyFee > 0 && <div className="flex justify-between"><span className="text-slate-500">{package_security_label || 'Contingency'}</span><strong>{money(contingencyFee)}</strong></div>}
+                                {contingencyFee > 0 && <div className="flex justify-between"><span className="text-slate-500">{Math.round((businessRules?.contingency_surcharge_rate !== undefined ? businessRules.contingency_surcharge_rate : 0.10) * 100)}% contingency</span><strong>{money(contingencyFee)}</strong></div>}
                                 {cashBond > 0 && <div className="flex justify-between"><span className="text-slate-500">{package_security_label || 'Cash bond'}</span><strong>{money(cashBond)}</strong></div>}
-                                {overtimeFee > 0 && <div className="flex justify-between"><span className="text-slate-500">Extra service hours</span><strong>{money(overtimeFee)}</strong></div>}
+                                {overtimeFee > 0 && <div className="flex justify-between"><span className="text-slate-500">{businessRules?.extra_service_hours_fee !== undefined ? businessRules.extra_service_hours_fee : 5000} additional hours</span><strong>{money(overtimeFee)}</strong></div>}
                             </div>
                         </Section>
                     )}

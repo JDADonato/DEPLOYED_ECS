@@ -23,138 +23,54 @@ const defaultRules = {
 
 const numberField = (value) => value === null || value === undefined ? '' : String(value);
 
+const SurchargeInput = ({ field, label, icon: Icon, type = 'percent', rules, updateField }) => {
+    const isDecimalRate = field.endsWith('_rate');
+    
+    let displayValue = rules[field] !== null && rules[field] !== undefined ? String(rules[field]) : '';
+    if (isDecimalRate && type === 'percent' && displayValue !== '') {
+        displayValue = String(Math.round(Number(displayValue) * 10000) / 100);
+    }
+
+    const handleChange = (event) => {
+        let val = event.target.value;
+        if (val === '') {
+            updateField(field, '');
+            return;
+        }
+        if (isDecimalRate && type === 'percent') {
+            val = String(Number(val) / 100);
+        }
+        updateField(field, val);
+    };
+
+    return (
+        <label className="group flex flex-col gap-1.5 p-4 rounded-2xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-[#720101] focus-within:bg-[#720101]/5 hover:bg-slate-100">
+            <div className="flex items-center gap-2 text-slate-500 group-focus-within:text-[#720101]">
+                <Icon size={16} />
+                <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+            </div>
+            <div className="relative mt-1">
+                <input
+                    type="number"
+                    min="0"
+                    step={type === 'percent' ? 'any' : '1'}
+                    value={displayValue}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-8 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
+                />
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    {type === 'percent' ? '%' : '₱'}
+                </span>
+            </div>
+        </label>
+    );
+};
+
 const PaymentRulesPanel = ({ onToast, embedded = false }) => {
     const [rules, setRules] = useState(defaultRules);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savingSurcharges, setSavingSurcharges] = useState(false);
-
-    const notify = (message, type = 'success') => {
-        if (onToast) onToast(message, type);
-    };
-
-    const loadRules = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/admin/payment-rules', { headers: { Accept: 'application/json' } });
-            if (!response.ok) throw new Error('Could not load payment rules.');
-            const data = await response.json();
-            setRules({ ...defaultRules, ...(data || {}) });
-        } catch (error) {
-            notify(error.message || 'Could not load payment rules.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadRules();
-    }, []);
-
-    const updateField = (field, value) => {
-        setRules((current) => ({ ...current, [field]: value }));
-    };
-
-    const saveRules = async (event) => {
-        event.preventDefault();
-        setSaving(true);
-        try {
-            const payload = Object.fromEntries(Object.entries(rules).map(([key, value]) => [key, Number(value)]));
-            const response = await csrfFetch('/api/admin/payment-rules', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || data.message || 'Could not save payment rules.');
-            setRules({ ...defaultRules, ...(data.rules || payload) });
-            notify('Payment rules updated.');
-        } catch (error) {
-            notify(error.message || 'Could not save payment rules.', 'error');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const saveSurcharges = async (event) => {
-        event.preventDefault();
-        setSavingSurcharges(true);
-        try {
-            const payload = {
-                location_surcharge_rate: Number(rules.location_surcharge_rate),
-                floor_surcharge_rate: Number(rules.floor_surcharge_rate),
-                december_surcharge_rate: Number(rules.december_surcharge_rate),
-                transport_fee: Number(rules.transport_fee),
-                labor_surcharge: Number(rules.labor_surcharge),
-                service_charge_rate: Number(rules.service_charge_rate),
-                contingency_surcharge_rate: Number(rules.contingency_surcharge_rate),
-                vat_rate: Number(rules.vat_rate),
-                extra_service_hours_fee: Number(rules.extra_service_hours_fee),
-            };
-            const response = await csrfFetch('/api/admin/surcharge-rules', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || data.message || 'Could not save surcharge rules.');
-            setRules(current => ({ ...current, ...(data.rules || payload) }));
-            notify('Surcharge rules updated.');
-        } catch (error) {
-            notify(error.message || 'Could not save surcharge rules.', 'error');
-        } finally {
-            setSavingSurcharges(false);
-        }
-    };
-
-    if (loading) {
-        return <StaffSkeleton rows={4} label="Loading payment rules" />;
-    }
-
-    const total = Number(rules.reservation_fee_percentage || 0) + Number(rules.downpayment_percentage || 0) + Number(rules.final_payment_percentage || 0);
-
-    const SurchargeInput = ({ field, label, icon: Icon, type = 'percent' }) => {
-        const isDecimalRate = field.endsWith('_rate');
-        
-        let displayValue = rules[field] !== null && rules[field] !== undefined ? String(rules[field]) : '';
-        if (isDecimalRate && type === 'percent' && displayValue !== '') {
-            displayValue = String(Math.round(Number(displayValue) * 10000) / 100);
-        }
-
-        const handleChange = (event) => {
-            let val = event.target.value;
-            if (val === '') {
-                updateField(field, '');
-                return;
-            }
-            if (isDecimalRate && type === 'percent') {
-                val = String(Number(val) / 100);
-            }
-            updateField(field, val);
-        };
-
-        return (
-            <label className="group flex flex-col gap-1.5 p-4 rounded-2xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-[#720101] focus-within:bg-[#720101]/5 hover:bg-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 group-focus-within:text-[#720101]">
-                    <Icon size={16} />
-                    <span className="text-xs font-black uppercase tracking-widest">{label}</span>
-                </div>
-                <div className="relative mt-1">
-                    <input
-                        type="number"
-                        min="0"
-                        step={type === 'percent' ? 'any' : '1'}
-                        value={displayValue}
-                        onChange={handleChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-8 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
-                    />
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                        {type === 'percent' ? '%' : '₱'}
-                    </span>
-                </div>
-            </label>
-        );
-    };
 
     return (
         <div className="flex flex-col gap-8">
@@ -174,12 +90,12 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                 </div>
 
                 <form onSubmit={saveRules} className="grid gap-5 lg:grid-cols-3">
-                    <SurchargeInput field="reservation_fee_percentage" label="Reservation Fee %" icon={Percent} />
-                    <SurchargeInput field="downpayment_percentage" label="Down Payment %" icon={Percent} />
-                    <SurchargeInput field="final_payment_percentage" label="Final Payment %" icon={Percent} />
-                    <SurchargeInput field="reservation_validity_hours" label="Reservation Validity (Hours)" icon={Clock} type="flat" />
-                    <SurchargeInput field="downpayment_due_days" label="Down Payment Due (Days)" icon={Clock} type="flat" />
-                    <SurchargeInput field="final_payment_due_days" label="Final Payment Due (Days)" icon={Clock} type="flat" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="reservation_fee_percentage" label="Reservation Fee %" icon={Percent} />
+                    <SurchargeInput rules={rules} updateField={updateField} field="downpayment_percentage" label="Down Payment %" icon={Percent} />
+                    <SurchargeInput rules={rules} updateField={updateField} field="final_payment_percentage" label="Final Payment %" icon={Percent} />
+                    <SurchargeInput rules={rules} updateField={updateField} field="reservation_validity_hours" label="Reservation Validity (Hours)" icon={Clock} type="flat" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="downpayment_due_days" label="Down Payment Due (Days)" icon={Clock} type="flat" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="final_payment_due_days" label="Final Payment Due (Days)" icon={Clock} type="flat" />
                     
                     <div className="flex items-end lg:col-span-3 mt-2 border-t border-slate-100 pt-5">
                         <button type="submit" disabled={saving} className="admin-button-primary px-6 py-3 text-sm font-black flex items-center gap-2 shadow-sm">
@@ -206,9 +122,9 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                             Statutory & Core Fees
                         </h4>
                         <div className="grid gap-5 lg:grid-cols-3">
-                            <SurchargeInput field="service_charge_rate" label="Service Charge Rate" icon={Briefcase} type="percent" />
-                            <SurchargeInput field="vat_rate" label="Value Added Tax (VAT)" icon={Percent} type="percent" />
-                            <SurchargeInput field="contingency_surcharge_rate" label="Contingency Rate" icon={ShieldAlert} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="service_charge_rate" label="Service Charge Rate" icon={Briefcase} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="vat_rate" label="Value Added Tax (VAT)" icon={Percent} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="contingency_surcharge_rate" label="Contingency Rate" icon={ShieldAlert} type="percent" />
                         </div>
                     </div>
 
@@ -218,9 +134,9 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                             Service Extrapolations
                         </h4>
                         <div className="grid gap-5 lg:grid-cols-3">
-                            <SurchargeInput field="extra_service_hours_fee" label="Extra Service Hours" icon={Zap} type="flat" />
-                            <SurchargeInput field="december_surcharge_rate" label="December Peak Surcharge" icon={Percent} type="percent" />
-                            <SurchargeInput field="labor_surcharge" label="Default Labor Surcharge" icon={Briefcase} type="flat" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="extra_service_hours_fee" label="Extra Service Hours" icon={Zap} type="flat" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="december_surcharge_rate" label="December Peak Surcharge" icon={Percent} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="labor_surcharge" label="Default Labor Surcharge" icon={Briefcase} type="flat" />
                         </div>
                     </div>
 
@@ -230,9 +146,9 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                             Logistics & Mobility
                         </h4>
                         <div className="grid gap-5 lg:grid-cols-3">
-                            <SurchargeInput field="location_surcharge_rate" label="Out-of-Town Surcharge" icon={Truck} type="percent" />
-                            <SurchargeInput field="floor_surcharge_rate" label="High-Rise Floor Surcharge" icon={Building} type="percent" />
-                            <SurchargeInput field="transport_fee" label="Default Transport Fee" icon={Truck} type="flat" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="location_surcharge_rate" label="Out-of-Town Surcharge" icon={Truck} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="floor_surcharge_rate" label="High-Rise Floor Surcharge" icon={Building} type="percent" />
+                            <SurchargeInput rules={rules} updateField={updateField} field="transport_fee" label="Default Transport Fee" icon={Truck} type="flat" />
                         </div>
                     </div>
 

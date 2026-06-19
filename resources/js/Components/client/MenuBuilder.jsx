@@ -413,10 +413,17 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
         .filter(pkg => !pkg.addOnOnly || Number(pax || 0) >= (pkg.minimumPax || 0));
     const packageCards = configuredPackageCards.length ? configuredPackageCards : fallbackPackageCards;
     const hasPackagePricing = Boolean(bookingData.package_pricing_type || bookingData.package_base_price || bookingData.package_flat_price);
+    const dynamicContingencyLabel = `${Math.round((businessRules?.contingency_surcharge_rate !== undefined ? Number(businessRules.contingency_surcharge_rate) : 0.10) * 100)}% Contingency`;
+    
+    const getDynamicSecurityLabel = (baseLabel, type) => {
+        if (type === 'contingency') return dynamicContingencyLabel;
+        return baseLabel;
+    };
+
     const packageTerms = [
         ...getGlobalPaymentTerms(businessRules),
         ...(packageCategory.terms || []),
-        packageCategory.security.label,
+        getDynamicSecurityLabel(packageCategory.security.label, packageCategory.security.type),
     ];
     const packageContextFields = {
         package_category: packageCategoryKey,
@@ -424,7 +431,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
         package_amenities: bookingData.event_applicable_setups?.length ? bookingData.event_applicable_setups : packageCategory.amenities,
         package_terms: packageTerms,
         package_security_type: bookingData.event_security_type || packageCategory.security.type,
-        package_security_label: bookingData.event_security_label || packageCategory.security.label,
+        package_security_label: getDynamicSecurityLabel(bookingData.event_security_label || packageCategory.security.label, bookingData.event_security_type || packageCategory.security.type),
         package_security_description: bookingData.event_security_description || packageCategory.security.description,
         package_security_rate: businessRules?.contingency_surcharge_rate !== undefined ? Number(businessRules.contingency_surcharge_rate) : (packageCategory.security.rate || 0),
         package_cash_bond: packageCategory.security.amount || 0,

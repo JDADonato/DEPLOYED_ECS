@@ -191,7 +191,7 @@ const PACKAGE_CATEGORY_OPTIONS = [
 ];
 
 const SECURITY_OPTIONS = [
-    { value: 'contingency', label: '10% Contingency' },
+    { value: 'contingency', label: 'Contingency (Global Rate)' },
     { value: 'cash_bond', label: 'Php 1,500 Cash Bond' },
 ];
 
@@ -3296,7 +3296,7 @@ const DashboardAdmin = () => {
                 drink: Number(pkg.menu_structure?.drink ?? pkg.menu_structure?.refreshments ?? 0),
             },
             security_type: pkg.security_type || 'cash_bond',
-            security_label: pkg.security_label || (pkg.security_type === 'contingency' ? '10% Contingency' : 'Php 1,500 Cash Bond'),
+            security_label: pkg.security_label || (pkg.security_type === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond'),
         });
     };
 
@@ -3358,7 +3358,7 @@ const DashboardAdmin = () => {
             package_category: eventType.package_category || 'standard',
             applicable_setups: linesToText(eventType.applicable_setups),
             security_type: eventType.security_type || 'cash_bond',
-            security_label: eventType.security_label || (eventType.security_type === 'contingency' ? '10% Contingency' : 'Php 1,500 Cash Bond'),
+            security_label: eventType.security_label || (eventType.security_type === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond'),
             security_description: eventType.security_description || '',
         });
     };
@@ -6439,7 +6439,7 @@ const DashboardAdmin = () => {
                             <section className="staff-drawer-section">
                                 <p className="staff-section-title">Security term</p>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                    <select value={packageForm.security_type} onChange={e => setPackageForm({ ...packageForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? '10% Contingency' : 'Php 1,500 Cash Bond' })} className="staff-control">
+                                    <select value={packageForm.security_type} onChange={e => setPackageForm({ ...packageForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond' })} className="staff-control">
                                         {SECURITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                                     </select>
                                     <input value={packageForm.security_label} onChange={e => setPackageForm({ ...packageForm, security_label: e.target.value })} placeholder="Security label" className="staff-control" />
@@ -6510,7 +6510,7 @@ const DashboardAdmin = () => {
                                                 <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
                                                     Security Type
                                                     <div className="relative">
-                                                        <select value={eventTypeForm.security_type} onChange={e => setEventTypeForm({ ...eventTypeForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? '10% Contingency' : 'Php 1,500 Cash Bond' })} className="staff-control font-normal py-3 appearance-none w-full bg-white pr-10">
+                                                        <select value={eventTypeForm.security_type} onChange={e => setEventTypeForm({ ...eventTypeForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond' })} className="staff-control font-normal py-3 appearance-none w-full bg-white pr-10">
                                                             {SECURITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                                                         </select>
                                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
