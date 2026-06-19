@@ -19,35 +19,53 @@ const daysUntilEvent = (date) => {
     return Math.ceil((eventDate - today) / 86400000);
 };
 
-const paymentScheduleForDate = (date, total) => {
-    const days = daysUntilEvent(date);
-    if (days !== null && days <= 10) {
+const paymentScheduleForDate = (dateString, total, businessRules = {}) => {
+    if (!total || total <= 0) return null;
+    if (!dateString) return null;
+
+    const eventDate = new Date(dateString);
+    const today = new Date();
+    // Normalize times
+    eventDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffTime = Math.abs(eventDate - today);
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const resPct = businessRules?.reservation_fee_percentage !== undefined ? Number(businessRules.reservation_fee_percentage) : 10;
+    const dpPct = businessRules?.downpayment_percentage !== undefined ? Number(businessRules.downpayment_percentage) : 70;
+    const fpPct = businessRules?.final_payment_percentage !== undefined ? Number(businessRules.final_payment_percentage) : 20;
+    const finalDays = businessRules?.final_payment_due_days !== undefined ? Number(businessRules.final_payment_due_days) : 10;
+    const dpDays = businessRules?.downpayment_due_days !== undefined ? Number(businessRules.downpayment_due_days) : 30;
+
+    if (days !== null && days <= finalDays) {
         return {
             rows: [{ label: 'Full payment', amount: total }],
             note: '100% payment is required immediately for events 10 days or less before the event.',
         };
     }
 
-    if (days !== null && days <= 30) {
-        const upfront = Math.round(total * 0.80);
+    if (days !== null && days <= dpDays) {
+        const upfrontPct = resPct + dpPct;
+        const upfront = Math.round(total * (upfrontPct / 100));
         return {
             rows: [
                 { label: 'Reservation + down payment', amount: upfront },
                 { label: 'Balance', amount: Math.max(0, total - upfront) },
             ],
-            note: '80% combines reservation and down payment. The 20% final balance is due 10 days before the event.',
+            note: `${upfrontPct}% combines reservation and down payment. The ${fpPct}% final balance is due ${finalDays} days before the event.`,
         };
     }
 
-    const reservation = Math.round(total * 0.10);
-    const downPayment = Math.round(total * 0.70);
+    const reservation = Math.round(total * (resPct / 100));
+    const downPayment = Math.round(total * (dpPct / 100));
     return {
         rows: [
             { label: 'Reservation', amount: reservation },
             { label: 'Down payment', amount: downPayment },
             { label: 'Balance', amount: Math.max(0, total - reservation - downPayment) },
         ],
-        note: 'Standard bookings use the 10% / 70% / 20% payment schedule.',
+        note: `Standard bookings use the ${resPct}% / ${dpPct}% / ${fpPct}% payment schedule.`,
     };
 };
 
@@ -162,7 +180,7 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
     const cashBond = package_security_type === 'cash_bond' ? package_cash_bond : 0;
     const overtimeFee = useMemo(() => Math.max(0, duration - 4) * package_extra_service_hours_fee, [duration, package_extra_service_hours_fee]);
     const totalEstimate = menuTotal + packageServiceCharge + packageVat + locationSurcharge + floorSurcharge + decemberSurcharge + contingencyFee + cashBond + overtimeFee;
-    const paymentSchedule = useMemo(() => paymentScheduleForDate(date, totalEstimate), [date, totalEstimate]);
+    const paymentSchedule = useMemo(() => paymentScheduleForDate(date, totalEstimate, businessRules), [date, totalEstimate, businessRules]);
     const totalDishCount = selectedDishCount;
     const feeCount = [
         menuExtraFee,

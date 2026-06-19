@@ -148,22 +148,30 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         
         const days = Math.round((eventDate - today) / (1000 * 60 * 60 * 24));
         const total = reviewCosts?.finalTotal || 0;
+        if (!total) return [];
         
-        if (days <= 10) {
+        const resPct = businessRules?.reservation_fee_percentage !== undefined ? Number(businessRules.reservation_fee_percentage) : 10;
+        const dpPct = businessRules?.downpayment_percentage !== undefined ? Number(businessRules.downpayment_percentage) : 70;
+        const fpPct = businessRules?.final_payment_percentage !== undefined ? Number(businessRules.final_payment_percentage) : 20;
+        const finalDays = businessRules?.final_payment_due_days !== undefined ? Number(businessRules.final_payment_due_days) : 10;
+        const dpDays = businessRules?.downpayment_due_days !== undefined ? Number(businessRules.downpayment_due_days) : 30;
+
+        if (days <= finalDays) {
             return [{ id: 'Final', label: '100% Full Payment', amount: total }];
         }
-        if (days <= 30) {
+        if (days <= dpDays) {
+            const upfrontPct = resPct + dpPct;
             return [
-                { id: 'DownPayment', label: '80% Down Payment', amount: total * 0.8 },
-                { id: 'Final', label: '20% Final Balance', amount: total * 0.2 }
+                { id: 'DownPayment', label: `${upfrontPct}% Down Payment`, amount: total * (upfrontPct / 100) },
+                { id: 'Final', label: `${fpPct}% Final Balance`, amount: total * (fpPct / 100) }
             ];
         }
         return [
-            { id: 'Reservation', label: '10% Reservation', amount: total * 0.1 },
-            { id: 'DownPayment', label: '70% Down Payment', amount: total * 0.7 },
-            { id: 'Final', label: '20% Final Balance', amount: total * 0.2 }
+            { id: 'Reservation', label: `${resPct}% Reservation`, amount: total * (resPct / 100) },
+            { id: 'DownPayment', label: `${dpPct}% Down Payment`, amount: total * (dpPct / 100) },
+            { id: 'Final', label: `${fpPct}% Final Balance`, amount: total * (fpPct / 100) }
         ];
-    }, [bookingData.date, reviewCosts?.finalTotal]);
+    }, [bookingData.date, reviewCosts?.finalTotal, businessRules]);
 
     const selectedTotal = useMemo(() => {
         return availableTranches

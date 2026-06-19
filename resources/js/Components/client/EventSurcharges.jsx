@@ -198,8 +198,8 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                             ) : (
                                                 <>
                                                     {metroCities.length > 0 && <CityGroup title="Metro Manila" feeLabel="Included" cities={metroCities} selectedValue={formData.venue_city} onSelect={handleSelectCity} />}
-                                                    {nearCities.length > 0 && <CityGroup title="Nearby areas" feeLabel="+20%" cities={nearCities} selectedValue={formData.venue_city} onSelect={handleSelectCity} />}
-                                                    {farCities.length > 0 && <CityGroup title="Extended service area" feeLabel="+20%" cities={farCities} selectedValue={formData.venue_city} onSelect={handleSelectCity} />}
+                                                    {nearCities.length > 0 && <CityGroup title="Nearby areas" feeLabel={`+${Math.round((businessRules?.location_surcharge_rate !== undefined ? businessRules.location_surcharge_rate : 0.20) * 100)}%`} cities={nearCities} selectedValue={formData.venue_city} onSelect={handleSelectCity} />}
+                                                    {farCities.length > 0 && <CityGroup title="Extended service area" feeLabel={`+${Math.round((businessRules?.location_surcharge_rate !== undefined ? businessRules.location_surcharge_rate : 0.20) * 100)}%`} cities={farCities} selectedValue={formData.venue_city} onSelect={handleSelectCity} />}
                                                 </>
                                             )}
                                         </div>
