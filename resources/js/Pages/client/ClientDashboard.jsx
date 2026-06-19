@@ -1052,7 +1052,7 @@ const ClientDashboard = () => {
         try {
             const smartResult = await fetchSmartResource('/api/dashboard/client', {
                 cacheKey: dashboardSmartCacheKey,
-                ttl: 30000,
+                ttl: 25000,
                 force,
             });
             const result = smartResult.raw || smartResult.data || {};

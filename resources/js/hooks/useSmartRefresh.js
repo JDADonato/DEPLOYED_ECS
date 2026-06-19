@@ -35,7 +35,7 @@ export default function useSmartRefresh({
         const runRefresh = (reason) => {
             if (!canRefresh()) return;
             lastRefreshRef.current = getNow();
-            refreshRef.current({ silent: true, reason, force: reason === 'realtime' });
+            refreshRef.current({ silent: true, reason, force: ['realtime', 'focus', 'visible'].includes(reason) });
         };
 
         const handleFocus = () => {
