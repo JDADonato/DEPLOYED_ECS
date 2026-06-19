@@ -401,6 +401,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::post('/api/admin/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->middleware('throttle:announcement-action');
     Route::post('/api/admin/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->middleware('throttle:announcement-action');
     Route::post('/api/admin/announcements/{announcement}/send-test', [AnnouncementController::class, 'sendTest'])->middleware('throttle:announcement-action');
+    Route::post('/api/admin/announcements/{announcement}/force-send', [AnnouncementController::class, 'forceSend'])->middleware('throttle:announcement-action');
     Route::delete('/api/admin/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->middleware('throttle:announcement-action');
 });
 
@@ -530,6 +531,31 @@ Route::get('/fix-images', function () {
         }
     }
     return "Fixed $count images!";
+});
+
+Route::get('/debug-logs', function () {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return "No log file found at: " . $logPath;
+    }
+    $lines = file($logPath);
+    return implode("", array_slice($lines, -200));
+});
+
+Route::get('/debug-recipients/{id}', function ($id) {
+    $announcement = \App\Models\Announcement::find($id);
+    if (!$announcement) return "Not found";
+    $svc = app(\App\Services\AnnouncementService::class);
+    $users = $svc->resolveRecipients($announcement);
+    $recipients = \App\Models\AnnouncementRecipient::where('announcement_id', $id)->get();
+    return [
+        'users' => $users->pluck('email'),
+        'recipients_in_db' => $recipients,
+        'announcement_send_email' => $announcement->send_email,
+        'announcement_starts_at' => $announcement->starts_at,
+        'isFuture' => $announcement->starts_at && $announcement->starts_at->isFuture(),
+        'now' => now()
+    ];
 });
 
 Route::fallback(function (Illuminate\Http\Request $request) {

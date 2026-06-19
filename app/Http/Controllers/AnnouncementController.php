@@ -175,6 +175,33 @@ class AnnouncementController extends Controller
         return response()->json($users);
     }
 
+    public function forceSend(Request $request, Announcement $announcement)
+    {
+        $recipients = $this->service->resolveRecipients($announcement);
+        $log = [];
+        $sentCount = 0;
+
+        foreach ($recipients as $user) {
+            try {
+                Mail::to($user->email)->send(new AnnouncementBroadcastEmail($announcement));
+                $log[] = "Sent to {$user->email}";
+                $sentCount++;
+            } catch (\Throwable $e) {
+                $log[] = "Failed for {$user->email}: " . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'message' => "Force send complete.",
+            'total_found' => $recipients->count(),
+            'total_sent' => $sentCount,
+            'log' => $log,
+            'isScheduled' => $announcement->starts_at && $announcement->starts_at->isFuture(),
+            'starts_at' => $announcement->starts_at,
+            'now' => now()
+        ]);
+    }
+
     public function sendTest(Request $request, Announcement $announcement)
     {
         $data = $request->validate(['email' => 'required|email']);
