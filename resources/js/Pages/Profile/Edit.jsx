@@ -1020,9 +1020,9 @@ const ProfileEdit = () => {
                                         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-slate-50 bg-[#720101] text-2xl font-black text-white shadow-sm">
                                             {avatarPreview ? <img src={avatarPreview} alt={`${displayName} profile`} className="h-full w-full object-cover" /> : initial}
                                         </div>
-                                        <div className="min-w-0">
-                                            <h2 className="truncate text-xl font-black leading-tight text-slate-950">{displayName}</h2>
-                                            <p className="truncate text-xs font-bold text-slate-500">@{user.username} • {user.role || 'Account'}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <h2 className="text-xl font-black leading-tight text-slate-950 break-words">{displayName}</h2>
+                                            <p className="text-xs font-bold text-slate-500 break-words">@{user.username} • {user.role || 'Account'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1077,7 +1077,7 @@ const ProfileEdit = () => {
                             </div>
                         </aside>
 
-                        <div className="min-w-0 flex-1 bg-white p-5 sm:p-6 lg:p-8">
+                        <div className="min-w-0 flex-1 bg-white p-5 sm:p-6 lg:px-8 lg:pb-8 lg:pt-0">
                             <section>
                                 {activeTab === 'overview' && renderOverview()}
                                 {activeTab === 'personal' && renderPersonal()}
