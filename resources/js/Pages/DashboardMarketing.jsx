@@ -2195,7 +2195,7 @@ const DashboardMarketing = () => {
                             </button>
                         )}
 
-                        {canEdit && selectedBooking.status === 'Pending' && (
+                        {canEdit && !['Cancelled', 'Completed'].includes(selectedBooking.status) && String(selectedBooking.review_status || '').toLowerCase() !== 'approved for reservation' && (
                             <>
                                 <button onClick={() => updateStatus(selectedBooking.id, 'Confirmed')} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100">
                                     Approve
@@ -2830,7 +2830,7 @@ const DashboardMarketing = () => {
                                 const displayReviewBadge = booking.review_status && String(booking.review_status).toLowerCase() !== 'submitted';
                                 const bookingStatus = String(booking.status || '').toLowerCase();
                                 const bookingReviewStatus = String(booking.review_status || '').toLowerCase();
-                                const canDecideBooking = canEdit && bookingStatus === 'pending' && bookingReviewStatus !== 'approved for reservation';
+                                const canDecideBooking = canEdit && !['cancelled', 'completed'].includes(bookingStatus) && bookingReviewStatus !== 'approved for reservation';
                                 const currentLiveStatus = booking.live_status || 'Not Started';
                                 return (
                                 <li key={booking.id} onClick={() => setSelectedBooking(booking)} className="block cursor-pointer transition-colors hover:bg-[#fffaf3]">
