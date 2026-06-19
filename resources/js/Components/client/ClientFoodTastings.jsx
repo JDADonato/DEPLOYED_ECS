@@ -16,7 +16,9 @@ const ClientFoodTastings = ({ tastings, onUpdate, onCancel, router, hideNewReque
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const openEdit = (tasting) => {
-        setScheduleData({ preferred_date: tasting.preferred_date || '', preferred_time: tasting.preferred_time || '' });
+        const rawDate = tasting.preferred_date || '';
+        const dateStr = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
+        setScheduleData({ preferred_date: dateStr, preferred_time: tasting.preferred_time || '' });
         setErrors({});
         setEditModal({ isOpen: true, tasting });
     };
