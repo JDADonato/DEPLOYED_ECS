@@ -4,11 +4,10 @@ namespace App\Mail;
 
 use App\Models\Announcement;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class AnnouncementEmail extends Mailable implements ShouldQueue
+class AnnouncementEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
