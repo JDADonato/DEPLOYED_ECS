@@ -2115,8 +2115,10 @@ const DashboardMarketing = () => {
 
     const renderBookingModal = () => {
         if (!selectedBooking) return null;
-        const isApproved = selectedBooking.status === 'Confirmed';
-        const reviewStatus = selectedBooking.review_status || (selectedBooking.status === 'Pending' ? 'Submitted' : selectedBooking.status);
+        const isApprovedForReservation = String(selectedBooking.review_status || '').toLowerCase() === 'approved for reservation';
+        const displayStatus = (selectedBooking.status === 'Confirmed' && !isApprovedForReservation) ? 'Pending' : selectedBooking.status;
+        const isApproved = displayStatus === 'Confirmed';
+        const reviewStatus = selectedBooking.review_status || (displayStatus === 'Pending' ? 'Submitted' : displayStatus);
         const reviewStatusInfo = reviewStatusLabel(reviewStatus);
         const canEdit = canEditBooking(selectedBooking);
         const isClaiming = Boolean(claimingBookingIds[selectedBooking.id]);
@@ -2930,7 +2932,7 @@ const DashboardMarketing = () => {
 
                                             </div>
                                         </div>
-                                        {canEdit && booking.status === 'Confirmed' && (
+                                        {canEdit && booking.status === 'Confirmed' && bookingReviewStatus === 'approved for reservation' && (
                                             <div className="mt-2.5 flex flex-wrap gap-2">
                                                 {LIVE_STATUS_OPTIONS.map((status) => (
                                                     <button

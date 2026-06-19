@@ -88,7 +88,9 @@ const EventDetailDrawer = ({
         return localStorage.getItem('ecs_event_brief_active_tab') || 'overview';
     });
 
-    const bookingStatus = bookingStatusLabel(booking.status);
+    const isApprovedForReservation = String(booking.review_status || '').toLowerCase() === 'approved for reservation';
+    const displayStatus = (booking.status === 'Confirmed' && !isApprovedForReservation) ? 'Pending' : booking.status;
+    const bookingStatus = bookingStatusLabel(displayStatus);
     const reviewStatus = reviewStatusLabel(booking.review_status || (booking.status === 'Pending' ? 'Submitted' : booking.status));
     const ownershipStatus = ownershipStatusLabel(booking, currentUser);
     const liveStatus = liveStatusLabel(booking.live_status);
@@ -133,7 +135,7 @@ const EventDetailDrawer = ({
         )
     );
 
-    const showLiveStatus = booking.status === 'Confirmed' && onUpdateLiveStatus;
+    const showLiveStatus = booking.status === 'Confirmed' && isApprovedForReservation && onUpdateLiveStatus;
     const LIVE_STATUS_OPTIONS = ['Not Started', 'On the Way', 'Preparing', 'Serving', 'Completed'];
 
     const drawerFooter = (
