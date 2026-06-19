@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { useAuth } from '../../context/AuthContext';
 import csrfFetch from '../../utils/csrf';
@@ -10,6 +10,7 @@ import RevealOnScroll from '../../Components/common/RevealOnScroll';
 import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
 import FoodTastingSchedulePicker from '../../Components/client/FoodTastingSchedulePicker';
 import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
+import ClientFoodTastings from '../../Components/client/ClientFoodTastings';
 
 const FoodTasting = () => {
     const { user } = useAuth();
@@ -26,7 +27,47 @@ const FoodTasting = () => {
     const [message, setMessage] = useState(null);
     const [errors, setErrors] = useState({});
     const [scheduledTastingId, setScheduledTastingId] = useState(null);
+    const [tastings, setTastings] = useState([]);
     const dashboardHref = dashboardHrefForUser(user, '/');
+
+    const fetchTastings = async () => {
+        if (!user) return;
+        try {
+            const res = await csrfFetch('/api/food-tasting');
+            if (res.ok) {
+                const data = await res.json();
+                setTastings(data.tastings || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch tastings', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchTastings();
+    }, [user]);
+
+    const handleUpdateTasting = async (id, updates) => {
+        const res = await csrfFetch(`/api/food-tasting/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || 'Error updating tasting.');
+        }
+        await fetchTastings();
+    };
+
+    const handleCancelTasting = async (id) => {
+        const res = await csrfFetch(`/api/food-tasting/${id}/cancel`, { method: 'PATCH' });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || 'Error cancelling tasting.');
+        }
+        await fetchTastings();
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -83,6 +124,10 @@ const FoodTasting = () => {
                 setMessage({ type: 'success', text: 'Food tasting scheduled successfully.' });
                 setScheduledTastingId(data.tastingId || true);
                 if (!user) setFormData({ guest_name: '', guest_email: '', guest_phone: '', preferred_date: '', preferred_time: '', notes: '', website: '' });
+                else {
+                    setFormData(prev => ({ ...prev, preferred_date: '', preferred_time: '', notes: '' }));
+                    fetchTastings();
+                }
             } else {
                 const nextErrors = data.errors || {};
                 setErrors(nextErrors);
@@ -123,6 +168,17 @@ const FoodTasting = () => {
                     </RevealOnScroll>
 
                     <RevealOnScroll as="section" delay="rv-d1" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                        {user && tastings.length > 0 && (
+                            <div className="mb-12">
+                                <ClientFoodTastings 
+                                    tastings={tastings}
+                                    onUpdate={handleUpdateTasting}
+                                    onCancel={handleCancelTasting}
+                                    router={router}
+                                    hideNewRequest={true}
+                                />
+                            </div>
+                        )}
                         <div className="booking-step animate-fadeIn">
                             <div className="booking-step-grid">
                                 <section className="booking-step-panel">

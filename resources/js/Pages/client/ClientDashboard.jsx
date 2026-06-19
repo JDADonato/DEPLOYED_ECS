@@ -6,7 +6,6 @@ import ClientNavbar from '../../Components/common/ClientNavbar';
 import ConfirmModal from '../../Components/common/ConfirmModal';
 import SmartImage from '../../Components/common/SmartImage';
 import CustomerAnnouncements from '../../Components/content/CustomerAnnouncements';
-import ClientFoodTastings from '../../Components/client/ClientFoodTastings';
 import PasswordUpgradeBanner from '../../Components/auth/PasswordUpgradeBanner';
 import { customerBookingStatus, customerPaymentStatus, isSettledPaymentStatus, liveStatusLabel, paymentTypeLabel, statusToneClasses } from '../../utils/statusLabels';
 import { fetchSmartResource, getUserScopedCacheKey, writeSmartCache } from '../../utils/smartResource';
@@ -27,7 +26,7 @@ const menuCategories = [
     { id: 'dessert', label: 'Desserts' },
     { id: 'drink', label: 'Refreshments' },
 ];
-const dashboardSections = ['details', 'menu', 'tastings', 'payments', 'history'];
+const dashboardSections = ['details', 'menu', 'payments', 'history'];
 const liveStatusSteps = [
     { status: 'Not Started', label: 'Not started', description: 'Approved and waiting for event-day movement.' },
     { status: 'On the Way', label: 'On the way', description: 'The Eloquente team is traveling to your venue.' },
@@ -1881,7 +1880,6 @@ const ClientDashboard = () => {
                                 {[
                                     { id: 'details', label: 'Event Details', needsWork: activeJourneySteps.some(s => s.label === 'Event details' && !s.done), icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1 -18 0 a 9 9 0 0 1 18 0z' },
                                     { id: 'menu', label: 'Menu', needsWork: activeJourneySteps.some(s => s.label === 'Menu selection' && !s.done), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
-                                    { id: 'tastings', label: 'Food Tastings', needsWork: false, icon: 'M21 15a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h14a2 2 0 012 2v6z' },
                                     { id: 'payments', label: 'Payments', needsWork: activeBooking.nextPaymentDue, icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 1 1 -4 0 a 2 2 0 0 1 4 0z' },
                                     { id: 'history', label: 'History', needsWork: false, icon: 'M12 8v4l3 3m6-3a9 9 0 1 1 -18 0 a 9 9 0 0 1 18 0z' },
                                 ].map(section => (
@@ -2460,7 +2458,57 @@ const ClientDashboard = () => {
                                                 )}
                                             </div>
 
-
+                                            <div className="mb-8 rounded-2xl border border-[#720101]/10 bg-[#faf7f2]/70 p-5">
+                                                {latestTasting ? (
+                                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                                        <div>
+                                                            <p className="text-[11px] font-black uppercase tracking-widest text-[#720101]">Optional tasting</p>
+                                                            <h4 className="mt-1 text-lg font-display font-bold text-[#1a1a1a]">
+                                                                {isOpenTasting(latestTasting) ? 'Food tasting request on file' : 'Latest tasting request'}
+                                                            </h4>
+                                                            <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                                                                {formatEventDate(latestTasting.preferred_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                                                {latestTasting.preferred_time ? ` at ${latestTasting.preferred_time}` : ''} - {latestTasting.status || 'Pending'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button onClick={() => router.get('/food-tasting')} className="rounded-xl border border-[#720101]/15 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-[#720101] hover:bg-[#720101]/5">
+                                                                View tasting page
+                                                            </button>
+                                                            {isOpenTasting(latestTasting) && (
+                                                                <button
+                                                                    onClick={() => setConfirmModal({
+                                                                        isOpen: true,
+                                                                        title: 'Cancel tasting session?',
+                                                                        message: 'This will cancel the selected food tasting request.',
+                                                                        confirmText: 'Cancel Session',
+                                                                        onConfirm: () => {
+                                                                            closeConfirmModal();
+                                                                            fetch(`/api/food-tasting/${latestTasting.id}/cancel`, { method: 'PATCH', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' } })
+                                                                                .then(() => { setToast({ message: 'Tasting cancelled.', type: 'success' }); fetchData(); })
+                                                                                .catch(() => setToast({ message: 'Error cancelling tasting.', type: 'error' }));
+                                                                        },
+                                                                    })}
+                                                                    className="rounded-xl bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-widest text-red-700 hover:bg-red-100"
+                                                                >
+                                                                    Cancel tasting
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div>
+                                                            <p className="text-[11px] font-black uppercase tracking-widest text-[#720101]">Optional tasting</p>
+                                                            <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">Want to taste the menu first? Schedule a tasting before final menu decisions.</p>
+                                                        </div>
+                                                        <button onClick={() => router.get('/food-tasting')} className="rounded-xl border border-[#720101]/15 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-[#720101] hover:bg-[#720101]/5">
+                                                            Schedule tasting
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
                                             {!activeBooking.canEditMenu && activeBooking.status !== 'Cancelled' && (
                                                 <div className="mb-8 p-5 rounded-2xl flex items-start gap-4 bg-red-50 border border-red-100 shadow-sm">
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600">
@@ -2585,42 +2633,6 @@ const ClientDashboard = () => {
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-
-                                    {activeSection === 'tastings' && (
-                                        <ClientFoodTastings
-                                            tastings={data.tastings}
-                                            onUpdate={(id, updates) => {
-                                                return fetch(`/api/food-tasting/${id}`, {
-                                                    method: 'PUT',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'Accept': 'application/json',
-                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                                                    },
-                                                    body: JSON.stringify(updates)
-                                                })
-                                                .then(res => res.json())
-                                                .then(result => {
-                                                    if (result.error) throw new Error(result.error);
-                                                    setToast({ message: 'Tasting schedule updated.', type: 'success' });
-                                                    fetchData();
-                                                });
-                                            }}
-                                            onCancel={(id) => {
-                                                return fetch(`/api/food-tasting/${id}/cancel`, {
-                                                    method: 'PATCH',
-                                                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' }
-                                                })
-                                                .then(res => res.json())
-                                                .then(result => {
-                                                    if (result.error) throw new Error(result.error);
-                                                    setToast({ message: 'Tasting cancelled.', type: 'success' });
-                                                    fetchData();
-                                                });
-                                            }}
-                                            router={router}
-                                        />
                                     )}
 
                                     {activeSection === 'payments' && (

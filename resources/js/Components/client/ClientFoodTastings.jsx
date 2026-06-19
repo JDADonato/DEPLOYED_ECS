@@ -8,7 +8,7 @@ const displayDate = (date) => (
     date ? new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date pending'
 );
 
-const ClientFoodTastings = ({ tastings, onUpdate, onCancel, router }) => {
+const ClientFoodTastings = ({ tastings, onUpdate, onCancel, router, hideNewRequest = false }) => {
     const [editModal, setEditModal] = useState({ isOpen: false, tasting: null });
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, tasting: null });
     
@@ -61,13 +61,15 @@ const ClientFoodTastings = ({ tastings, onUpdate, onCancel, router }) => {
                         Manage your food tasting schedules. Taste our menu before finalizing your event details.
                     </p>
                 </div>
-                <button 
-                    onClick={() => router.get('/food-tasting')} 
-                    className="group flex items-center gap-2 rounded-2xl bg-[#720101] px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95"
-                >
-                    <svg className="w-4 h-4 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                    New Request
-                </button>
+                {!hideNewRequest && (
+                    <button 
+                        onClick={() => router.get('/food-tasting')} 
+                        className="group flex items-center gap-2 rounded-2xl bg-[#720101] px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95"
+                    >
+                        <svg className="w-4 h-4 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                        New Request
+                    </button>
+                )}
             </div>
 
             {(!tastings || tastings.length === 0) ? (
