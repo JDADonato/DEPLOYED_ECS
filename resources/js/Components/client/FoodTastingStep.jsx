@@ -4,6 +4,7 @@ import { FieldError, FormErrorSummary } from '../common/FormFeedback';
 import { focusFirstInvalidField } from '../../utils/validation';
 import FoodTastingSchedulePicker from './FoodTastingSchedulePicker';
 import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
+import MenuPickerModal from './MenuPickerModal';
 
 const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmitting = false }) => {
     const [showTasting, setShowTasting] = useState(true);
@@ -15,8 +16,10 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
         preferred_date: bookingData.tasting_preferred_date || '',
         preferred_time: bookingData.tasting_preferred_time || '',
         notes: bookingData.tasting_notes || '',
+        requested_dishes: bookingData.tasting_requested_dishes || [],
     });
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
+    const [isMenuPickerOpen, setIsMenuPickerOpen] = useState(false);
     const [errors, setErrors] = useState({});
     const formRef = useRef(null);
 
@@ -83,6 +86,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
             tasting_preferred_date: tastingData.preferred_date,
             tasting_preferred_time: tastingData.preferred_time,
             tasting_notes: tastingData.notes,
+            tasting_requested_dishes: tastingData.requested_dishes,
         };
 
         updateBooking(finalData);
@@ -237,10 +241,42 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                                     className="booking-note-field"
                                 />
                             </label>
+
+                            <div className="md:col-span-2 border border-slate-100 rounded-xl p-5 bg-white shadow-sm mt-2">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <span className="booking-field-label !mb-1 block">Requested Dishes (Optional)</span>
+                                        <p className="text-xs font-medium text-slate-500">Pick up to 5 dishes you want to taste.</p>
+                                    </div>
+                                    <button type="button" onClick={() => setIsMenuPickerOpen(true)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap">
+                                        Select Dishes
+                                    </button>
+                                </div>
+                                {tastingData.requested_dishes.length > 0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {tastingData.requested_dishes.map((dish, i) => (
+                                            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#720101]/5 text-[#720101] text-xs font-bold rounded-lg border border-[#720101]/10">
+                                                {dish.name}
+                                                <button type="button" onClick={() => setTastingData(prev => ({ ...prev, requested_dishes: prev.requested_dishes.filter(d => d.id !== dish.id) }))} className="hover:text-[#5a0101]">
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </section>
             </div>
+
+            <MenuPickerModal 
+                isOpen={isMenuPickerOpen} 
+                onClose={() => setIsMenuPickerOpen(false)} 
+                onSelect={(dishes) => setTastingData(prev => ({ ...prev, requested_dishes: dishes }))} 
+                initialSelections={tastingData.requested_dishes} 
+                maxSelections={5} 
+            />
 
             <div className="booking-step-actions">
                 <button onClick={onBack} disabled={isSubmitting} className="booking-secondary-btn disabled:cursor-not-allowed disabled:opacity-50">Back</button>

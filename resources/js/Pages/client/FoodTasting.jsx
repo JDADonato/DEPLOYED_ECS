@@ -11,6 +11,7 @@ import { dashboardHrefForUser, isStaffUser } from '../../utils/dashboardLinks';
 import FoodTastingSchedulePicker from '../../Components/client/FoodTastingSchedulePicker';
 import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
 import ClientFoodTastings from '../../Components/client/ClientFoodTastings';
+import MenuPickerModal from '../../Components/client/MenuPickerModal';
 
 const FoodTasting = () => {
     const { user } = useAuth();
@@ -22,12 +23,15 @@ const FoodTasting = () => {
         preferred_time: '',
         notes: '',
         website: '',
+        requested_dishes: [],
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [errors, setErrors] = useState({});
     const [scheduledTastingId, setScheduledTastingId] = useState(null);
     const [tastings, setTastings] = useState([]);
+    const [activeTab, setActiveTab] = useState('schedule');
+    const [isMenuPickerOpen, setIsMenuPickerOpen] = useState(false);
     const dashboardHref = dashboardHrefForUser(user, '/');
 
     const fetchTastings = async () => {
@@ -123,10 +127,11 @@ const FoodTasting = () => {
             if (response.ok) {
                 setMessage({ type: 'success', text: 'Food tasting scheduled successfully.' });
                 setScheduledTastingId(data.tastingId || true);
-                if (!user) setFormData({ guest_name: '', guest_email: '', guest_phone: '', preferred_date: '', preferred_time: '', notes: '', website: '' });
+                if (!user) setFormData({ guest_name: '', guest_email: '', guest_phone: '', preferred_date: '', preferred_time: '', notes: '', website: '', requested_dishes: [] });
                 else {
-                    setFormData(prev => ({ ...prev, preferred_date: '', preferred_time: '', notes: '' }));
+                    setFormData(prev => ({ ...prev, preferred_date: '', preferred_time: '', notes: '', requested_dishes: [] }));
                     fetchTastings();
+                    setActiveTab('schedules');
                 }
             } else {
                 const nextErrors = data.errors || {};
@@ -169,7 +174,26 @@ const FoodTasting = () => {
 
                     <RevealOnScroll as="section" delay="rv-d1" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
                         {user && (
-                            <div className="mb-12">
+                            <div className="mb-8 border-b border-slate-200">
+                                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button
+                                        onClick={() => setActiveTab('schedule')}
+                                        className={`${activeTab === 'schedule' ? 'border-[#720101] text-[#720101]' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-black tracking-wide uppercase transition-colors`}
+                                    >
+                                        Schedule a Tasting
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('schedules')}
+                                        className={`${activeTab === 'schedules' ? 'border-[#720101] text-[#720101]' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-black tracking-wide uppercase transition-colors`}
+                                    >
+                                        My Schedules
+                                    </button>
+                                </nav>
+                            </div>
+                        )}
+
+                        {activeTab === 'schedules' && user && (
+                            <div className="mb-12 animate-fadeIn">
                                 <ClientFoodTastings 
                                     tastings={tastings}
                                     onUpdate={handleUpdateTasting}
@@ -179,6 +203,8 @@ const FoodTasting = () => {
                                 />
                             </div>
                         )}
+
+                        {(!user || activeTab === 'schedule') && (
                         <div className="booking-step animate-fadeIn">
                             <div className="booking-step-grid">
                                 <section className="booking-step-panel">
@@ -286,6 +312,31 @@ const FoodTasting = () => {
                                             />
                                             <FieldError message={errors.notes} />
                                         </label>
+
+                                        <div className="md:col-span-2 border border-slate-100 rounded-xl p-5 bg-white shadow-sm">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div>
+                                                    <span className="booking-field-label !mb-1 block">Requested Dishes (Optional)</span>
+                                                    <p className="text-xs font-medium text-slate-500">Pick up to 5 dishes you want to taste.</p>
+                                                </div>
+                                                <button type="button" onClick={() => setIsMenuPickerOpen(true)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap">
+                                                    Select Dishes
+                                                </button>
+                                            </div>
+                                            {formData.requested_dishes.length > 0 && (
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    {formData.requested_dishes.map((dish, i) => (
+                                                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#720101]/5 text-[#720101] text-xs font-bold rounded-lg border border-[#720101]/10">
+                                                            {dish.name}
+                                                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, requested_dishes: prev.requested_dishes.filter(d => d.id !== dish.id) }))} className="hover:text-[#5a0101]">
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <FieldError message={errors.requested_dishes} />
+                                        </div>
                                         
                                         <div className="md:col-span-2 booking-step-actions !mt-6 !border-t-0 !p-0">
                                             <button type="button" onClick={() => router.get('/menu')} disabled={loading} className="booking-secondary-btn">Browse Menu</button>
@@ -297,11 +348,21 @@ const FoodTasting = () => {
                                 </section>
                             </div>
                         </div>
+                        )}
                     </RevealOnScroll>
                 </main>
             </div>
-        </div>
-    );
+            
+            <MenuPickerModal 
+                isOpen={isMenuPickerOpen} 
+                onClose={() => setIsMenuPickerOpen(false)} 
+                onSelect={(dishes) => setFormData(prev => ({ ...prev, requested_dishes: dishes }))} 
+                initialSelections={formData.requested_dishes} 
+                maxSelections={5} 
+            />
+
+            <Footer />
+        </div>);
 };
 
 export default FoodTasting;

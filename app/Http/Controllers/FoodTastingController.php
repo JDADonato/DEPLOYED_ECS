@@ -33,6 +33,9 @@ class FoodTastingController extends Controller
             'preferred_time' => 'required|string',
             'notes' => 'nullable|string',
             'website' => 'nullable|prohibited',
+            'requested_dishes' => 'nullable|array|max:5',
+            'requested_dishes.*.id' => 'required',
+            'requested_dishes.*.name' => 'required|string',
         ]);
 
         FoodTastingScheduleService::validateCustomerSlot($data['preferred_date'], $data['preferred_time']);
@@ -48,6 +51,7 @@ class FoodTastingController extends Controller
             'preferred_date' => $data['preferred_date'],
             'preferred_time' => $data['preferred_time'],
             'notes' => $data['notes'] ?? null,
+            'requested_dishes' => $data['requested_dishes'] ?? null,
             'duplicate_user_id' => $duplicateUser?->id,
         ]);
         app(OperationalBroadcastService::class)
@@ -98,6 +102,9 @@ class FoodTastingController extends Controller
             'preferred_date' => 'required|date',
             'preferred_time' => 'required|string',
             'notes' => 'nullable|string',
+            'requested_dishes' => 'nullable|array|max:5',
+            'requested_dishes.*.id' => 'required',
+            'requested_dishes.*.name' => 'required|string',
         ]);
 
         FoodTastingScheduleService::validateCustomerSlot($data['preferred_date'], $data['preferred_time'], $tasting->id);

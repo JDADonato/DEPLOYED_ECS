@@ -10,13 +10,12 @@ import StaffPagination from '../staff/StaffPagination';
 import StaffSkeleton from '../staff/StaffSkeleton';
 import { TASTING_TIME_OPTIONS, isFoodTastingDay, minFoodTastingDate } from '../../utils/foodTastingSchedule';
 
-const STATUS_OPTIONS = ['All', 'Pending', 'Contacted', 'Approved', 'Confirmed', 'Completed', 'Cancelled', 'Rescheduled', 'Archived', 'Spam'];
+const STATUS_OPTIONS = ['Pending', 'Approved', 'Completed', 'Cancelled'];
 const STATUS_FILTER_OPTIONS = [
     { value: 'all', label: 'All tasting work', statuses: [] },
-    { value: 'needs-action', label: 'Needs action', statuses: ['Pending', 'Contacted', 'Approved', 'Rescheduled'] },
-    { value: 'scheduled', label: 'Scheduled', statuses: ['Confirmed'] },
+    { value: 'active', label: 'Active (Pending/Approved)', statuses: ['Pending', 'Approved'] },
     { value: 'completed', label: 'Completed', statuses: ['Completed'] },
-    { value: 'closed', label: 'Closed / spam', statuses: ['Cancelled', 'Archived', 'Spam'] },
+    { value: 'cancelled', label: 'Cancelled', statuses: ['Cancelled'] },
 ];
 
 const formatDate = (value) => {
@@ -387,7 +386,7 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Client</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Preferred Slot</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Notes</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Details</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500">Status</th>
                             </tr>
                         </thead>
@@ -414,12 +413,45 @@ const FoodTastingQueue = ({ onToast, surfaceMode = 'default' }) => {
                                         )}
                                     </td>
                                     <td className="px-6 py-4 font-bold text-slate-700">{formatDate(row.preferred_date)} / {row.preferred_time || 'Time pending'}</td>
-                                    <td className="max-w-md px-6 py-4 text-sm font-semibold text-slate-600">{row.outcome_notes || row.notes || 'No notes yet.'}</td>
+                                    <td className="max-w-md px-6 py-4">
+                                        <div className="text-sm font-semibold text-slate-600 mb-2">{row.outcome_notes || row.notes || 'No notes yet.'}</div>
+                                        {row.requested_dishes && row.requested_dishes.length > 0 && (
+                                            <div className="flex flex-wrap gap-1">
+                                                {row.requested_dishes.map((dish, i) => (
+                                                    <span key={i} className="inline-flex items-center px-2 py-1 rounded bg-[#720101]/5 text-[#720101] text-[10px] font-bold border border-[#720101]/10">
+                                                        {dish.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex flex-col items-end gap-2">
-                                            <select disabled={savingId === row.id} value={row.status || 'Pending'} onChange={(event) => updateStatus(row, event.target.value)} className="staff-control max-w-[170px] text-xs">
-                                                {STATUS_OPTIONS.filter((status) => status !== 'All').map((status) => <option key={status} value={status}>{status}</option>)}
-                                            </select>
+                                            <div className="mb-1">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wide
+                                                    ${row.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                                                      row.status === 'Cancelled' ? 'bg-rose-100 text-rose-800' :
+                                                      row.status === 'Approved' ? 'bg-blue-100 text-blue-800' :
+                                                      'bg-amber-100 text-amber-800'}`}>
+                                                    {row.status || 'Pending'}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex flex-wrap justify-end gap-1.5 mb-2">
+                                                {(row.status === 'Pending' || !row.status) && (
+                                                    <>
+                                                        <button disabled={savingId === row.id} onClick={() => updateStatus(row, 'Approved')} className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition-colors border border-blue-200">Approve</button>
+                                                        <button disabled={savingId === row.id} onClick={() => updateStatus(row, 'Cancelled')} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-colors border border-rose-200">Cancel</button>
+                                                    </>
+                                                )}
+                                                {row.status === 'Approved' && (
+                                                    <>
+                                                        <button disabled={savingId === row.id} onClick={() => updateStatus(row, 'Completed')} className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg transition-colors border border-emerald-200">Mark Completed</button>
+                                                        <button disabled={savingId === row.id} onClick={() => updateStatus(row, 'Cancelled')} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-colors border border-rose-200">Cancel</button>
+                                                    </>
+                                                )}
+                                            </div>
+
                                             <div className="flex flex-wrap justify-end gap-2">
                                                 {row.can_claim && (
                                                     <button type="button" disabled={savingId === row.id} onClick={() => postTastingAction(row, 'claim', 'Food tasting claimed.')} className="staff-row-action">

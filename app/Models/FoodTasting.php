@@ -27,6 +27,7 @@ class FoodTasting extends Model
         'transfer_requested_to',
         'transfer_requested_by',
         'transfer_requested_at',
+        'requested_dishes',
     ];
 
     protected function casts(): array
@@ -37,6 +38,7 @@ class FoodTasting extends Model
             'completed_at' => 'datetime',
             'archived_at' => 'datetime',
             'transfer_requested_at' => 'datetime',
+            'requested_dishes' => 'array',
         ];
     }
 
