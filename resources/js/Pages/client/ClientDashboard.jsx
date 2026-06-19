@@ -11,6 +11,7 @@ import { customerBookingStatus, customerPaymentStatus, isSettledPaymentStatus, l
 import { fetchSmartResource, getUserScopedCacheKey, writeSmartCache } from '../../utils/smartResource';
 import useRealtimeStatus from '../../hooks/useRealtimeStatus';
 import useSmartRefresh from '../../hooks/useSmartRefresh';
+import { saveBookingDraft } from '../../hooks/useBookingDraft';
 import { LiveSyncIndicator, SoftRefreshBoundary } from '../../Components/common/LiveFeedback';
 import { operationalChannelsForUser } from '../../utils/liveChannels';
 import csrfFetch from '../../utils/csrf';
@@ -332,7 +333,7 @@ const LiveStatusTracker = ({ booking }) => {
     );
 };
 
-const HistoryPanel = ({ bookings }) => {
+const HistoryPanel = ({ bookings, user }) => {
     const [selectedBooking, setSelectedBooking] = React.useState(null);
 
     const renderMenuSummary = (menuData) => {
@@ -391,7 +392,27 @@ const HistoryPanel = ({ bookings }) => {
                                     <button onClick={() => setSelectedBooking(booking)} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors">
                                         See Details
                                     </button>
-                                    <button onClick={() => router.get('/book')} className="rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
+                                    <button onClick={() => {
+                                        const draft = {
+                                            eventName: booking.event_name,
+                                            eventType: booking.event_type,
+                                            pax: booking.pax,
+                                            budget: booking.budget,
+                                            package_id: booking.package_id,
+                                            client_full_name: booking.client_full_name,
+                                            client_email: booking.client_email,
+                                            client_phone: booking.client_phone,
+                                            venue_address_line: booking.venue_address_line,
+                                            venue_street: booking.venue_street,
+                                            venue_city: booking.venue_city,
+                                            venue_province: booking.venue_province,
+                                            venue_zip_code: booking.venue_zip_code,
+                                            venue_building_details: booking.venue_building_details,
+                                            customMenu: booking.selected_menu,
+                                        };
+                                        saveBookingDraft(draft, 1, user?.id);
+                                        router.get('/book');
+                                    }} className="rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
                                         Rebook Event
                                     </button>
                                 </div>
@@ -450,13 +471,36 @@ const HistoryPanel = ({ bookings }) => {
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-gray-100 p-4 flex justify-end bg-gray-50/50">
+                        <div className="border-t border-gray-100 p-4 flex justify-end gap-3 bg-gray-50/50">
                             <button
                                 type="button"
                                 onClick={() => setSelectedBooking(null)}
                                 className="rounded-xl bg-white border border-gray-200 px-6 py-2.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Close
+                            </button>
+                            <button onClick={() => {
+                                const draft = {
+                                    eventName: selectedBooking.event_name,
+                                    eventType: selectedBooking.event_type,
+                                    pax: selectedBooking.pax,
+                                    budget: selectedBooking.budget,
+                                    package_id: selectedBooking.package_id,
+                                    client_full_name: selectedBooking.client_full_name,
+                                    client_email: selectedBooking.client_email,
+                                    client_phone: selectedBooking.client_phone,
+                                    venue_address_line: selectedBooking.venue_address_line,
+                                    venue_street: selectedBooking.venue_street,
+                                    venue_city: selectedBooking.venue_city,
+                                    venue_province: selectedBooking.venue_province,
+                                    venue_zip_code: selectedBooking.venue_zip_code,
+                                    venue_building_details: selectedBooking.venue_building_details,
+                                    customMenu: selectedBooking.selected_menu,
+                                };
+                                saveBookingDraft(draft, 1, user?.id);
+                                router.get('/book');
+                            }} className="rounded-xl bg-[#720101] px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-sm hover:bg-[#5a0101] transition-colors">
+                                Rebook Event
                             </button>
                         </div>
                     </div>
@@ -1954,7 +1998,7 @@ const ClientDashboard = () => {
                             <p className="text-[#1a1a1a]/50 mb-6 max-w-md mx-auto">Cancelled or completed events are kept in history. Start a new event or rebook from a past one.</p>
                             <button onClick={() => router.get('/book')} className="bg-[#720101] hover:bg-[#5a0101] text-white font-bold py-3 px-8 rounded-full shadow-md transition-all">Book Your Event</button>
                         </div>
-                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} />
+                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} user={user} />
                     </div>
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-8">
@@ -2499,7 +2543,7 @@ const ClientDashboard = () => {
                                     )}
 
                                     {activeSection === 'history' && (
-                                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} />
+                                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} user={user} />
                                     )}
 
                                     {activeSection === 'menu' && (
