@@ -26,21 +26,34 @@ const numberField = (value) => value === null || value === undefined ? '' : Stri
 const SurchargeInput = ({ field, label, icon: Icon, type = 'percent', rules, updateField }) => {
     const isDecimalRate = field.endsWith('_rate');
     
-    let displayValue = rules[field] !== null && rules[field] !== undefined ? String(rules[field]) : '';
-    if (isDecimalRate && type === 'percent' && displayValue !== '') {
-        displayValue = String(Math.round(Number(displayValue) * 10000) / 100);
+    let externalValue = rules[field] !== null && rules[field] !== undefined ? String(rules[field]) : '';
+    if (isDecimalRate && type === 'percent' && externalValue !== '') {
+        externalValue = String(Math.round(Number(externalValue) * 10000) / 100);
     }
 
+    const [localValue, setLocalValue] = React.useState(externalValue);
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isFocused) {
+            setLocalValue(externalValue);
+        }
+    }, [externalValue, isFocused]);
+
     const handleChange = (event) => {
-        let val = event.target.value;
+        const val = event.target.value;
+        setLocalValue(val);
+
         if (val === '') {
             updateField(field, '');
             return;
         }
+        
+        let parsedForParent = val;
         if (isDecimalRate && type === 'percent') {
-            val = String(Number(val) / 100);
+            parsedForParent = String(Number(val) / 100);
         }
-        updateField(field, val);
+        updateField(field, parsedForParent);
     };
 
     return (
@@ -54,8 +67,10 @@ const SurchargeInput = ({ field, label, icon: Icon, type = 'percent', rules, upd
                     type="number"
                     min="0"
                     step={type === 'percent' ? 'any' : '1'}
-                    value={displayValue}
+                    value={isFocused ? localValue : externalValue}
                     onChange={handleChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-8 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
                 />
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">

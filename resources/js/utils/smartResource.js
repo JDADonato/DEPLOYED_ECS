@@ -114,10 +114,17 @@ export const clearSensitiveAuthState = () => {
     window.sessionStorage?.removeItem('ecs_booking_active');
 };
 
-const appendVersionParam = (url, version) => {
-    if (!version) return url;
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}since_version=${encodeURIComponent(version)}`;
+const appendVersionParam = (url, version, force = false) => {
+    let finalUrl = url;
+    if (version) {
+        const separator = finalUrl.includes('?') ? '&' : '?';
+        finalUrl = `${finalUrl}${separator}since_version=${encodeURIComponent(version)}`;
+    }
+    if (force) {
+        const separator = finalUrl.includes('?') ? '&' : '?';
+        finalUrl = `${finalUrl}${separator}_cb=${Date.now()}`;
+    }
+    return finalUrl;
 };
 
 export const fetchSmartResource = async (url, {
@@ -144,12 +151,14 @@ export const fetchSmartResource = async (url, {
         return inFlight.get(cacheKey);
     }
 
-    const requestUrl = appendVersionParam(url, force ? null : cached?.meta?.resource_version);
+    const requestUrl = appendVersionParam(url, force ? null : cached?.meta?.resource_version, force);
+
     const request = fetch(requestUrl, {
         signal,
         headers: {
             Accept: 'application/json',
             ...((!force && cached?.meta?.etag) ? { 'If-None-Match': cached.meta.etag } : {}),
+            ...(force ? { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } : {}),
             ...headers,
         },
     }).then(async (response) => {
