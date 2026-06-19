@@ -72,6 +72,90 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
     const [saving, setSaving] = useState(false);
     const [savingSurcharges, setSavingSurcharges] = useState(false);
 
+    const notify = (message, type = 'success') => {
+        if (onToast) onToast(message, type);
+    };
+
+    const loadRules = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/admin/payment-rules', { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error('Could not load payment rules.');
+            const data = await response.json();
+            setRules({ ...defaultRules, ...(data || {}) });
+        } catch (error) {
+            notify(error.message || 'Could not load payment rules.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRules();
+    }, []);
+
+    const updateField = (field, value) => {
+        setRules((current) => ({ ...current, [field]: value }));
+    };
+
+    const saveRules = async (event) => {
+        event.preventDefault();
+        setSaving(true);
+        try {
+            const payload = Object.fromEntries(Object.entries(rules).map(([key, value]) => [key, Number(value)]));
+            const response = await csrfFetch('/api/admin/payment-rules', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not save payment rules.');
+            setRules({ ...defaultRules, ...(data.rules || payload) });
+            notify('Payment rules updated.');
+        } catch (error) {
+            notify(error.message || 'Could not save payment rules.', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const saveSurcharges = async (event) => {
+        event.preventDefault();
+        setSavingSurcharges(true);
+        try {
+            const payload = {
+                location_surcharge_rate: Number(rules.location_surcharge_rate),
+                floor_surcharge_rate: Number(rules.floor_surcharge_rate),
+                december_surcharge_rate: Number(rules.december_surcharge_rate),
+                transport_fee: Number(rules.transport_fee),
+                labor_surcharge: Number(rules.labor_surcharge),
+                service_charge_rate: Number(rules.service_charge_rate),
+                contingency_surcharge_rate: Number(rules.contingency_surcharge_rate),
+                vat_rate: Number(rules.vat_rate),
+                extra_service_hours_fee: Number(rules.extra_service_hours_fee),
+            };
+            const response = await csrfFetch('/api/admin/surcharge-rules', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not save surcharge rules.');
+            setRules(current => ({ ...current, ...(data.rules || payload) }));
+            notify('Surcharge rules updated.');
+        } catch (error) {
+            notify(error.message || 'Could not save surcharge rules.', 'error');
+        } finally {
+            setSavingSurcharges(false);
+        }
+    };
+
+    if (loading) {
+        return <StaffSkeleton rows={4} label="Loading payment rules" />;
+    }
+
+    const total = Number(rules.reservation_fee_percentage || 0) + Number(rules.downpayment_percentage || 0) + Number(rules.final_payment_percentage || 0);
+
     return (
         <div className="flex flex-col gap-8">
             <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-6'}>
