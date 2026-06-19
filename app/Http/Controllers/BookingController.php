@@ -508,7 +508,7 @@ class BookingController extends Controller
 
         $bookingService = new BookingManagementService;
         if (! $bookingService->canEditMenu($booking)) {
-            return response()->json(['error' => 'Menu changes are locked within 14 days of the event.'], 400);
+            return response()->json(['error' => $bookingService->getMenuLockReason($booking)], 400);
         }
 
         $validated = $request->validate([

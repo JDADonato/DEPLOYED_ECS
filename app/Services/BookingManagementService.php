@@ -34,10 +34,24 @@ class BookingManagementService
      */
     public function canEditMenu(Booking $booking): bool
     {
+        return $this->getMenuLockReason($booking) === null;
+    }
+
+    public function getMenuLockReason(Booking $booking): ?string
+    {
         $eventDate = Carbon::parse($booking->event_date)->startOfDay();
         $daysUntilEvent = now()->startOfDay()->diffInDays($eventDate, false);
 
-        return $daysUntilEvent > 14;
+        if ($daysUntilEvent <= 14) {
+            return 'Menu customization is locked because your event is less than 14 days away.';
+        }
+
+        $hasPaid = $booking->payments()->whereIn('status', ['Paid', 'Verified'])->exists();
+        if ($hasPaid) {
+            return 'You have already made a payment for this booking. To edit your menu, please coordinate with our marketing staff first.';
+        }
+
+        return null;
     }
 
     /**

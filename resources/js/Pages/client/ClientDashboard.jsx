@@ -2438,11 +2438,23 @@ const ClientDashboard = () => {
                                                     <h3 className="text-2xl font-bold font-display text-[#1a1a1a]">Curated Menu</h3>
                                                     <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">Fine-tune your menu. Swapping dishes will update your event total based on the current menu prices.</p>
                                                 </div>
-                                                {activeBooking.canEditMenu && !menuEditMode && (
-                                                    <button onClick={() => setMenuEditMode(true)} className="group flex items-center gap-2 rounded-2xl bg-[#720101] px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95">
-                                                        <svg className="w-4 h-4 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                        Customize Menu
-                                                    </button>
+                                                {!menuEditMode && (
+                                                    activeBooking.canEditMenu ? (
+                                                        <button onClick={() => setMenuEditMode(true)} className="group flex items-center gap-2 rounded-2xl bg-[#720101] px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95">
+                                                            <svg className="w-4 h-4 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                            Customize Menu
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex flex-col items-end gap-2">
+                                                            <button disabled className="group flex items-center gap-2 rounded-2xl bg-gray-100 px-6 py-3.5 text-sm font-black uppercase tracking-widest text-gray-400 cursor-not-allowed">
+                                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                                Customize Menu
+                                                            </button>
+                                                            <p className="text-xs font-medium text-[#720101] max-w-xs text-right">
+                                                                {activeBooking.menuLockReason || 'Menu customization is locked.'}
+                                                            </p>
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
 

@@ -180,6 +180,7 @@ class ClientDashboardController extends Controller
                 ] : null;
                 $bookingArray['canEditSupplementary'] = $bookingService->canEditSupplementary($booking);
                 $bookingArray['canEditMenu'] = $bookingService->canEditMenu($booking);
+                $bookingArray['menuLockReason'] = $bookingService->getMenuLockReason($booking);
                 $bookingArray['cancellationImpact'] = $this->calculateCancellationImpactFromLoadedPayments($booking);
 
                 return $bookingArray;
