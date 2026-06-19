@@ -91,7 +91,7 @@ const emptyPackageForm = (defaultType = '') => ({
     package_category: 'standard',
     event_type_slugs: defaultType ? [defaultType] : [],
     base_price_per_head: '',
-    minimum_pax: 1,
+    minimum_pax: 50,
     description: '',
     inclusions: '',
     amenities: '',
@@ -1378,7 +1378,7 @@ const DashboardMarketing = () => {
             package_category: pkg.package_category || 'standard',
             event_type_slugs: pkg.event_type_slugs?.length ? pkg.event_type_slugs : (defaultType ? [defaultType] : []),
             base_price_per_head: pkg.base_price_per_head ?? '',
-            minimum_pax: pkg.minimum_pax ?? 1,
+            minimum_pax: 50,
             description: pkg.description || '',
             inclusions: linesToText(pkg.inclusions),
             amenities: linesToText(pkg.amenities),
@@ -3025,8 +3025,16 @@ const DashboardMarketing = () => {
         const togglePackageEventType = (slug) => {
             const current = packageForm.event_type_slugs || [];
             const next = current.includes(slug) ? current.filter(item => item !== slug) : [...current, slug];
-            setPackageForm({ ...packageForm, event_type_slugs: next });
+            const firstSelectedSlug = next[0];
+            const firstSelectedType = firstSelectedSlug ? eventTypes.find(t => t.slug === firstSelectedSlug) : null;
+            const derivedCategory = firstSelectedType?.package_category || 'standard';
+            setPackageForm({ ...packageForm, event_type_slugs: next, package_category: derivedCategory });
         };
+        const derivedCategoryLabel = (() => {
+            const firstSlug = (packageForm.event_type_slugs || [])[0];
+            const matched = firstSlug ? eventTypes.find(t => t.slug === firstSlug) : null;
+            return getCategoryLabel(matched?.package_category || packageForm.package_category || 'standard');
+        })();
 
         return (
             <>
@@ -3292,23 +3300,14 @@ const DashboardMarketing = () => {
                                                 <input required value={packageForm.name} onChange={e => setPackageForm({ ...packageForm, name: e.target.value })} placeholder="e.g. Premium Debut" className="staff-control mt-2 normal-case tracking-normal" />
                                             </label>
                                             <label className="admin-field-label">
-                                                Package category
-                                                <select value={packageForm.package_category} onChange={e => setPackageForm({ ...packageForm, package_category: e.target.value })} className="staff-control mt-2 normal-case tracking-normal">
-                                                    {PACKAGE_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                                </select>
-                                            </label>
-                                            <label className="admin-field-label">
                                                 Price / head (PHP)
                                                 <input required type="number" min="0" value={packageForm.base_price_per_head} onChange={e => setPackageForm({ ...packageForm, base_price_per_head: e.target.value })} placeholder="0" className="staff-control mt-2 normal-case tracking-normal" />
-                                            </label>
-                                            <label className="admin-field-label">
-                                                Minimum guests
-                                                <input required type="number" min="1" value={packageForm.minimum_pax} onChange={e => setPackageForm({ ...packageForm, minimum_pax: e.target.value })} placeholder="1" className="staff-control mt-2 normal-case tracking-normal" />
                                             </label>
                                         </div>
                                     </section>
                                     <section className="staff-drawer-section">
                                         <p className="staff-section-title">Connected event types</p>
+                                        <p className="mt-1 text-xs font-medium text-slate-400">Select which event types this package will be available for. The package category is automatically determined by your selection.</p>
                                         <div className="staff-checkbox-grid mt-4">
                                             {eventTypes.map(type => (
                                                 <label key={type.id} className="staff-checkbox-chip">
@@ -3317,6 +3316,12 @@ const DashboardMarketing = () => {
                                                 </label>
                                             ))}
                                         </div>
+                                        {(packageForm.event_type_slugs || []).length > 0 && (
+                                            <div className="mt-3 flex items-center gap-2">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Auto-category:</span>
+                                                <span className="inline-flex items-center rounded-full bg-[#720101]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#720101]">{derivedCategoryLabel}</span>
+                                            </div>
+                                        )}
                                     </section>
                                         <section className="staff-drawer-section">
                                             <p className="staff-section-title">Customer-facing details</p>
@@ -3358,11 +3363,10 @@ const DashboardMarketing = () => {
                                     </section>
                                     <section className="staff-drawer-section">
                                         <p className="staff-section-title">Security term</p>
-                                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                        <div className="mt-4">
                                             <select value={packageForm.security_type} onChange={e => setPackageForm({ ...packageForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond' })} className="staff-control">
                                                 {SECURITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                                             </select>
-                                            <input value={packageForm.security_label} onChange={e => setPackageForm({ ...packageForm, security_label: e.target.value })} placeholder="Security label" className="staff-control" />
                                         </div>
                                     </section>
                                 </>
