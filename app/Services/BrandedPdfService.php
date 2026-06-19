@@ -58,6 +58,9 @@ class BrandedPdfService
             ->groupBy(fn ($task) => $this->responsibleArea($task->department))
             ->sortKeysUsing(fn ($a, $b) => array_search($a, ['Marketing', 'Accounting', 'Service prep'], true) <=> array_search($b, ['Marketing', 'Accounting', 'Service prep'], true));
 
+        $pax = (int) ($booking->pax ?? 0);
+        $servingStaffCount = $pax <= 50 ? 3 : 3 + (int) floor(($pax - 50) / 25);
+
         return $this->render('pdf.preparation', [
             'title' => 'Event Preparation Checklist',
             'documentNumber' => sprintf('Booking #%04d', $booking->id),
@@ -67,6 +70,7 @@ class BrandedPdfService
             'venue' => $this->venue($booking),
             'readiness' => $this->readinessSummary($booking, $categorizedMenu->isNotEmpty()),
             'taskGroups' => $taskGroups,
+            'servingStaffCount' => $servingStaffCount,
         ]);
     }
 

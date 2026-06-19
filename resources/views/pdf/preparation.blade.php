@@ -40,6 +40,7 @@
                 <p class="eyebrow">Assigned staff</p>
                 <div class="box">
                     <div class="value">{{ $booking->assignee?->full_name ?: $booking->assignee?->username ?: 'Unassigned' }}</div>
+                    <div class="muted">Waitstaff Ratio: {{ $servingStaffCount }}</div>
                     <div class="muted">Total {{ $money($booking->total_cost ?? 0) }}</div>
                     <div class="muted">Package {{ $booking->package_id ?: 'Custom' }}</div>
                 </div>
