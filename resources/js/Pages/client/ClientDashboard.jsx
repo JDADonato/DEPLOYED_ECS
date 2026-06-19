@@ -332,47 +332,137 @@ const LiveStatusTracker = ({ booking }) => {
     );
 };
 
-const HistoryPanel = ({ bookings }) => (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-[#720101]">History</p>
-                <h3 className="mt-1 text-xl font-display font-bold text-[#1a1a1a]">Cancelled and completed events</h3>
-                <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-gray-500">Past records stay read-only. Use Rebook to start a new booking with the proper availability, menu, pricing, and payment steps.</p>
+const HistoryPanel = ({ bookings }) => {
+    const [selectedBooking, setSelectedBooking] = React.useState(null);
+
+    const renderMenuSummary = (menuData) => {
+        if (!hasSelectedMenu(menuData)) return <p className="text-sm font-semibold text-gray-500">No dishes selected</p>;
+        let parsed = {};
+        try { parsed = typeof menuData === 'string' ? JSON.parse(menuData) : menuData; } catch(e) {}
+        
+        return (
+            <div className="grid gap-3 sm:grid-cols-2">
+                {menuCategories.map(cat => {
+                    const items = parsed[cat.id];
+                    if (!items || items.length === 0) return null;
+                    return (
+                        <div key={cat.id} className="rounded-xl border border-gray-100 bg-[#faf7f2]/50 p-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#720101]">{cat.label}</p>
+                            <ul className="mt-1 list-inside list-disc text-sm font-semibold text-gray-700">
+                                {items.map(item => <li key={item.id || item}>{item.name || item}</li>)}
+                            </ul>
+                        </div>
+                    );
+                })}
             </div>
-        </div>
-        {bookings.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-                <p className="font-bold text-gray-900">No history yet.</p>
+        );
+    };
+
+    return (
+        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[#720101]">History</p>
+                    <h3 className="mt-1 text-xl font-display font-bold text-[#1a1a1a]">Cancelled and completed events</h3>
+                    <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-gray-500">Past records stay read-only. Use Rebook to start a new booking with the proper availability, menu, pricing, and payment steps.</p>
+                </div>
             </div>
-        ) : (
-            <div className="grid gap-4">
-                {bookings.map((booking) => (
-                    <div key={booking.id} className="group relative rounded-2xl border border-gray-100 bg-[#faf7f2] p-5 transition-all hover:border-gray-200 hover:shadow-sm">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <div className="mb-2 flex flex-wrap items-center gap-2">
-                                    <h4 className="font-display text-lg font-bold text-[#1a1a1a]">{eventDisplayName(booking)}</h4>
-                                    <span className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest ${statusToneClasses[customerBookingStatus(booking.status).tone]?.light || statusToneClasses.neutral.light}`}>
-                                        {customerBookingStatus(booking.status).label}
-                                    </span>
+            {bookings.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                    <p className="font-bold text-gray-900">No history yet.</p>
+                </div>
+            ) : (
+                <div className="grid gap-4">
+                    {bookings.map((booking) => (
+                        <div key={booking.id} className="group relative rounded-2xl border border-gray-100 bg-[#faf7f2] p-5 transition-all hover:border-gray-200 hover:shadow-sm">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                                        <h4 className="font-display text-lg font-bold text-[#1a1a1a]">{eventDisplayName(booking)}</h4>
+                                        <span className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest ${statusToneClasses[customerBookingStatus(booking.status).tone]?.light || statusToneClasses.neutral.light}`}>
+                                            {customerBookingStatus(booking.status).label}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-semibold text-gray-600">
+                                        {new Date(booking.event_date).toLocaleDateString()} - {booking.pax} pax - {peso(booking.total_cost)}
+                                    </p>
                                 </div>
-                                <p className="text-sm font-semibold text-gray-600">
-                                    {new Date(booking.event_date).toLocaleDateString()} - {booking.pax} pax - {peso(booking.total_cost)}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => router.get('/book')} className="rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
-                                    Rebook Event
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setSelectedBooking(booking)} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                                        See Details
+                                    </button>
+                                    <button onClick={() => router.get('/book')} className="rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
+                                        Rebook Event
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                    ))}
+                </div>
+            )}
+
+            {selectedBooking && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm animate-fadeIn">
+                    <div className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[1.75rem] border border-[#720101]/10 bg-white shadow-2xl transform transition-all scale-100 animate-scaleIn">
+                        <div className="border-b border-gray-100 p-6 flex items-center justify-between bg-[#fffaf3]">
+                            <div>
+                                <h3 className="text-xl font-black font-display text-slate-900">{eventDisplayName(selectedBooking)}</h3>
+                                <p className="text-sm font-semibold text-gray-500">{new Date(selectedBooking.event_date).toLocaleDateString()}</p>
+                            </div>
+                            <button onClick={() => setSelectedBooking(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="rounded-2xl border border-gray-100 p-4">
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Package</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.package_name || 'Custom'}</p>
+                                    <p className="text-xs font-semibold text-gray-500">{peso(selectedBooking.package_price)}</p>
+                                </div>
+                                <div className="rounded-2xl border border-gray-100 p-4">
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Guest Count</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.pax} pax</p>
+                                    <p className="text-xs font-semibold text-gray-500">Total: {peso(selectedBooking.total_cost)}</p>
+                                </div>
+                                <div className="rounded-2xl border border-gray-100 p-4 sm:col-span-2">
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Venue</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-900">{selectedBooking.venue_address_line || 'Not provided'}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="font-black text-lg text-slate-900 mb-3 border-b border-gray-100 pb-2">Selected Menu</h4>
+                                {renderMenuSummary(selectedBooking.selected_menu)}
+                            </div>
+                            
+                            {(selectedBooking.event_time || selectedBooking.event_timeline) && (
+                                <div>
+                                    <h4 className="font-black text-lg text-slate-900 mb-3 border-b border-gray-100 pb-2">Schedule & Timeline</h4>
+                                    <div className="rounded-2xl border border-gray-100 p-4 bg-[#faf7f2]/30">
+                                        {selectedBooking.event_time && <p className="text-sm font-bold text-gray-900 mb-2">Event Start: {formatTimeLabel(selectedBooking.event_time) || selectedBooking.event_time}</p>}
+                                        {selectedBooking.event_timeline && (
+                                            <p className="text-sm font-semibold text-gray-600 whitespace-pre-wrap">{selectedBooking.event_timeline}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="border-t border-gray-100 p-4 flex justify-end bg-gray-50/50">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedBooking(null)}
+                                className="rounded-xl bg-white border border-gray-200 px-6 py-2.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
-                ))}
-            </div>
-        )}
-    </div>
-);
+                </div>
+            )}
+        </div>
+    );
+};
 
 const BoundedTimeSelect = ({ value, onChange, minTime, maxTime, className }) => {
     const [isOpen, setIsOpen] = React.useState(false);
