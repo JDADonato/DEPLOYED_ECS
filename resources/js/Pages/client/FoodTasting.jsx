@@ -12,6 +12,7 @@ import FoodTastingSchedulePicker from '../../Components/client/FoodTastingSchedu
 import { isFoodTastingTimeAllowed } from '../../utils/foodTastingSchedule';
 import ClientFoodTastings from '../../Components/client/ClientFoodTastings';
 import MenuPickerModal from '../../Components/client/MenuPickerModal';
+import Footer from '../../Components/common/Footer';
 
 const FoodTasting = () => {
     const { user } = useAuth();
