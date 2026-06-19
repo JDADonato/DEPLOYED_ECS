@@ -651,7 +651,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
         const secRate = packageContextFields.package_security_type === 'contingency' ? (packageContextFields.package_security_rate || 0) : 0;
         
         const C = packageContextFields.package_security_type === 'cash_bond' ? (packageContextFields.package_cash_bond || 0) : 0;
-        const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : 5000);
+        const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
         const D = bookingData.date && packageContextFields.package_december_surcharge && new Date(bookingData.date).getMonth() === 11 ? packageContextFields.package_december_surcharge : 0;
 
         const feeMultiplier = (1 + sRate + vRate + lRate + hRate) * (1 + secRate);
@@ -1385,7 +1385,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                 const secRate = packageContextFields.package_security_type === 'contingency' ? (packageContextFields.package_security_rate || 0) : 0;
                 
                 const C = packageContextFields.package_security_type === 'cash_bond' ? (packageContextFields.package_cash_bond || 0) : 0;
-                const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : 5000);
+                const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
                 const D = bookingData.date && packageContextFields.package_december_surcharge && new Date(bookingData.date).getMonth() === 11 ? packageContextFields.package_december_surcharge : 0;
                 
                 const projectedTotal = Math.ceil(menuTotal * (1 + sRate + vRate + lRate + hRate) * (1 + secRate) + D * (1 + secRate) + C + O);

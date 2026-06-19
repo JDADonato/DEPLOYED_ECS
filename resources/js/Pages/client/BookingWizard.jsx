@@ -63,7 +63,7 @@ const logConversionEvent = (eventName, payload = {}) => {
     });
 };
 
-const summarizeBookingCosts = (data = {}) => {
+const summarizeBookingCosts = (data = {}, businessRules = {}) => {
     const baseEventCost = data.totalCost || 0;
     const serviceCharge = Math.round(baseEventCost * (data.package_service_charge_rate || 0));
     const vatFee = Math.round(baseEventCost * (data.package_vat_rate || 0));
@@ -78,7 +78,7 @@ const summarizeBookingCosts = (data = {}) => {
         ? Math.round((baseEventCost + serviceCharge + vatFee + locationSurcharge + highRiseFee + decemberSurcharge) * (data.package_security_rate || 0))
         : 0;
     const cashBond = data.package_security_type === 'cash_bond' ? (data.package_cash_bond || 0) : 0;
-    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * (data.package_extra_service_hours_fee !== undefined ? Number(data.package_extra_service_hours_fee) : 5000);
+    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * (data.package_extra_service_hours_fee !== undefined ? Number(data.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
     const laborSurcharge = serviceCharge + vatFee + highRiseFee + decemberSurcharge + contingencyFee + cashBond + overtimeFee;
 
     return {
@@ -333,7 +333,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             return;
         }
 
-        const { locationSurcharge, laborSurcharge, finalTotal } = summarizeBookingCosts(merged);
+        const { locationSurcharge, laborSurcharge, finalTotal } = summarizeBookingCosts(merged, businessRules);
 
         const payload = {
             user_id: user.id,
@@ -416,7 +416,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} initialEventTypes={initialEventTypes} />;
         }
         if (currentStep === 2) {
-            return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
+            return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} businessRules={businessRules} />;
         }
         if (currentStep === 3) {
             return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
@@ -433,7 +433,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
         return <FoodTastingStep bookingData={bookingData} updateBooking={updateBooking} onReview={openReviewModal} onBack={prevStep} isSubmitting={isSubmittingBooking} />;
     };
 
-    const reviewCosts = summarizeBookingCosts(reviewData || bookingData);
+    const reviewCosts = summarizeBookingCosts(reviewData || bookingData, businessRules);
     const reviewMenuRows = menuRowsFromBooking(reviewData || bookingData);
 
     return (

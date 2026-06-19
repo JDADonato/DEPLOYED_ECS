@@ -49,7 +49,7 @@ const emptyCustomerSearchMeta = {
     search: '',
 };
 
-const summarizeBookingCosts = (data = {}) => {
+const summarizeBookingCosts = (data = {}, businessRules = {}) => {
     const baseEventCost = data.totalCost || 0;
     const serviceCharge = Math.round(baseEventCost * (data.package_service_charge_rate || 0));
     const vatFee = Math.round(baseEventCost * (data.package_vat_rate || 0));
@@ -64,7 +64,7 @@ const summarizeBookingCosts = (data = {}) => {
         ? Math.round((baseEventCost + serviceCharge + vatFee + locationSurcharge + highRiseFee + decemberSurcharge) * (data.package_security_rate || 0))
         : 0;
     const cashBond = data.package_security_type === 'cash_bond' ? (data.package_cash_bond || 0) : 0;
-    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * (data.package_extra_service_hours_fee !== undefined ? Number(data.package_extra_service_hours_fee) : 5000);
+    const overtimeFee = Math.max(0, (data.duration || 4) - 4) * (data.package_extra_service_hours_fee !== undefined ? Number(data.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
     const laborSurcharge = serviceCharge + vatFee + highRiseFee + decemberSurcharge + contingencyFee + cashBond + overtimeFee;
 
     return {
@@ -116,7 +116,7 @@ const logAssistedConversionEvent = (eventName, payload = {}) => {
     }));
 };
 
-const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toast }) => {
+const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toast, businessRules }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [customerState, setCustomerState] = useState(initialCustomerState);
     const [bookingData, setBookingData] = useState(initialBookingState);
@@ -135,7 +135,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         reference: '',
     });
 
-    const reviewCosts = useMemo(() => summarizeBookingCosts(bookingData), [bookingData]);
+    const reviewCosts = useMemo(() => summarizeBookingCosts(bookingData, businessRules), [bookingData, businessRules]);
 
     const availableTranches = useMemo(() => {
         if (!bookingData.date) return [];
@@ -403,7 +403,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             return;
         }
 
-        const costs = summarizeBookingCosts(bookingData);
+        const costs = summarizeBookingCosts(bookingData, businessRules);
         const customer = customerState.mode === 'existing' ? customerState.selected : customerState.newCustomer;
         const payload = {
             customer_mode: customerState.mode,

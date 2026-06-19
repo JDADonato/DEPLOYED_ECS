@@ -57,7 +57,7 @@ const nearbyAvailableDates = (baseDate, disabledSet, minDate, count = 3) => {
     return suggestions;
 };
 
-const CalendarView = ({ bookingData, updateBooking, onNext, onBack }) => {
+const CalendarView = ({ bookingData, updateBooking, onNext, onBack, businessRules = {} }) => {
     const [selectedDate, setSelectedDate] = useState(bookingData.date || '');
     const [selectedTime, setSelectedTime] = useState(parseStartTime(bookingData.time));
     const [duration, setDuration] = useState(bookingData.duration || 4);
@@ -386,7 +386,7 @@ const CalendarView = ({ bookingData, updateBooking, onNext, onBack }) => {
                                 </button>
                             ))}
                         </div>
-                        {duration > 4 && <p className="mt-2 text-sm font-semibold text-slate-500">Extra service hours: PHP {((duration - 4) * (bookingData.package_extra_service_hours_fee !== undefined ? Number(bookingData.package_extra_service_hours_fee) : 5000)).toLocaleString()}</p>}
+                        {duration > 4 && <p className="mt-2 text-sm font-semibold text-slate-500">Extra service hours: PHP {((duration - 4) * (bookingData.package_extra_service_hours_fee !== undefined ? Number(bookingData.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000))).toLocaleString()}</p>}
                     </div>
 
                     <div className="booking-summary-strip booking-schedule-summary">
