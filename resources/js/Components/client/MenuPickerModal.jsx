@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Modal from '../common/Modal';
 import csrfFetch from '../../utils/csrf';
 
 const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], maxSelections = 5 }) => {
@@ -53,10 +52,13 @@ const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], ma
         return menuItems.filter(item => item.name.toLowerCase().includes(search.toLowerCase()) || (item.category && item.category.toLowerCase().includes(search.toLowerCase())));
     }, [menuItems, search]);
 
+    if (!isOpen) return null;
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
-            <div className="p-6">
-                <div className="mb-6 flex items-center justify-between">
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm animate-fadeIn">
+            <div className="w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-[#720101]/10 bg-white shadow-2xl transform transition-all scale-100 animate-scaleIn">
+                <div className="p-6">
+                    <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h3 className="text-xl font-black font-display text-slate-900">Request Dishes to Taste</h3>
                         <p className="mt-1 text-sm font-medium text-slate-500">
@@ -109,12 +111,13 @@ const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], ma
                     )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                    <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
-                    <button onClick={handleConfirm} className="px-6 py-2.5 text-sm font-bold text-white bg-[#720101] rounded-xl hover:bg-[#5a0101] transition-colors shadow-lg shadow-[#720101]/20">Confirm Selection</button>
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
+                        <button onClick={handleConfirm} className="px-6 py-2.5 text-sm font-bold text-white bg-[#720101] rounded-xl hover:bg-[#5a0101] transition-colors shadow-lg shadow-[#720101]/20">Confirm Selection</button>
+                    </div>
                 </div>
             </div>
-        </Modal>
+        </div>
     );
 };
 
