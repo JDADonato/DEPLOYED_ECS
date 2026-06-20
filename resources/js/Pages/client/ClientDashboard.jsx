@@ -1887,13 +1887,21 @@ const ClientDashboard = () => {
                 </div>
 
                 {feedbackRequests.length > 0 && (
-                    <div id="feedback-request-panel" className="mb-8 rounded-3xl border border-[#f0aa0b]/30 bg-[#fffaf3] p-6 shadow-sm">
-                        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div id="feedback-request-panel" className="mb-8 overflow-hidden rounded-3xl border-2 border-[#f0aa0b] bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-xl shadow-[#f0aa0b]/10 relative">
+                        {/* Decorative background element */}
+                        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl"></div>
+                        
+                        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                             <div className="max-w-2xl">
-                                <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
-                                <h2 className="mt-2 text-2xl font-display font-bold text-[#1a1a1a]">How did your event go?</h2>
-                                <p className="mt-2 text-sm font-medium leading-6 text-gray-600">
-                                    Share your experience for {feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}.
+                                <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
+                                    <svg className="h-4 w-4 text-[#720101]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                    </svg>
+                                    <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
+                                </div>
+                                <h2 className="text-3xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
+                                <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+                                    Share your experience for <span className="text-[#a16207]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
                                 </p>
                             </div>
                             <form
@@ -1911,15 +1919,25 @@ const ClientDashboard = () => {
                                         ['communication_rating', 'Communication'],
                                         ['value_rating', 'Value'],
                                     ].map(([field, label]) => (
-                                        <label key={field} className="block">
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">{label}</span>
-                                            <select
-                                                value={feedbackForm[field]}
-                                                onChange={(event) => setFeedbackForm(prev => ({ ...prev, [field]: Number(event.target.value) }))}
-                                                className="mt-1 w-full rounded-xl border border-[#720101]/10 bg-white px-3 py-2 text-sm font-bold text-gray-800 outline-none focus:border-[#720101]/30 focus:ring-2 focus:ring-[#720101]/15"
-                                            >
-                                                {[5, 4, 3, 2, 1].map(value => <option key={value} value={value}>{value} / 5</option>)}
-                                            </select>
+                                        <label key={field} className="block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">{label}</span>
+                                                <span className="rounded-full bg-[#fffaf3] px-2 py-0.5 text-[10px] font-black text-[#a16207]">{feedbackForm[field]} / 5</span>
+                                            </div>
+                                            <div className="mt-2 flex items-center justify-between gap-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setFeedbackForm(prev => ({ ...prev, [field]: star }))}
+                                                        className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
+                                                    >
+                                                        <svg className="h-7 w-7 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                        </svg>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </label>
                                     ))}
                                 </div>
@@ -1935,16 +1953,22 @@ const ClientDashboard = () => {
                                         type="checkbox"
                                         checked={feedbackForm.testimonial_permission}
                                         onChange={(event) => setFeedbackForm(prev => ({ ...prev, testimonial_permission: event.target.checked }))}
-                                        className="h-4 w-4 rounded border-gray-300 text-[#720101] focus:ring-[#720101]/20"
+                                        className="h-5 w-5 rounded border-slate-300 text-[#720101] shadow-sm focus:border-[#720101] focus:ring focus:ring-[#720101] focus:ring-opacity-50"
                                     />
-                                    Eloquente may use my comments as a testimonial.
+                                    <span className="text-sm font-bold text-slate-600">Eloquente may use my comments as a testimonial.</span>
                                 </label>
                                 <button
                                     type="submit"
                                     disabled={submittingFeedback}
-                                    className="rounded-xl bg-[#720101] px-6 py-3 text-sm font-black uppercase tracking-widest text-white shadow-sm transition hover:bg-[#5a0101] disabled:opacity-60"
+                                    className="group relative flex w-full sm:w-auto items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#720101] to-[#a10101] px-8 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100"
                                 >
-                                    {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+                                    <span className="relative z-10">{submittingFeedback ? 'Submitting...' : 'Submit Feedback'}</span>
+                                    {!submittingFeedback && (
+                                        <svg className="relative z-10 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    )}
+                                    <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
                                 </button>
                             </form>
                         </div>
