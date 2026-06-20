@@ -222,12 +222,55 @@ const EventHistoryPanel = ({ role = 'staff', onToast, surfaceMode = 'default' })
                             <p className="staff-detail-value">{refunds.open || 0} open</p>
                             <p className="mt-2 text-sm font-semibold text-slate-500">{refunds.total || 0} refund case records</p>
                         </section>
-                        <section className="staff-detail-card">
-                            <p className="staff-detail-label">Feedback</p>
-                            <p className="staff-detail-value">{feedback.has_response ? `${feedback.rating || '-'} / 5` : 'No response'}</p>
-                            <p className="mt-2 text-sm font-semibold text-slate-500">{feedback.review_status || 'No follow-up status'} / {feedback.testimonial_status || 'No testimonial status'}</p>
-                        </section>
                     </div>
+
+                    {feedback.has_response ? (
+                        <section className="staff-detail-card bg-amber-50/50 border-amber-100">
+                            <div className="flex justify-between items-start border-b border-amber-100 pb-3 mb-3">
+                                <div>
+                                    <p className="staff-detail-label text-amber-800">Customer Feedback</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-2xl font-black text-amber-900">{feedback.rating || '-'} / 5</p>
+                                        <span className="rounded-full bg-amber-200/50 px-2.5 py-0.5 text-xs font-bold text-amber-900">Overall Rating</span>
+                                    </div>
+                                    <p className="mt-2 text-sm font-medium text-amber-800">Review status: {feedback.review_status || 'Pending'} • Testimonial: {feedback.testimonial_status || 'Pending'}</p>
+                                </div>
+                                {feedback.testimonial_permission && (
+                                    <span className="rounded-full bg-green-100 border border-green-200 px-3 py-1 text-xs font-black uppercase tracking-widest text-green-800">
+                                        Testimonial Allowed
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {feedback.comments && (
+                                <div className="mb-4 rounded-xl bg-white p-4 shadow-sm border border-amber-100">
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Customer Comments</p>
+                                    <p className="text-sm font-medium text-slate-800 italic whitespace-pre-wrap">"{feedback.comments}"</p>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                {[
+                                    ['Food', feedback.food_rating],
+                                    ['Service', feedback.service_rating],
+                                    ['Comm.', feedback.communication_rating],
+                                    ['Value', feedback.value_rating],
+                                ].map(([label, score]) => (
+                                    <div key={label} className="bg-white rounded-lg p-2 border border-amber-100 text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">{label}</p>
+                                        <p className="mt-1 text-sm font-black text-slate-900">{score ? `${score}/5` : '-'}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    ) : (
+                        <div className="grid gap-3 lg:grid-cols-3">
+                            <section className="staff-detail-card col-span-full">
+                                <p className="staff-detail-label">Feedback</p>
+                                <p className="mt-2 text-sm font-semibold text-slate-500 italic">No feedback response received from customer yet.</p>
+                            </section>
+                        </div>
+                    )}
 
                     <section className="staff-detail-card">
                         <p className="staff-detail-label">Limited follow-up</p>

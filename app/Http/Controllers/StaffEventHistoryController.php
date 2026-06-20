@@ -22,7 +22,7 @@ class StaffEventHistoryController extends Controller
                     ->when(! $request->boolean('include_voided'), fn ($inner) => $inner->active())
                     ->select('id', 'booking_id', 'amount', 'status', 'payment_type', 'due_date', 'voided_at', 'void_reason'),
                 'refundCases:id,booking_id,payment_id,amount,non_refundable_amount,status,reason,notes',
-                'feedbackResponses:id,booking_id,rating,follow_up_required,review_status,testimonial_status,retention_notes,assigned_to,follow_up_due_at,reviewed_at,created_at',
+                'feedbackResponses:id,booking_id,rating,food_rating,service_rating,communication_rating,value_rating,comments,testimonial_permission,follow_up_required,review_status,testimonial_status,retention_notes,assigned_to,follow_up_due_at,reviewed_at,created_at',
                 'feedbackResponses.assignee:id,full_name,username',
                 'historyNotes' => fn ($notes) => $notes->with('user:id,full_name,username,role')->latest()->limit(10),
             ])
@@ -183,6 +183,12 @@ class StaffEventHistoryController extends Controller
             'feedback_summary' => [
                 'has_response' => (bool) $feedback,
                 'rating' => $feedback?->rating,
+                'food_rating' => $feedback?->food_rating,
+                'service_rating' => $feedback?->service_rating,
+                'communication_rating' => $feedback?->communication_rating,
+                'value_rating' => $feedback?->value_rating,
+                'comments' => $feedback?->comments,
+                'testimonial_permission' => (bool) ($feedback?->testimonial_permission),
                 'follow_up_required' => (bool) ($feedback?->follow_up_required),
                 'review_status' => $feedback?->review_status,
                 'testimonial_status' => $feedback?->testimonial_status,
