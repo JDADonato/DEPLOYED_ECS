@@ -10,6 +10,8 @@ import ConfirmModal from '../Components/common/ConfirmModal';
 import SmartImage from '../Components/common/SmartImage';
 import RevealOnScroll from '../Components/common/RevealOnScroll';
 import StaffSkeleton, { StaffWorkspaceSkeleton } from '../Components/staff/StaffSkeleton';
+import EventDetailDrawer from '../Components/staff/EventDetailDrawer';
+import CompleteBookingModal from '../Components/staff/CompleteBookingModal';
 import StaffWorkspaceLayout from '../Layouts/StaffWorkspaceLayout';
 import StaffNavbarSearch from '../Components/staff/StaffNavbarSearch';
 import { AdminCommandStrip, AdminPageSurface, AdminResponsiveTable } from '../Components/admin/AdminSurface';
@@ -1090,6 +1092,7 @@ const DashboardAdmin = () => {
     });
 
     const [eventDetailsModal, setEventDetailsModal] = useState({ open: false, data: null });
+    const [completionPrompt, setCompletionPrompt] = useState({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false });
     const [editPaymentModal, setEditPaymentModal] = useState({ isOpen: false, payment: null, booking: null });
 
     // ==========================================
@@ -5891,16 +5894,23 @@ const DashboardAdmin = () => {
         }
     };
 
-    const fetchBookings = async ({ silent = false } = {}) => {
+    const fetchBookings = async (silent = false) => {
         if (!silent) setBookingsLoading(true);
         try {
-            const data = await fetchCachedJson(ADMIN_BOOKINGS_URL, 30000);
+            const res = await csrfFetch('/api/admin/bookings');
+            const data = await res.json();
             setBookings(getListData(data));
-        } catch (error) {
-            console.error(error);
-            showToast(getErrorMessage(error, "Could not load bookings"), 'error');
+        } catch (err) {
+            console.error('Error fetching bookings:', err);
         } finally {
             if (!silent) setBookingsLoading(false);
+        }
+    };
+
+    const handleBookingCompleteSuccess = (updatedBooking, success) => {
+        setBookings(prev => prev.map(item => item.id === updatedBooking.id ? { ...item, ...updatedBooking } : item));
+        if (success) {
+            fetchBookings(true);
         }
     };
 
@@ -10532,128 +10542,96 @@ const DashboardAdmin = () => {
                 )
             }
 
-            {/* Event Details Modal */}
-            {
-                eventDetailsModal.open && (
-                    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setEventDetailsModal({ open: false, data: null })}></div>
-                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl animate-fadeIn overflow-hidden flex flex-col max-h-[90vh]">
-                            <div className="px-5 py-4 border-b border-[#720101]/10 bg-white flex justify-between items-start sticky top-0 z-10">
-                                <div>
-                                    <p className="marketing-kicker">Event details</p>
-                                    <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{eventDisplayName(eventDetailsModal.data)}</h3>
-                                    <p className="mt-1 text-sm font-bold text-slate-500">{formatBookingRef(eventDetailsModal.data?.id)} / {eventDetailsModal.data?.event_type || 'Event'} / {eventDetailsModal.data?.pax || 0} guests</p>
-                                </div>
-                                <button onClick={() => setEventDetailsModal({ open: false, data: null })} className="staff-icon-button" aria-label="Close event details">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                            </div>
-
-                            <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4 bg-[#fbf8f2]">
-                                {(() => {
-                                    const selectedDishes = getSelectedDishes(eventDetailsModal.data);
-                                    return (
-                                        <>
-                                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_1fr]">
-                                    {[
-                                        ['Customer', eventDetailsModal.data?.client_full_name || eventDetailsModal.data?.username || 'N/A', `${eventDetailsModal.data?.client_email || 'No email'} / ${eventDetailsModal.data?.client_phone || 'No phone'}`],
-                                        ['Schedule', `${formatDate(eventDetailsModal.data?.event_date)} / ${formatTime(eventDetailsModal.data?.event_time)}`, eventDetailsModal.data?.status || 'Pending'],
-                                        ['Venue', formatFullAddress(eventDetailsModal.data), eventDetailsModal.data?.venue_building_details || 'No building notes'],
-                                        ['Total', formatCurrency(getBookingTotal(eventDetailsModal.data)), `${selectedDishes.length} dishes / ${eventDetailsModal.data?.transport_fee ? `Travel ${formatCurrency(eventDetailsModal.data.transport_fee)}` : 'No travel fee'}`],
-                                    ].map(([label, value, meta]) => (
-                                        <section key={label} className="rounded-xl border border-[#720101]/10 bg-white px-4 py-3">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#a16207]">{label}</p>
-                                            <p className="mt-1 break-words text-sm font-black leading-snug text-slate-950">{value}</p>
-                                            <p className="mt-1 break-words text-xs font-bold text-slate-500">{meta}</p>
-                                        </section>
-                                    ))}
-                                </div>
-
-                                {selectedDishes.length > 0 && (
-                                    <section>
-                                        <div className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
-                                            <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Selected Dishes</h4>
-                                            <span className="rounded-full bg-[#fff7e8] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#720101]">{selectedDishes.length} dishes</span>
-                                        </div>
-                                        <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-4 custom-scrollbar">
-                                            {selectedDishes.map((dish, index) => (
-                                                <div key={`${dish.category}-${dish.name}-${index}`} className="rounded-lg border border-gray-100 bg-white px-3 py-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#a16207]">{dish.category}</p>
-                                                    <p className="mt-1 text-sm font-bold text-gray-900">{dish.name}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
+            {/* Event Details Drawer */}
+            <EventDetailDrawer
+                isOpen={eventDetailsModal.open}
+                booking={eventDetailsModal.data}
+                role="admin"
+                currentUser={user}
+                onClose={() => setEventDetailsModal({ open: false, data: null })}
+                actionSlot={(
+                    <>
+                        {eventDetailsModal.data?.status === 'Confirmed' && (
+                            <button
+                                onClick={() => setCompletionPrompt({ isOpen: true, booking: eventDetailsModal.data, blockers: [], overrideReason: '', saving: false })}
+                                className="rounded-lg border border-[#720101] bg-[#720101] px-3 py-2 text-xs font-black text-white hover:bg-[#5c0101]"
+                            >
+                                Complete event
+                            </button>
+                        )}
+                        <a
+                            href={`/api/marketing/bookings/${eventDetailsModal.data?.id}/pdf`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
+                        >
+                            Prep list PDF
+                        </a>
+                    </>
+                )}
+            >
+                <div>
+                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 border-b border-gray-100 pb-2 mt-6">Payment Schedule</h4>
+                    <div className="overflow-x-auto rounded-lg border border-[#720101]/10">
+                        <table className="staff-table">
+                            <thead>
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-500">Term</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-500">Amount</th>
+                                    <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">Due Date</th>
+                                    <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">Status</th>
+                                    <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(eventDetailsModal.data?.payments || []).map(payment => (
+                                    <tr key={payment.id}>
+                                        <td className="px-4 py-3 font-semibold text-gray-900">{paymentLabel(payment.payment_type)}</td>
+                                        <td className="px-4 py-3 text-left font-bold text-gray-900">{formatCurrency(payment.amount)}</td>
+                                        <td className="px-4 py-3 text-center text-gray-600">{formatDate(payment.due_date)}</td>
+                                        <td className="px-4 py-3 text-center text-gray-600">{staffPaymentStatus(payment.status, payment.due_date).label}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            {payment.status === 'Pending' || payment.status === 'Rejected' ? (
+                                                <button onClick={() => setEditPaymentModal({ isOpen: true, payment, booking: eventDetailsModal.data })} className="rounded-lg bg-[#fff7e8] px-3 py-2 text-xs font-black text-[#720101] transition-colors hover:bg-[#fff1d3]">Edit term</button>
+                                            ) : (
+                                                <span className="text-xs font-semibold text-gray-400">Locked</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(eventDetailsModal.data?.payments || []).length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="px-4 py-6 text-center text-sm text-gray-500">No payment schedule found.</td>
+                                    </tr>
                                 )}
-
-                                <div>
-                                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 border-b border-gray-100 pb-2">Payment Schedule</h4>
-                                    <div className="overflow-x-auto rounded-lg border border-[#720101]/10">
-                                        <table className="staff-table">
-                                            <thead>
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-500">Term</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-500">Amount</th>
-                                                    <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">Due Date</th>
-                                                    <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">Status</th>
-                                                    <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {(eventDetailsModal.data?.payments || []).map(payment => (
-                                                    <tr key={payment.id}>
-                                                        <td className="px-4 py-3 font-semibold text-gray-900">{paymentLabel(payment.payment_type)}</td>
-                                                        <td className="px-4 py-3 text-left font-bold text-gray-900">{formatCurrency(payment.amount)}</td>
-                                                        <td className="px-4 py-3 text-center text-gray-600">{formatDate(payment.due_date)}</td>
-                                                        <td className="px-4 py-3 text-center text-gray-600">{staffPaymentStatus(payment.status, payment.due_date).label}</td>
-                                                        <td className="px-4 py-3 text-right">
-                                                            {payment.status === 'Pending' || payment.status === 'Rejected' ? (
-                                                                <button onClick={() => setEditPaymentModal({ isOpen: true, payment, booking: eventDetailsModal.data })} className="rounded-lg bg-[#fff7e8] px-3 py-2 text-xs font-black text-[#720101] transition-colors hover:bg-[#fff1d3]">Edit term</button>
-                                                            ) : (
-                                                                <span className="text-xs font-semibold text-gray-400">Locked</span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                                {(eventDetailsModal.data?.payments || []).length === 0 && (
-                                                    <tr>
-                                                        <td colSpan="5" className="px-4 py-6 text-center text-sm text-gray-500">No payment schedule found.</td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {eventDetailsModal.data?.preparation_tasks?.length > 0 && (
+                    <div className="mt-6">
+                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 border-b border-gray-100 pb-2">Preparation Tasks</h4>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            {eventDetailsModal.data.preparation_tasks.map(task => (
+                                <div key={task.id} className={`rounded-lg border px-4 py-3 ${task.status === 'Done' ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-[#fffaf3]'}`}>
+                                    <p className="text-sm font-bold text-gray-900">{task.label}</p>
+                                    <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                        {task.responsible_area || handoffResponsibleArea(task.department)} / {task.status}
+                                    </p>
                                 </div>
-                                {eventDetailsModal.data?.preparation_tasks?.length > 0 && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 border-b border-gray-100 pb-2">Preparation Tasks</h4>
-                                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                            {eventDetailsModal.data.preparation_tasks.map(task => (
-                                                <div key={task.id} className={`rounded-lg border px-4 py-3 ${task.status === 'Done' ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-[#fffaf3]'}`}>
-                                                    <p className="text-sm font-bold text-gray-900">{task.label}</p>
-                                                    <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                                        {task.responsible_area || handoffResponsibleArea(task.department)} / {task.status}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                        </>
-                                    );
-                                })()}
-                            </div>
-
-                            <div className="px-5 py-3 border-t border-[#720101]/10 bg-white flex items-center justify-between gap-3">
-                                <p className="text-xs font-bold text-slate-500">Payment terms can be edited here. Other actions stay in the current workspace.</p>
-                                <button onClick={() => setEventDetailsModal({ open: false, data: null })} className="px-5 py-2 bg-[#720101] hover:bg-[#5a0101] text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
-                                    Close
-                                </button>
-                            </div>
+                            ))}
                         </div>
                     </div>
-                )
-            }
+                )}
+            </EventDetailDrawer>
+
+            <CompleteBookingModal
+                completionPrompt={completionPrompt}
+                setCompletionPrompt={setCompletionPrompt}
+                user={user}
+                toast={toast}
+                onSuccess={handleBookingCompleteSuccess}
+            />
 
             {editPaymentModal.isOpen && (
                 <Suspense fallback={null}>
