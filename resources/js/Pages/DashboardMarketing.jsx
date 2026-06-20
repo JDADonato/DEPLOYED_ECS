@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import logoImg from '../../images/ECS_LOGO.png';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -2367,8 +2368,8 @@ const DashboardMarketing = () => {
         const blockers = completionPrompt.blockers || [];
         const canOverride = user?.role === 'Admin';
 
-        return (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/55 px-4" style={{ zIndex: 9999 }} onClick={() => setCompletionPrompt({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false })}>
+        return createPortal(
+            <div className="fixed inset-0 flex items-center justify-center bg-black/55 px-4" style={{ zIndex: 99999 }} onClick={() => setCompletionPrompt({ isOpen: false, booking: null, blockers: [], overrideReason: '', saving: false })}>
                 <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
                     <div className="border-b border-[#f1dfdf] bg-[#fffaf3] px-6 py-5">
                         <p className="marketing-kicker">Post-event completion</p>
@@ -2443,7 +2444,7 @@ const DashboardMarketing = () => {
                     </div>
                 </div>
             </div>
-        );
+        , document.body);
     };
 
     const renderAvailability = () => {
