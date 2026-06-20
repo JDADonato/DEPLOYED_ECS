@@ -17,6 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import StaffSkeleton from '../staff/StaffSkeleton';
+import StaffPagination from '../staff/StaffPagination';
 
 const emptyForm = {
     title: '',
@@ -116,6 +117,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
             return { tab: 'all', type: 'all', search: '' };
         }
     });
+    const [pagination, setPagination] = useState({ currentPage: 1, perPage: 15, total: 0, lastPage: 1 });
     useEffect(() => {
         try {
             localStorage.setItem('ecs_announcements_filters', JSON.stringify(filters));
@@ -159,25 +161,9 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         return acc;
     }, { total: 0, draft: 0, scheduled: 0, published: 0, archived: 0, homepage: 0, sent: 0, failed: 0, read: 0 }), [announcements]);
 
-    const filteredItems = useMemo(() => {
-        const search = filters.search.trim().toLowerCase();
-
-        return announcements.filter((item) => {
-            const tabMatch = filters.tab === 'all'
-                || item.status === filters.tab
-                || (filters.tab === 'sent' && Number(item.sent_count || 0) + Number(item.failed_count || 0) > 0);
-            const typeMatch = filters.type === 'all' || item.type === filters.type;
-            const searchMatch = !search || [item.title, item.summary, item.body, item.email_subject]
-                .filter(Boolean)
-                .some((value) => value.toLowerCase().includes(search));
-
-            return tabMatch && typeMatch && searchMatch;
-        });
-    }, [announcements, filters]);
-
     useEffect(() => {
-        fetchAnnouncements();
-    }, []);
+        fetchAnnouncements(1, filters);
+    }, [filters]);
 
     useEffect(() => {
         if (!loading && announcements.length > 0) {
@@ -230,11 +216,24 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
         window.setTimeout(() => setMessage(null), 3200);
     };
 
-    const fetchAnnouncements = async () => {
+    const fetchAnnouncements = async (page = pagination.currentPage, currentFilters = filters) => {
         setLoading(true);
         try {
-            const payload = await requestJson('/api/admin/announcements?paginated=1&per_page=75');
+            const params = new URLSearchParams({ paginated: '1', per_page: pagination.perPage, page });
+            Object.entries(currentFilters).forEach(([key, value]) => {
+                if (value && value !== 'all') params.set(key, value);
+            });
+            const payload = await requestJson(`/api/admin/announcements?${params.toString()}`);
             setAnnouncements(Array.isArray(payload) ? payload : (payload.data || []));
+            if (payload && payload.meta) {
+                setPagination(prev => ({
+                    ...prev,
+                    currentPage: payload.meta.current_page || page,
+                    lastPage: payload.meta.last_page || 1,
+                    total: payload.meta.total || 0,
+                    perPage: payload.meta.per_page || prev.perPage,
+                }));
+            }
         } catch (error) {
             flash(error.message || 'Unable to load announcements.', 'error');
         } finally {
@@ -757,11 +756,11 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                         <div className="p-5">
                             <StaffSkeleton rows={5} label="Loading announcements" />
                         </div>
-                    ) : filteredItems.length === 0 ? (
+                    ) : announcements.length === 0 ? (
                         <div className="p-8 text-center text-sm font-bold text-slate-400">No announcements match this view.</div>
                     ) : (
                         <div className="divide-y divide-slate-100">
-                            {filteredItems.map((item) => {
+                            {announcements.map((item) => {
                                 const canDelete = ['draft', 'scheduled'].includes(item.status);
                                 const emailTotal = Number(item.sent_count || 0) + Number(item.failed_count || 0) + Number(item.pending_count || 0);
 
@@ -817,8 +816,18 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                             })}
                         </div>
                     )}
-
-
+                    
+                    {!loading && announcements.length > 0 && (
+                        <div className="mt-6 border-t border-slate-100 pt-4">
+                            <StaffPagination
+                                currentPage={pagination.currentPage}
+                                lastPage={pagination.lastPage}
+                                total={pagination.total}
+                                perPage={pagination.perPage}
+                                onPageChange={(page) => fetchAnnouncements(page)}
+                            />
+                        </div>
+                    )}
                 </section>
             </div>
         </div>

@@ -37,8 +37,30 @@ class AnnouncementController extends Controller
             ])
             ->latest();
 
-        if ($request->filled('status') && $request->status !== 'all') {
+        if ($request->filled('tab') && $request->tab !== 'all') {
+            if ($request->tab === 'sent') {
+                $query->whereHas('recipients', function ($q) {
+                    $q->whereIn('status', ['sent', 'failed']);
+                });
+            } else {
+                $query->where('status', $request->tab);
+            }
+        } elseif ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $searchTerm = '%' . mb_strtolower(trim((string) $request->query('search'))) . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(title) LIKE ?', [$searchTerm])
+                  ->orWhereRaw('LOWER(summary) LIKE ?', [$searchTerm])
+                  ->orWhereRaw('LOWER(body) LIKE ?', [$searchTerm])
+                  ->orWhereRaw('LOWER(email_subject) LIKE ?', [$searchTerm]);
+            });
         }
 
         $versionMeta = ResourceVersion::fromQuery($query);
