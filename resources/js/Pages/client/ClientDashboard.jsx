@@ -1950,38 +1950,59 @@ const ClientDashboard = () => {
                                         event.preventDefault();
                                         submitFeedback(feedbackRequests[0].token);
                                     }}
-                                    className="w-full space-y-4 lg:max-w-xl"
+                                    className="w-full flex flex-col gap-5 lg:max-w-xl"
                                 >
-                                    <div className="grid gap-3 sm:grid-cols-2">
+                                    {/* Prominent Overall Rating */}
+                                    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-white/60 p-5 shadow-sm backdrop-blur-md transition-all hover:bg-white/80">
+                                        <h3 className="mb-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">Overall Experience</h3>
+                                        <div className="mb-3 rounded-full bg-[#fffaf3] px-3 py-1 text-xs font-black text-[#a16207]">{feedbackForm.rating} / 5</div>
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setFeedbackForm(prev => ({ ...prev, rating: star }))}
+                                                    className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm.rating ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
+                                                >
+                                                    <svg className="h-10 w-10 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                    </svg>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Sub-ratings */}
+                                    <div className="flex flex-col gap-2 rounded-2xl border border-white/50 bg-white/40 p-4 shadow-inner backdrop-blur-sm">
                                         {[
-                                            ['rating', 'Overall'],
                                             ['food_rating', 'Food'],
                                             ['service_rating', 'Service'],
                                             ['communication_rating', 'Communication'],
                                             ['value_rating', 'Value'],
                                         ].map(([field, label]) => (
-                                            <label key={field} className={`block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80 ${field === 'rating' ? 'sm:col-span-2' : ''}`}>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">{label}</span>
-                                                    <span className="rounded-full bg-[#fffaf3] px-2 py-0.5 text-[10px] font-black text-[#a16207]">{feedbackForm[field]} / 5</span>
+                                            <div key={field} className="flex items-center justify-between border-b border-white/40 pb-2 last:border-0 last:pb-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">{label}</span>
+                                                    <span className="text-[10px] font-black text-[#a16207] opacity-60">{feedbackForm[field]} / 5</span>
                                                 </div>
-                                                <div className="mt-2 flex items-center justify-between gap-1">
+                                                <div className="flex items-center gap-1">
                                                     {[1, 2, 3, 4, 5].map(star => (
                                                         <button
                                                             key={star}
                                                             type="button"
                                                             onClick={() => setFeedbackForm(prev => ({ ...prev, [field]: star }))}
-                                                            className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
+                                                            className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-300 hover:text-gray-400'}`}
                                                         >
-                                                            <svg className="h-7 w-7 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                            <svg className="h-6 w-6 drop-shadow-sm fill-current" viewBox="0 0 24 24">
                                                                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                                                             </svg>
                                                         </button>
                                                     ))}
                                                 </div>
-                                            </label>
+                                            </div>
                                         ))}
                                     </div>
+
                                     <textarea
                                         value={feedbackForm.comments}
                                         onChange={(event) => setFeedbackForm(prev => ({ ...prev, comments: event.target.value }))}
