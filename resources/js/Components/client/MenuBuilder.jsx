@@ -1148,7 +1148,20 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Curated Packages</h3>
                             <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                                Browse pre-designed packages — <strong>Economy</strong>, <strong>Standard</strong>, or <strong>Premium</strong> — each with a balanced set of dishes already picked for you.
+                                Browse pre-designed packages{packageCards.length > 0 ? ' — ' : ' '}
+                                {packageCards.length === 1 ? (
+                                    <strong>{packageCards[0].name}</strong>
+                                ) : packageCards.length === 2 ? (
+                                    <><strong>{packageCards[0].name}</strong> and <strong>{packageCards[1].name}</strong></>
+                                ) : packageCards.length > 2 ? (
+                                    <>
+                                        {packageCards.slice(0, -1).map((pkg) => (
+                                            <React.Fragment key={pkg.name}><strong>{pkg.name}</strong>, </React.Fragment>
+                                        ))}
+                                        or <strong>{packageCards[packageCards.length - 1].name}</strong>
+                                    </>
+                                ) : null}
+                                {packageCards.length > 0 ? ' — ' : ''}each with a balanced set of dishes already picked for you.
                             </p>
                             <ul className="space-y-2 text-xs text-gray-500 mb-5">
                                 <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Event-specific amenities and security terms</li>
