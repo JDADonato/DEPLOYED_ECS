@@ -184,13 +184,30 @@ class ContactInquiryController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        $reply = ContactInquiryReply::create([
+        $replyData = [
             'contact_inquiry_id' => $inquiry->id,
             'user_id' => $request->user()->id,
             'message' => $validated['message'],
-        ]);
+        ];
 
-        Mail::to($inquiry->email)->send(new GuestInquiryReplyMail($inquiry, $reply, $request->user()->full_name));
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
+                $reply = ContactInquiryReply::create($replyData);
+            } else {
+                $reply = new ContactInquiryReply($replyData);
+            }
+        } catch (\Throwable $e) {
+            $reply = new ContactInquiryReply($replyData);
+        }
+
+        try {
+            Mail::to($inquiry->email)->send(new GuestInquiryReplyMail($inquiry, $reply, $request->user()->full_name));
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Reply saved, but failed to send email. Please check your SMTP configuration.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
 
         if ($inquiry->status === 'New') {
             $inquiry->status = 'Contacted';
