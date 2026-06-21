@@ -18293,7 +18293,6 @@
 
 .admin-page .admin-responsive-table .admin-audit-table {
   width: 100%;
-  min-width: max(100%, 72rem);
   table-layout: fixed;
 }
 

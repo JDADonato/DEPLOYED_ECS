@@ -100,6 +100,7 @@ class RecordStaffAuditLog
             'POST /api/admin/pricing' => 'Changed pricing override',
             'PUT /api/admin/bookings' => 'Updated a booking',
             'POST /api/admin/bookings' => 'Changed booking financials',
+            'POST /api/admin/menu-items/' => 'Updated a menu item',
             'POST /api/admin/menu-items' => 'Created a menu item',
             'PUT /api/admin/menu-items' => 'Updated a menu item',
             'DELETE /api/admin/menu-items' => 'Archived a menu item',
