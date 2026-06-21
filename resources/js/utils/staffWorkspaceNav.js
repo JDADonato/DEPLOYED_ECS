@@ -17,7 +17,6 @@ export const ADMIN_WORKSPACE_NAV_GROUPS = [
             { id: 'reports', label: 'Reports', description: 'Build exports and formal summaries for admin review.', aliases: ['exports', 'report builder', 'pdf'] },
             { id: 'feedbacks', label: 'Customer Feedbacks', description: 'Review customer satisfaction scores and feedback.', aliases: ['feedbacks', 'reviews', 'testimonials'] },
             { id: 'system-audit', label: 'System & Audit', description: 'Monitor system health, delivery, sessions, and activity logs.', aliases: ['audit', 'logs', 'system'] },
-            { id: 'action-logs', label: 'Activity Logs', description: 'Monitor staff actions and undo dangerous operations.', aliases: ['undo', 'action logs', 'history'] },
             { id: 'settings', label: 'Settings', description: 'Control admin preferences, business profile, and payment rules.', aliases: ['configuration', 'preferences', 'payment rules'] },
         ],
     },
