@@ -31,6 +31,11 @@ class RecordStaffAuditLog
                 return $response;
             }
 
+            $metadata = AuditContext::forRequest($request, $response);
+            if ($request->attributes->has('undo_data')) {
+                $metadata['undo_data'] = $request->attributes->get('undo_data');
+            }
+
             AuditLog::create([
                 'user_id' => $user->id,
                 'username' => $user->username,
@@ -41,7 +46,7 @@ class RecordStaffAuditLog
                 'status_code' => $response->getStatusCode(),
                 'ip_address' => $request->ip(),
                 'user_agent' => Str::limit((string) $request->userAgent(), 500, ''),
-                'metadata' => AuditContext::forRequest($request, $response),
+                'metadata' => $metadata,
             ]);
         } catch (\Throwable $e) {
             Log::warning('Unable to record staff audit log.', [

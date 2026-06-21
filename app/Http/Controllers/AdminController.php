@@ -753,8 +753,7 @@ class AdminController extends Controller
             return response()->json(['error' => 'Only pending bookings can be approved from this screen.'], 422);
         }
 
-        ActionLog::create([
-            'user_id' => $request->user()->id,
+        $request->attributes->set('undo_data', [
             'action_type' => 'update_booking_status',
             'target_type' => Booking::class,
             'target_id' => $booking->id,
@@ -1201,4 +1200,113 @@ class AdminController extends Controller
         Cache::forget('menu_categories');
         Cache::forget('menu_bestsellers');
     }
+
+    public function undoAudit(Request $request, int $id)
+    {
+        $audit = AuditLog::findOrFail($id);
+
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!Hash::check($request->password, $request->user()->password)) {
+            return response()->json(['error' => 'Incorrect password. Undo aborted.'], 403);
+        }
+
+        $undoData = $audit->metadata['undo_data'] ?? null;
+
+        if (!$undoData) {
+            return response()->json(['error' => 'This action cannot be undone.'], 400);
+        }
+
+        $actionType = $undoData['action_type'] ?? null;
+
+        if ($actionType !== 'update_booking_status' && $actionType !== 'delete_announcement') {
+            return response()->json(['error' => 'This type of action cannot be undone.'], 400);
+        }
+
+        // Prevent double-undo
+        $alreadyUndone = AuditLog::whereJsonContains('metadata->undo_data->original_log_id', $audit->id)
+            ->exists();
+
+        if ($alreadyUndone) {
+            return response()->json(['error' => 'This action has already been undone.'], 400);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            if ($actionType === 'update_booking_status') {
+                $booking = Booking::findOrFail($undoData['target_id']);
+                
+                $previousStatus = $undoData['previous_state']['status'] ?? 'Pending';
+                $expectedCurrentStatus = $undoData['new_state']['status'] ?? null;
+
+                if ($booking->status !== $expectedCurrentStatus) {
+                    throw new \Exception('Cannot undo: Booking status has already changed since this action.');
+                }
+                
+                if ($booking->event_date && \Carbon\Carbon::parse($booking->event_date)->isPast()) {
+                    throw new \Exception('Cannot undo: The event date has already passed.');
+                }
+
+                $booking->status = $previousStatus;
+                $booking->save();
+                
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_booking_status',
+                    'target_type' => Booking::class,
+                    'target_id' => $booking->id,
+                    'details' => ['message' => 'Reverted status to ' . $previousStatus],
+                    'previous_state' => ['status' => $expectedCurrentStatus],
+                    'new_state' => ['status' => $previousStatus],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'delete_announcement') {
+                $announcementData = $undoData['previous_state']['announcement'] ?? null;
+                
+                if ($announcementData) {
+                    $existingSlug = \App\Models\Announcement::where('slug', $announcementData['slug'])->first();
+                    if ($existingSlug) {
+                        throw new \Exception('Cannot undo: An announcement with this slug already exists.');
+                    }
+
+                    $announcement = \App\Models\Announcement::create($announcementData);
+                    
+                    $request->attributes->set('undo_data', [
+                        'action_type' => 'undo_delete_announcement',
+                        'target_type' => \App\Models\Announcement::class,
+                        'target_id' => $announcement->id,
+                        'details' => ['message' => 'Restored announcement ' . $announcement->title],
+                        'original_log_id' => $audit->id,
+                    ]);
+                } else {
+                    $announcement = \App\Models\Announcement::withTrashed()->find($undoData['target_id']);
+                    if ($announcement) {
+                        $existingSlug = \App\Models\Announcement::where('slug', $announcement->slug)->where('id', '!=', $announcement->id)->first();
+                        if ($existingSlug) {
+                            throw new \Exception('Cannot undo: An announcement with this slug already exists.');
+                        }
+                        $announcement->restore();
+                        
+                        $request->attributes->set('undo_data', [
+                            'action_type' => 'undo_delete_announcement',
+                            'target_type' => \App\Models\Announcement::class,
+                            'target_id' => $announcement->id,
+                            'details' => ['message' => 'Restored announcement ' . $announcement->title],
+                            'original_log_id' => $audit->id,
+                        ]);
+                    } else {
+                        throw new \Exception('Announcement data not found for restoration.');
+                    }
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+            return response()->json(['message' => 'Action successfully undone.']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            Log::error('Undo failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to undo action: ' . $e->getMessage()], 400);
+        }
 }

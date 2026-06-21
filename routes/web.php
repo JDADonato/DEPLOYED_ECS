@@ -28,7 +28,7 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StaffEventHistoryController;
-use App\Http\Controllers\ActivityLogController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -482,8 +482,7 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('/api/admin/report-templates/{template}/run', [ReportController::class, 'run'])->middleware('throttle:report-heavy');
     Route::get('/api/admin/report-runs/{run}/export', [ReportController::class, 'export'])->middleware('throttle:report-heavy');
     Route::get('/api/admin/audits', [AdminController::class, 'getAudits']);
-    Route::get('/api/admin/action-logs', [ActivityLogController::class, 'index']);
-    Route::post('/api/admin/action-logs/{id}/undo', [ActivityLogController::class, 'undo']);
+    Route::post('/api/admin/audits/{id}/undo', [AdminController::class, 'undoAudit']);
     Route::get('/api/admin/refunds/queue', [AccountingController::class, 'getRefundQueue']);
     Route::post('/api/admin/refund/{bookingId}', [AccountingController::class, 'processRefund'])->middleware('throttle:refund-action');
     Route::post('/api/admin/refund/{bookingId}/{action}', [AccountingController::class, 'refundAction'])->middleware('throttle:refund-action');

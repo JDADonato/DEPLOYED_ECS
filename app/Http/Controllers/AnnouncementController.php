@@ -159,8 +159,7 @@ class AnnouncementController extends Controller
         $announcementData = $announcement->toArray();
         $this->service->deleteDraft($announcement);
         
-        ActionLog::create([
-            'user_id' => auth()->id(),
+        request()->attributes->set('undo_data', [
             'action_type' => 'delete_announcement',
             'target_type' => Announcement::class,
             'target_id' => $announcementData['id'],

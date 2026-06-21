@@ -672,8 +672,7 @@ class MarketingController extends Controller
             default => $booking->review_status ?: 'Submitted',
         };
 
-        ActionLog::create([
-            'user_id' => Auth::id(),
+        $request->attributes->set('undo_data', [
             'action_type' => 'update_booking_status',
             'target_type' => Booking::class,
             'target_id' => $booking->id,

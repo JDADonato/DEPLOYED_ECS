@@ -15,7 +15,7 @@ import CompleteBookingModal from '../Components/staff/CompleteBookingModal';
 import StaffWorkspaceLayout from '../Layouts/StaffWorkspaceLayout';
 import StaffNavbarSearch from '../Components/staff/StaffNavbarSearch';
 import { AdminCommandStrip, AdminPageSurface, AdminResponsiveTable } from '../Components/admin/AdminSurface';
-import ActivityLogPanel from '../Components/admin/ActivityLogPanel';
+import PasswordConfirmModal from '../Components/common/PasswordConfirmModal';
 import StaffEmptyState from '../Components/staff/StaffEmptyState';
 import StaffStatusBadge from '../Components/staff/StaffStatusBadge';
 import { StaffOpsListRow, StaffOpsPanel } from '../Components/staff/StaffOpsUI';
@@ -293,7 +293,7 @@ const ADMIN_EMPLOYEES_URL = '/api/admin/employees';
 const ADMIN_CUSTOMERS_URL = '/api/admin/customers';
 const ADMIN_BOOKINGS_URL = '/api/admin/bookings';
 const CUSTOMER_SUPPORT_TABS = ['customer-lookup', 'customer-dashboard', 'customer-menu', 'customer-payments', 'customer-history', 'customer-messages', 'customer-feedback', 'customer-announcements', 'customer-account-status'];
-const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'tastings', 'finance', 'messages-inquiries', 'guest-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
+const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'tastings', 'finance', 'messages-inquiries', 'guest-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'history', ...CUSTOMER_SUPPORT_TABS];
 const ADMIN_TAB_ALIASES = {
     dashboard: 'today',
     overview: 'today',
@@ -345,7 +345,7 @@ const ADMIN_SEARCH_ALIASES = {
     'analytics-supporting': ['supporting charts', 'descriptive charts', 'charts', 'revenue trend', 'payment breakdown', 'booking status', 'package performance', 'menu performance'],
     reports: ['reports', 'report builder', 'exports', 'summaries', 'pdf'],
     'system-audit': ['system', 'audit', 'audits', 'activity', 'delivery', 'session', 'logs'],
-    'action-logs': ['action logs', 'activity logs', 'undo', 'reversals', 'dangerous actions'],
+
     history: ['history', 'event history', 'completed events', 'notes', 'post-event'],
     settings: ['settings', 'configuration', 'preferences', 'notifications', 'business profile', 'payment rules'],
     profile: ['profile', 'my account', 'account details', 'password', 'contact details'],
@@ -376,7 +376,7 @@ const WORKSPACE_TAB_TO_INTERNAL_TAB = {
         reports: 'reports',
         feedbacks: 'feedbacks',
         'system-audit': 'system-audit',
-        'action-logs': 'action-logs',
+
         settings: 'settings',
         profile: 'profile',
     },
@@ -433,7 +433,7 @@ const LEGACY_TAB_DESTINATIONS = {
     'analytics-supporting': { workspace: 'admin', tab: 'analytics-supporting', analyticsView: 'supporting' },
     reports: { workspace: 'admin', tab: 'reports' },
     'system-audit': { workspace: 'admin', tab: 'system-audit' },
-    'action-logs': { workspace: 'admin', tab: 'action-logs' },
+
     settings: { workspace: 'admin', tab: 'settings' },
     profile: { workspace: 'admin', tab: 'profile' },
     'bookings-intake': { workspace: 'marketing', tab: 'bookings' },
@@ -961,6 +961,33 @@ const DashboardAdmin = () => {
     const [empLoading, setEmpLoading] = useState(false);
     const [customerLoading, setCustomerLoading] = useState(false);
     const [empModal, setEmpModal] = useState({ open: false, mode: 'add', data: null });
+    const [undoModal, setUndoModal] = useState({ open: false, auditId: null, busy: false });
+
+    const confirmUndo = async (password) => {
+        setUndoModal(prev => ({ ...prev, busy: true }));
+        try {
+            const response = await fetch(`/api/admin/audits/${undoModal.auditId}/undo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({ password })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showToast('Action successfully undone.', 'success');
+                setUndoModal({ open: false, auditId: null, busy: false });
+                fetchAudits();
+            } else {
+                showToast(data.error || 'Failed to undo action.', 'error');
+                setUndoModal(prev => ({ ...prev, busy: false }));
+            }
+        } catch (err) {
+            showToast('Network error while undoing.', 'error');
+            setUndoModal(prev => ({ ...prev, busy: false }));
+        }
+    };
     const [temporaryPasswordModal, setTemporaryPasswordModal] = useState({ open: false, userId: null, username: '', email: '', password: '', expiresAt: null, deliveryHint: '', canRevealAgain: false });
     const [empForm, setEmpForm] = useState({ full_name: '', username: '', password: '', role: 'Marketing', email: '', phone: '' });
     const empPasswordEvaluation = useMemo(
@@ -10445,6 +10472,18 @@ const DashboardAdmin = () => {
                                                                         <span className={`admin-audit-result-pill ${result.className}`}>
                                                                             {result.label}
                                                                         </span>
+                                                                        {metadata.undo_data && !metadata.undo_data.original_log_id && (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="ml-2 px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] uppercase font-bold tracking-wider rounded transition-colors"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setUndoModal({ open: true, auditId: audit.id, busy: false });
+                                                                                }}
+                                                                            >
+                                                                                Undo
+                                                                            </button>
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                                 {expanded && (
@@ -10477,14 +10516,18 @@ const DashboardAdmin = () => {
                             </AdminPageSurface>
                         )
                     }
-                    {activeTab === 'action-logs' && (
-                        <AdminPageSurface className="p-6 overflow-y-auto block">
-                            <ActivityLogPanel showToast={showToast} />
-                        </AdminPageSurface>
-                    )}
                 </div>
 
             {/* Employee Add/Edit Modal */}
+            <PasswordConfirmModal
+                isOpen={undoModal.open}
+                busy={undoModal.busy}
+                onCancel={() => setUndoModal({ open: false, auditId: null, busy: false })}
+                onConfirm={confirmUndo}
+                title="Authorize Undo"
+                message="Undoing an action requires elevated verification. Please enter your password to authorize this reversal."
+                confirmText="Authorize & Undo"
+            />
             {
                 empModal.open && (
                     <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
