@@ -64,8 +64,17 @@ class ContactInquiryController extends Controller
         $dateTo = $request->query('date_to');
 
         $query = ContactInquiry::query()
-            ->with(['assignee:id,full_name,username', 'duplicateUser', 'replies', 'replies.user:id,full_name'])
-            ->when($search !== '', function ($query) use ($search) {
+            ->with(['assignee:id,full_name,username', 'duplicateUser']);
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
+                $query->with(['replies', 'replies.user:id,full_name']);
+            }
+        } catch (\Throwable $e) {
+            // Ignore if schema check fails
+        }
+
+        $query->when($search !== '', function ($query) use ($search) {
                 $term = '%'.mb_strtolower($search).'%';
                 $query->where(function ($inner) use ($term) {
                     $inner->whereRaw('LOWER(full_name) LIKE ?', [$term])
@@ -110,8 +119,16 @@ class ContactInquiryController extends Controller
     {
         $user = $request->user();
 
+        $eagerLoads = ['duplicateUser'];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
+                $eagerLoads[] = 'replies';
+                $eagerLoads[] = 'replies.user:id,full_name';
+            }
+        } catch (\Throwable $e) {}
+
         $inquiries = ContactInquiry::query()
-            ->with(['replies', 'replies.user:id,full_name'])
+            ->with($eagerLoads)
             ->where('duplicate_user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
@@ -147,9 +164,17 @@ class ContactInquiryController extends Controller
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry updated.');
 
+        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
+                $eagerLoads[] = 'replies';
+                $eagerLoads[] = 'replies.user:id,full_name';
+            }
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'message' => 'Inquiry updated.',
-            'inquiry' => $this->formatInquiry($inquiry->fresh(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])),
+            'inquiry' => $this->formatInquiry($inquiry->fresh($eagerLoads)),
         ]);
     }
 
@@ -187,9 +212,17 @@ class ContactInquiryController extends Controller
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry replied.');
 
+        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
+                $eagerLoads[] = 'replies';
+                $eagerLoads[] = 'replies.user:id,full_name';
+            }
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'message' => 'Reply sent successfully.',
-            'inquiry' => $this->formatInquiry($inquiry->fresh(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])),
+            'inquiry' => $this->formatInquiry($inquiry->fresh($eagerLoads)),
         ]);
     }
 
