@@ -378,6 +378,7 @@ const WORKSPACE_TAB_TO_INTERNAL_TAB = {
         analytics: 'analytics',
         'analytics-supporting': 'analytics',
         reports: 'reports',
+        feedbacks: 'feedbacks',
         'system-audit': 'system-audit',
         'action-logs': 'action-logs',
         settings: 'settings',
@@ -405,6 +406,8 @@ const WORKSPACE_TAB_TO_INTERNAL_TAB = {
         'public-content': 'public-content',
         availability: 'availability',
         history: 'history',
+        feedbacks: 'feedbacks',
+        settings: 'settings',
     },
     accounting: {
         today: 'accounting-today',
