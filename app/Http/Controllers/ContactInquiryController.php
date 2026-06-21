@@ -64,7 +64,7 @@ class ContactInquiryController extends Controller
         $dateTo = $request->query('date_to');
 
         $query = ContactInquiry::query()
-            ->with(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])
+            ->with(['assignee:id,full_name,username', 'duplicateUser', 'replies', 'replies.user:id,full_name'])
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%'.mb_strtolower($search).'%';
                 $query->where(function ($inner) use ($term) {
