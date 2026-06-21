@@ -145,13 +145,21 @@ class SettingsController extends Controller
 
     public function eventTypes()
     {
-        $version = $this->catalogVersion();
-
-        return response()->json(Cache::remember("catalog.settings.event_types.v{$version}", now()->addMinutes(10), fn () => (
+        return response()->json(
             EventType::query()
                 ->orderBy('label')
                 ->get()
-        )));
+        );
+    }
+
+    public function packages()
+    {
+        return response()->json(
+            Package::query()
+                ->orderBy('type')
+                ->orderBy('name')
+                ->get()
+        );
     }
 
     public function createPackage(Request $request)

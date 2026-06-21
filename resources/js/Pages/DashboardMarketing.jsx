@@ -539,7 +539,7 @@ const DashboardMarketing = () => {
             }, 150);
             return () => window.clearTimeout(backgroundTimer);
         } else if (activeTab === 'public-content') {
-            fetchMarketingSettings();
+            fetchMarketingSettings({ force: true });
         } else if (activeTab === 'availability') {
             fetchAvailabilityOverrides();
         } else if (activeTab === 'bookings' && bookingsScope !== 'all') {
@@ -1086,10 +1086,10 @@ const DashboardMarketing = () => {
                 }),
             ]);
             setMenuItems(menuData.raw || menuData.data || []);
-            const packagePayload = packageData.raw || packageData.data;
-            setPackages(packagePayload.data || packagePayload);
-            const eventPayload = eventData.raw || eventData.data;
-            const types = eventPayload.data || eventPayload;
+            const packagePayload = packageData.raw || packageData.data || [];
+            setPackages(Array.isArray(packagePayload) ? packagePayload : (packagePayload.data || []));
+            const eventPayload = eventData.raw || eventData.data || [];
+            const types = Array.isArray(eventPayload) ? eventPayload : (eventPayload.data || []);
             setEventTypes(types);
             setPackageForm(prev => {
                 const defaultType = prev.type || types[0]?.slug || '';
