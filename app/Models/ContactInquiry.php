@@ -49,4 +49,9 @@ class ContactInquiry extends Model
     {
         return $this->belongsTo(User::class, 'duplicate_user_id');
     }
+
+    public function replies()
+    {
+        return $this->hasMany(ContactInquiryReply::class, 'contact_inquiry_id');
+    }
 }

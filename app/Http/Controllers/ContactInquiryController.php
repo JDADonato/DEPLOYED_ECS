@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactInquiry;
+use App\Models\ContactInquiryReply;
+use App\Models\Notification;
 use App\Models\User;
+use App\Mail\GuestInquiryReplyMail;
 use App\Services\OperationalBroadcastService;
 use App\Support\ResourceVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 
 class ContactInquiryController extends Controller
@@ -60,7 +64,7 @@ class ContactInquiryController extends Controller
         $dateTo = $request->query('date_to');
 
         $query = ContactInquiry::query()
-            ->with(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'])
+            ->with(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%'.mb_strtolower($search).'%';
                 $query->where(function ($inner) use ($term) {
@@ -102,6 +106,21 @@ class ContactInquiryController extends Controller
         ]);
     }
 
+    public function customerIndex(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $inquiries = ContactInquiry::query()
+            ->with(['replies', 'replies.user:id,full_name'])
+            ->where('duplicate_user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'data' => $inquiries->map(fn (ContactInquiry $inquiry) => $this->formatInquiry($inquiry))->values(),
+        ]);
+    }
+
     public function update(Request $request, ContactInquiry $inquiry): JsonResponse
     {
         $validated = $request->validate([
@@ -130,7 +149,47 @@ class ContactInquiryController extends Controller
 
         return response()->json([
             'message' => 'Inquiry updated.',
-            'inquiry' => $this->formatInquiry($inquiry->fresh(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'])),
+            'inquiry' => $this->formatInquiry($inquiry->fresh(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])),
+        ]);
+    }
+
+    public function reply(Request $request, ContactInquiry $inquiry): JsonResponse
+    {
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $reply = ContactInquiryReply::create([
+            'contact_inquiry_id' => $inquiry->id,
+            'user_id' => $request->user()->id,
+            'message' => $validated['message'],
+        ]);
+
+        Mail::to($inquiry->email)->send(new GuestInquiryReplyMail($inquiry, $reply, $request->user()->full_name));
+
+        if ($inquiry->status === 'New') {
+            $inquiry->status = 'Contacted';
+            $inquiry->save();
+        }
+
+        if ($inquiry->duplicate_user_id) {
+            Notification::create([
+                'user_id' => $inquiry->duplicate_user_id,
+                'title' => 'Reply to your inquiry',
+                'message' => 'We have replied to your inquiry: "' . str($inquiry->subject)->limit(40) . '"',
+                'action_url' => '/dashboard',
+                'type' => 'customer_message',
+            ]);
+            // Attempt to broadcast if service exists or user is connected
+            app(OperationalBroadcastService::class)->userSessionInvalidated($inquiry->duplicate_user_id); // small hack to force user state refresh, or we can just let notification handle it.
+        }
+
+        app(OperationalBroadcastService::class)
+            ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry replied.');
+
+        return response()->json([
+            'message' => 'Reply sent successfully.',
+            'inquiry' => $this->formatInquiry($inquiry->fresh(['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status', 'replies', 'replies.user:id,full_name'])),
         ]);
     }
 

@@ -25,6 +25,7 @@ import EventHistoryPanel from '../Components/staff/EventHistoryPanel';
 import NextActionPanel from '../Components/staff/NextActionPanel';
 import RoleSettingsPanel from '../Components/staff/RoleSettingsPanel';
 import AssistedBookingWizard from '../Components/marketing/AssistedBookingWizard';
+import GuestInquiriesManager from '../Components/staff/GuestInquiriesManager';
 import PasswordStrengthField, { PasswordMatchHint } from '../Components/auth/PasswordStrengthField';
 import PasswordUpgradeBanner from '../Components/auth/PasswordUpgradeBanner';
 import { getListData } from '../utils/apiResponses';
@@ -293,7 +294,7 @@ const ADMIN_EMPLOYEES_URL = '/api/admin/employees';
 const ADMIN_CUSTOMERS_URL = '/api/admin/customers';
 const ADMIN_BOOKINGS_URL = '/api/admin/bookings';
 const CUSTOMER_SUPPORT_TABS = ['customer-lookup', 'customer-dashboard', 'customer-menu', 'customer-payments', 'customer-history', 'customer-messages', 'customer-feedback', 'customer-announcements', 'customer-account-status'];
-const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
+const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'guest-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
 const ADMIN_TAB_ALIASES = {
     dashboard: 'today',
     overview: 'today',
@@ -398,7 +399,7 @@ const WORKSPACE_TAB_TO_INTERNAL_TAB = {
     marketing: {
         today: 'marketing-today',
         bookings: 'bookings-intake',
-        leads: 'messages-inquiries',
+        leads: 'guest-inquiries',
         tastings: 'tastings',
         calendar: 'calendar',
         handoff: 'handoff',
@@ -9910,8 +9911,13 @@ const DashboardAdmin = () => {
                     {activeTab === 'handoff' && (
                         <AdminPageSurface>
                             <Suspense fallback={<StaffSkeleton variant="panel" rows={3} label="Loading handoff board" />}>
-                                <PreparationBoard surfaceMode="admin-full" />
+                                <PreparationBoard surfaceMode="admin-full" onToast={(message, type) => type === 'error' ? toast.error(message) : toast.success(message)} />
                             </Suspense>
+                        </AdminPageSurface>
+                    )}
+                    {activeTab === 'guest-inquiries' && (
+                        <AdminPageSurface>
+                            <GuestInquiriesManager />
                         </AdminPageSurface>
                     )}
                     {activeTab === 'tastings' && (

@@ -274,6 +274,7 @@ Route::middleware(['auth', 'role:Client'])->group(function () {
 
     Route::get('/api/dashboard/client', [ClientDashboardController::class, 'apiData']);
     Route::get('/api/customer/journey-tracker', [ClientDashboardController::class, 'journeyTracker']);
+    Route::get('/api/customer/my-inquiries', [App\Http\Controllers\ContactInquiryController::class, 'customerIndex']);
 
     // Booking API endpoints (JSON responses for React AJAX calls)
     Route::post('/api/bookings', [BookingController::class, 'store'])->middleware('throttle:10,1');
@@ -346,6 +347,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::post('/api/marketing/bookings/assisted', [MarketingController::class, 'createAssistedBooking']);
     Route::get('/api/marketing/contact-inquiries', [ContactInquiryController::class, 'index']);
     Route::patch('/api/marketing/contact-inquiries/{inquiry}', [ContactInquiryController::class, 'update']);
+    Route::post('/api/marketing/contact-inquiries/{inquiry}/reply', [ContactInquiryController::class, 'reply']);
     Route::put('/api/marketing/bookings/{id}/status', [MarketingController::class, 'updateStatus']);
     Route::post('/api/marketing/bookings/{id}/complete', [MarketingController::class, 'complete']);
     Route::put('/api/marketing/bookings/{id}/assign', [MarketingController::class, 'assign']);

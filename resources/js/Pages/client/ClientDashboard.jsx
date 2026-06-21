@@ -15,6 +15,7 @@ import { saveBookingDraft } from '../../hooks/useBookingDraft';
 import { LiveSyncIndicator, SoftRefreshBoundary } from '../../Components/common/LiveFeedback';
 import { operationalChannelsForUser } from '../../utils/liveChannels';
 import csrfFetch from '../../utils/csrf';
+import CustomerInquiriesPanel from '../Components/client/CustomerInquiriesPanel';
 
 const ReceiptModal = lazy(() => import('../../Components/common/ReceiptModal'));
 
@@ -27,7 +28,7 @@ const menuCategories = [
     { id: 'dessert', label: 'Desserts' },
     { id: 'drink', label: 'Refreshments' },
 ];
-const dashboardSections = ['details', 'menu', 'payments', 'history'];
+const dashboardSections = ['details', 'menu', 'payments', 'history', 'inquiries'];
 const liveStatusSteps = [
     { status: 'Not Started', label: 'Not started', description: 'Approved and waiting for event-day movement.' },
     { status: 'On the Way', label: 'On the way', description: 'The Eloquente team is traveling to your venue.' },
@@ -2097,6 +2098,7 @@ const ClientDashboard = () => {
                                     { id: 'menu', label: 'Menu', needsWork: activeJourneySteps.some(s => s.label === 'Menu selection' && !s.done), icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
                                     { id: 'payments', label: 'Payments', needsWork: activeBooking.nextPaymentDue, icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 1 1 -4 0 a 2 2 0 0 1 4 0z' },
                                     { id: 'history', label: 'History', needsWork: false, icon: 'M12 8v4l3 3m6-3a9 9 0 1 1 -18 0 a 9 9 0 0 1 18 0z' },
+                                    { id: 'inquiries', label: 'Inquiries', needsWork: false, icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
                                 ].map(section => (
                                     <button 
                                         key={section.id} 
@@ -2323,314 +2325,12 @@ const ClientDashboard = () => {
                                         />
                                     )}
 
-                                    {false && activeSection === 'details' && (
-                                        <div id="event-details-panel" className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                                            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                <div>
-                                                    <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Event details</p>
-                                                    <h3 className="mt-1 text-xl font-bold font-display text-[#1a1a1a]">Planning notes</h3>
-                                                </div>
-                                                {activeBooking.canEditSupplementary && (
-                                                    <div className="flex gap-2">
-                                                        {detailsEditMode ? (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setDetailsEditMode(false);
-                                                                        setActiveDetailRow(null);
-                                                                    }}
-                                                                    className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={saveEventDetails}
-                                                                    disabled={savingDetails}
-                                                                    className="rounded-xl bg-[#720101] px-5 py-2 text-xs font-black uppercase tracking-widest text-white shadow-sm hover:bg-[#5a0101] disabled:opacity-50"
-                                                                >
-                                                                    {savingDetails ? 'Saving...' : 'Save'}
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setDetailsEditMode(true);
-                                                                    setActiveDetailRow('venue');
-                                                                }}
-                                                                className="rounded-xl bg-[#1a1a1a] px-5 py-2 text-xs font-black uppercase tracking-widest text-white shadow-sm hover:bg-black"
-                                                            >
-                                                                Edit Details
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            {!activeBooking.canEditSupplementary && activeBooking.status !== 'Cancelled' && (
-                                                <div className="mb-6 p-4 rounded-xl flex items-start gap-3 bg-red-50 border border-red-100">
-                                                    <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-red-800">Hard Freeze Active</p>
-                                                        <p className="text-xs text-red-700 mt-1">Your event details are currently locked as our team is making final preparations. If you need to make an urgent change, please use the messaging module to contact your Marketing Executive directly.</p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {(() => {
-                                                const detailFields = [
-                                                    { id: 'venue', label: 'Venue Address', value: detailsForm.venue_address_line, type: 'text', key: 'venue_address_line', placeholder: 'Complete venue address' },
-                                                    { id: 'color_motif', label: 'Color Motif', value: detailsForm.color_motif, type: 'text', key: 'color_motif', placeholder: 'e.g., Royal Gold and Deep Navy' },
-                                                    { id: 'reservation_time', label: 'Reservation Time', value: detailsForm.reservation_time, type: 'text', key: 'reservation_time', placeholder: 'e.g., 4:00 PM' },
-                                                    { id: 'serving_time', label: 'Serving Time', value: detailsForm.serving_time, type: 'text', key: 'serving_time', placeholder: 'e.g., 6:30 PM' },
-                                                    { id: 'event_timeline', label: 'Event Timeline / Program', value: detailsForm.event_timeline, type: 'textarea', key: 'event_timeline', placeholder: 'Outline your program here' },
-                                                    { id: 'special_instructions', label: 'Special Instructions & Allergies', value: detailsForm.special_instructions, type: 'textarea', key: 'special_instructions', placeholder: 'Dietary restrictions, guest count adjustments, access notes, etc.' },
-                                                ];
-                                                const filledFields = detailFields.filter(field => String(field.value || '').trim());
-                                                const filledCount = filledFields.length + (detailsForm.theme_uploads ? 1 : 0);
-                                                const missingCount = detailFields.length + 1 - filledCount;
-
-                                                if (!detailsEditMode) {
-                                                    return (
-                                                        <div className="space-y-5">
-                                                            <div className="rounded-2xl border border-[#720101]/10 bg-[#faf7f2]/70 p-5">
-                                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                                    <div>
-                                                                        <p className="text-sm font-black text-[#1a1a1a]">{filledCount ? `${filledCount} planning detail${filledCount > 1 ? 's' : ''} added` : 'No planning notes added yet'}</p>
-                                                                        <p className="mt-1 text-sm font-semibold text-gray-500">{missingCount ? `${missingCount} optional detail${missingCount > 1 ? 's are' : ' is'} still blank.` : 'All planning fields have been filled.'}</p>
-                                                                    </div>
-                                                                    {activeBooking.canEditSupplementary && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setDetailsEditMode(true);
-                                                                                setActiveDetailRow('venue');
-                                                                            }}
-                                                                            className="rounded-xl bg-[#720101] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-sm hover:bg-[#5a0101]"
-                                                                        >
-                                                                            Update Notes
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {filledCount > 0 && (
-                                                                <div className="grid gap-3 md:grid-cols-2">
-                                                                    {filledFields.map(field => (
-                                                                        <div key={field.id} className="rounded-2xl border border-gray-100 bg-white p-4">
-                                                                            <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">{field.label}</p>
-                                                                            <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-6 text-gray-900">{field.value}</p>
-                                                                        </div>
-                                                                    ))}
-                                                                    {detailsForm.theme_uploads && (
-                                                                        <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                                                                            <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Inspiration Image</p>
-                                                                            <a href={detailsForm.theme_uploads} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-sm font-black text-[#720101] hover:text-[#5a0101]">View uploaded reference</a>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <div className="space-y-5">
-                                                        <div className="grid gap-4 md:grid-cols-2">
-                                                            {detailFields.map(field => (
-                                                                <label key={field.id} className={field.type === 'textarea' ? 'block md:col-span-2' : 'block'}>
-                                                                    <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">{field.label}</span>
-                                                                    {field.type === 'textarea' ? (
-                                                                        <textarea
-                                                                            rows={4}
-                                                                            value={detailsForm[field.key] || ''}
-                                                                            onChange={(event) => setDetailsForm(prev => ({ ...prev, [field.key]: event.target.value }))}
-                                                                            placeholder={field.placeholder}
-                                                                            className="mt-2 w-full resize-none rounded-2xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-semibold leading-6 text-gray-900 outline-none transition focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
-                                                                        />
-                                                                    ) : (
-                                                                        <input
-                                                                            value={detailsForm[field.key] || ''}
-                                                                            onChange={(event) => setDetailsForm(prev => ({ ...prev, [field.key]: event.target.value }))}
-                                                                            placeholder={field.placeholder}
-                                                                            className="mt-2 h-12 w-full rounded-2xl border border-[#720101]/10 bg-white px-4 text-sm font-semibold text-gray-900 outline-none transition focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
-                                                                        />
-                                                                    )}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-
-                                                        <div className="rounded-2xl border border-dashed border-[#720101]/20 bg-[#faf7f2]/60 p-5">
-                                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                                <div>
-                                                                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-500">Inspiration Image</p>
-                                                                    <p className="mt-1 text-sm font-semibold text-gray-600">{detailsForm.theme_uploads ? 'Reference image uploaded.' : 'Optional mood board, theme sample, or layout reference.'}</p>
-                                                                </div>
-                                                                <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#720101] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#5a0101]">
-                                                                    {uploadingImage ? 'Uploading...' : detailsForm.theme_uploads ? 'Replace Image' : 'Upload Image'}
-                                                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(event) => uploadInspirationImage(event.target.files?.[0])} />
-                                                                </label>
-                                                            </div>
-                                                            {detailsForm.theme_uploads && (
-                                                                <SmartImage src={detailsForm.theme_uploads} alt="Event inspiration" aspectRatio="16 / 9" containerClassName="mt-4 h-44 rounded-2xl" />
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            <div className="hidden">
-                                                {[
-                                                    { id: 'venue', label: 'Venue Address', value: detailsForm.venue_address_line, type: 'text', key: 'venue_address_line', placeholder: 'Complete Venue Address', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
-                                                    { id: 'color_motif', label: 'Color Motif', value: detailsForm.color_motif, type: 'text', key: 'color_motif', placeholder: 'e.g., Royal Gold & Deep Navy', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
-                                                    { id: 'reservation_time', label: 'Reservation Time', value: detailsForm.reservation_time, type: 'text', key: 'reservation_time', placeholder: 'e.g., 4:00 PM', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                                                    { id: 'serving_time', label: 'Serving Time', value: detailsForm.serving_time, type: 'text', key: 'serving_time', placeholder: 'e.g., 6:30 PM', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' },
-                                                    { id: 'event_timeline', label: 'Event Timeline / Program', value: detailsForm.event_timeline, type: 'textarea', key: 'event_timeline', placeholder: 'Outline your program here...', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-                                                    { id: 'special_instructions', label: 'Special Instructions & Allergies', value: detailsForm.special_instructions, type: 'textarea', key: 'special_instructions', placeholder: 'Dietary restrictions, guest count adjustments, etc.', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-                                                ].map(field => {
-                                                    const isExpanded = activeDetailRow === field.id;
-                                                    return (
-                                                        <div 
-                                                            key={field.id}
-                                                            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${isExpanded && detailsEditMode ? 'border-[#720101] bg-white shadow-xl shadow-[#720101]/5 p-6' : 'border-gray-100 bg-[#faf7f2]/40 p-5'} ${detailsEditMode ? 'cursor-pointer hover:border-[#720101]/30 hover:bg-white hover:shadow-md' : ''}`}
-                                                            onClick={() => { if (!isExpanded && activeBooking.canEditSupplementary && detailsEditMode) setActiveDetailRow(field.id); }}
-                                                        >
-                                                            <div className="flex items-start gap-4">
-                                                                <div className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors sm:flex ${isExpanded && detailsEditMode ? 'bg-[#720101] text-white' : 'bg-white text-[#720101] group-hover:bg-[#720101]/10 shadow-sm border border-gray-100'}`}>
-                                                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={field.icon} /></svg>
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center justify-between gap-4">
-                                                                        <h4 className={`text-xs font-black uppercase tracking-[0.15em] transition-colors ${isExpanded ? 'text-[#720101]' : 'text-gray-400 group-hover:text-gray-600'}`}>{field.label}</h4>
-                                                                        {!isExpanded && detailsEditMode && (
-                                                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {(!isExpanded || !detailsEditMode) && (
-                                                                        <p className="mt-1 text-sm font-bold text-gray-900 truncate pr-4">
-                                                                            {field.value ? field.value : <span className="text-gray-300 italic font-medium">Not filled</span>}
-                                                                        </p>
-                                                                    )}
-                                                                    {isExpanded && detailsEditMode && (
-                                                                        <div className="mt-4 animate-fadeIn">
-                                                                            {field.type === 'textarea' ? (
-                                                                                <textarea 
-                                                                                    autoFocus
-                                                                                    className="w-full bg-gray-50 border-0 border-b-2 border-gray-200 rounded-t-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-[#720101] focus:ring-0 focus:bg-white transition-all resize-none h-32"
-                                                                                    value={detailsForm[field.key] || ''}
-                                                                                    onChange={(e) => setDetailsForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                                                    placeholder={field.placeholder}
-                                                                                />
-                                                                            ) : (
-                                                                                <input 
-                                                                                    autoFocus
-                                                                                    className="w-full bg-gray-50 border-0 border-b-2 border-gray-200 rounded-t-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-[#720101] focus:ring-0 focus:bg-white transition-all h-12"
-                                                                                    value={detailsForm[field.key] || ''}
-                                                                                    onChange={(e) => setDetailsForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                                                                    placeholder={field.placeholder}
-                                                                                />
-                                                                            )}
-                                                                            <div className="mt-4 flex justify-end gap-3">
-                                                                                <button 
-                                                                                    type="button" 
-                                                                                    onClick={(e) => { e.stopPropagation(); setActiveDetailRow(null); }} 
-                                                                                    className="rounded-xl border border-gray-200 bg-white px-5 py-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors shadow-sm"
-                                                                                >
-                                                                                    Confirm
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                                
-                                                {/* Image Upload Accordion */}
-                                                <div 
-                                                    className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${activeDetailRow === 'image' && detailsEditMode ? 'border-[#720101] bg-white shadow-xl shadow-[#720101]/5 p-6' : 'border-gray-100 bg-[#faf7f2]/40 p-5'} ${detailsEditMode ? 'cursor-pointer hover:border-[#720101]/30 hover:bg-white hover:shadow-md' : ''}`}
-                                                    onClick={() => { if (activeDetailRow !== 'image' && activeBooking.canEditSupplementary && detailsEditMode) setActiveDetailRow('image'); }}
-                                                >
-                                                    <div className="flex items-start gap-4">
-                                                        <div className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors sm:flex ${activeDetailRow === 'image' && detailsEditMode ? 'bg-[#720101] text-white' : 'bg-white text-[#720101] group-hover:bg-[#720101]/10 shadow-sm border border-gray-100'}`}>
-                                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center justify-between gap-4">
-                                                                <h4 className={`text-xs font-black uppercase tracking-[0.15em] transition-colors ${activeDetailRow === 'image' ? 'text-[#720101]' : 'text-gray-400 group-hover:text-gray-600'}`}>Inspiration Image</h4>
-                                                                {activeDetailRow !== 'image' && detailsEditMode && (
-                                                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            {(activeDetailRow !== 'image' || !detailsEditMode) && (
-                                                                <p className="mt-1 text-sm font-bold text-gray-900 truncate pr-4">
-                                                                    {detailsForm.theme_uploads ? <span className="text-green-600 flex items-center gap-1.5"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>Image uploaded</span> : <span className="text-gray-300 italic font-medium">No image uploaded</span>}
-                                                                </p>
-                                                            )}
-                                                            {activeDetailRow === 'image' && detailsEditMode && (
-                                                                <div className="mt-4 animate-fadeIn">
-                                                                    <div className="flex flex-col gap-6">
-                                                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                                            <p className="text-sm font-medium text-gray-500 leading-relaxed max-w-xs">Upload a mood board, theme sample, or layout reference for our team.</p>
-                                                                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#720101] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#720101]/20 hover:bg-[#5a0101] transition-all active:scale-95">
-                                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                                                                {uploadingImage ? 'Uploading...' : 'Upload Image'}
-                                                                                <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => uploadInspirationImage(e.target.files?.[0])} />
-                                                                            </label>
-                                                                        </div>
-                                                                        
-                                                                        {detailsForm.theme_uploads && (
-                                                                            <div className="relative group/img aspect-video sm:aspect-auto sm:h-64 overflow-hidden rounded-2xl border-4 border-white shadow-lg">
-                                                                                <SmartImage src={detailsForm.theme_uploads} alt="Event inspiration" aspectRatio="16 / 9" containerClassName="h-full" />
-                                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                                                                    <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-white/30">Current Reference</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-
-                                                                        <div className="flex justify-end pt-2">
-                                                                            <button 
-                                                                                type="button" 
-                                                                                onClick={(e) => { e.stopPropagation(); setActiveDetailRow(null); }} 
-                                                                                className="rounded-xl border border-gray-200 bg-white px-5 py-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors shadow-sm"
-                                                                            >
-                                                                                Confirm
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {false && activeBooking.canEditSupplementary && detailsEditMode && (
-                                                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-                                                    <button onClick={saveEventDetails} disabled={savingDetails} className="group relative bg-[#1a1a1a] hover:bg-black text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 overflow-hidden">
-                                                        <span className="relative z-10 flex items-center gap-2">
-                                                            {savingDetails ? (
-                                                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                            ) : (
-                                                                <svg className="w-4 h-4 text-[#f0aa0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                                                            )}
-                                                            {savingDetails ? 'Synchronizing...' : 'Save All Details'}
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                    {activeSection === 'history' && (
+                                        <HistoryPanel bookings={data.historyBookings} user={user} />
                                     )}
 
-                                    {activeSection === 'history' && (
-                                        <HistoryPanel bookings={data.historyBookings.slice(0, 10)} user={user} />
+                                    {activeSection === 'inquiries' && (
+                                        <CustomerInquiriesPanel />
                                     )}
 
                                     {activeSection === 'menu' && (
