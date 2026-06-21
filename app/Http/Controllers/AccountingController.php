@@ -64,6 +64,7 @@ class AccountingController extends Controller
             'client_phone',
             'event_name',
             'event_type',
+            'selected_menu',
             'created_at',
         ];
 

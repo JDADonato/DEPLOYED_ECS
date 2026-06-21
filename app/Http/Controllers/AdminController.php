@@ -689,6 +689,7 @@ class AdminController extends Controller
                 'clarification_responded_at',
                 'reviewed_at',
                 'live_status',
+                'selected_menu',
                 'created_at',
             ])
             ->with([

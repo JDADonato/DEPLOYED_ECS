@@ -6576,95 +6576,78 @@ const DashboardAdmin = () => {
                         </>
                     ) : (
                         <>
-                            <div className="flex flex-col h-full">
-                                <div className="flex gap-6 border-b border-gray-100 mb-6 px-4 pt-2 shrink-0">
-                                    <button type="button" onClick={() => setCatalogDrawerTab('basics')} className={`pb-3 text-xs font-black uppercase tracking-widest transition-colors ${catalogDrawerTab === 'basics' ? 'text-[#720101] border-b-2 border-[#720101]' : 'text-gray-400 hover:text-gray-800'}`}>Basic Details</button>
-                                    <button type="button" onClick={() => setCatalogDrawerTab('display')} className={`pb-3 text-xs font-black uppercase tracking-widest transition-colors ${catalogDrawerTab === 'display' ? 'text-[#720101] border-b-2 border-[#720101]' : 'text-gray-400 hover:text-gray-800'}`}>Display & Visuals</button>
-                                    <button type="button" onClick={() => setCatalogDrawerTab('security')} className={`pb-3 text-xs font-black uppercase tracking-widest transition-colors ${catalogDrawerTab === 'security' ? 'text-[#720101] border-b-2 border-[#720101]' : 'text-gray-400 hover:text-gray-800'}`}>Security & Notes</button>
+                            <section className="staff-drawer-section">
+                                <p className="staff-section-title">Basic Details</p>
+                                <div className="mt-4 grid gap-3">
+                                    <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                        Event Type Name
+                                        <input required value={eventTypeForm.label} onChange={e => setEventTypeForm({ ...eventTypeForm, label: e.target.value })} placeholder="e.g. Anniversary" className="staff-control font-normal py-3" />
+                                    </label>
                                 </div>
-                                <div className="px-4 flex-1 flex flex-col pb-6 overflow-hidden">
-                                    {catalogDrawerTab === 'basics' && (
-                                        <div className="flex-1 flex flex-col gap-5 overflow-y-auto custom-scrollbar pr-2">
-                                            <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                Event Type Name
-                                                <input required value={eventTypeForm.label} onChange={e => setEventTypeForm({ ...eventTypeForm, label: e.target.value })} placeholder="e.g. Anniversary" className="staff-control font-normal py-3" />
-                                            </label>
-                                            <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                Package Category
-                                                <div className="relative">
-                                                    <select value={eventTypeForm.package_category} onChange={e => setEventTypeForm({ ...eventTypeForm, package_category: e.target.value })} className="staff-control font-normal py-3 appearance-none w-full bg-white pr-10">
-                                                        {PACKAGE_CATEGORY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                                    </select>
-                                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                                                    </div>
+                            </section>
+
+                            <section className="staff-drawer-section">
+                                <p className="staff-section-title">Display & Visuals</p>
+                                <div className="mt-4 grid gap-5">
+                                    <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                        Description
+                                        <textarea value={eventTypeForm.description} onChange={e => setEventTypeForm({ ...eventTypeForm, description: e.target.value })} placeholder="Short description of the event type" className="staff-control font-normal resize-none p-4 custom-scrollbar min-h-[120px]" />
+                                    </label>
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Image Link
+                                            <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="/images/..." className="staff-control font-normal py-3" />
+                                        </label>
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Upload Image (Overrides Link)
+                                            <div className="relative mt-0.5">
+                                                <input type="file" accept="image/*" onChange={e => setEventTypeForm({ ...eventTypeForm, image_file: e.target.files[0] })} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                                <div className="flex items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 px-4 py-2 hover:bg-gray-50 transition-colors h-[46px] overflow-hidden">
+                                                    <span className="flex items-center justify-center rounded-full bg-white shadow-sm p-1.5 text-gray-500 shrink-0">
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                                    </span>
+                                                    <span className="text-sm font-medium text-gray-600 truncate">
+                                                        {eventTypeForm.image_file ? eventTypeForm.image_file.name : 'Choose image...'}
+                                                    </span>
                                                 </div>
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {catalogDrawerTab === 'display' && (
-                                        <div className="flex-1 flex flex-col gap-5 h-full overflow-hidden">
-                                            <label className="flex-1 flex flex-col gap-1.5 text-xs font-bold text-gray-700 min-h-[150px]">
-                                                Description
-                                                <textarea value={eventTypeForm.description} onChange={e => setEventTypeForm({ ...eventTypeForm, description: e.target.value })} placeholder="Short description of the event type" className="staff-control font-normal flex-1 resize-none p-4 custom-scrollbar" />
-                                            </label>
-                                            <div className="grid gap-5 sm:grid-cols-2 shrink-0">
-                                                <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Image Link
-                                                    <input value={eventTypeForm.image} onChange={e => setEventTypeForm({ ...eventTypeForm, image: e.target.value })} placeholder="/images/..." className="staff-control font-normal py-3" />
-                                                </label>
-                                                <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Upload Image (Overrides Link)
-                                                    <div className="relative mt-0.5">
-                                                        <input type="file" accept="image/*" onChange={e => setEventTypeForm({ ...eventTypeForm, image_file: e.target.files[0] })} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                                        <div className="flex items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 px-4 py-2 hover:bg-gray-50 transition-colors h-[46px] overflow-hidden">
-                                                            <span className="flex items-center justify-center rounded-full bg-white shadow-sm p-1.5 text-gray-500 shrink-0">
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                                            </span>
-                                                            <span className="text-sm font-medium text-gray-600 truncate">
-                                                                {eventTypeForm.image_file ? eventTypeForm.image_file.name : 'Choose image...'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </label>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {catalogDrawerTab === 'security' && (
-                                        <div className="flex-1 flex flex-col gap-5 h-full overflow-hidden">
-                                            <div className="grid gap-5 sm:grid-cols-2 shrink-0">
-                                                <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Security Type
-                                                    <div className="relative">
-                                                        <select value={eventTypeForm.security_type} onChange={e => setEventTypeForm({ ...eventTypeForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond' })} className="staff-control font-normal py-3 appearance-none w-full bg-white pr-10">
-                                                            {SECURITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                                <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Security Label
-                                                    <input value={eventTypeForm.security_label} onChange={e => setEventTypeForm({ ...eventTypeForm, security_label: e.target.value })} placeholder="e.g. Php 1,500 Cash Bond" className="staff-control font-normal py-3" />
-                                                </label>
-                                            </div>
-                                            <div className="flex-1 flex flex-col sm:flex-row gap-5 min-h-[150px]">
-                                                <label className="flex-1 flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Security Explanation
-                                                    <textarea value={eventTypeForm.security_description} onChange={e => setEventTypeForm({ ...eventTypeForm, security_description: e.target.value })} placeholder="Explain the security term to the customer" className="staff-control font-normal flex-1 resize-none p-4 custom-scrollbar" />
-                                                </label>
-                                                <label className="flex-1 flex flex-col gap-1.5 text-xs font-bold text-gray-700">
-                                                    Applicable Setups
-                                                    <textarea value={eventTypeForm.applicable_setups} onChange={e => setEventTypeForm({ ...eventTypeForm, applicable_setups: e.target.value })} placeholder="Applicable setups, one per line" className="staff-control font-normal flex-1 resize-none p-4 custom-scrollbar whitespace-pre-wrap" />
-                                                </label>
-                                            </div>
-                                        </div>
-                                    )}
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
+
+                            <section className="staff-drawer-section">
+                                <p className="staff-section-title">Security & Notes</p>
+                                <div className="mt-4 grid gap-5">
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Security Type
+                                            <div className="relative">
+                                                <select value={eventTypeForm.security_type} onChange={e => setEventTypeForm({ ...eventTypeForm, security_type: e.target.value, security_label: e.target.value === 'contingency' ? 'Contingency (Global Rate)' : 'Php 1,500 Cash Bond' })} className="staff-control font-normal py-3 appearance-none w-full bg-white pr-10">
+                                                    {SECURITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Security Label
+                                            <input value={eventTypeForm.security_label} onChange={e => setEventTypeForm({ ...eventTypeForm, security_label: e.target.value })} placeholder="e.g. Php 1,500 Cash Bond" className="staff-control font-normal py-3" />
+                                        </label>
+                                    </div>
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Security Explanation
+                                            <textarea value={eventTypeForm.security_description} onChange={e => setEventTypeForm({ ...eventTypeForm, security_description: e.target.value })} placeholder="Explain the security term to the customer" className="staff-control font-normal resize-none p-4 custom-scrollbar min-h-[120px]" />
+                                        </label>
+                                        <label className="flex flex-col gap-1.5 text-xs font-bold text-gray-700">
+                                            Applicable Setups
+                                            <textarea value={eventTypeForm.applicable_setups} onChange={e => setEventTypeForm({ ...eventTypeForm, applicable_setups: e.target.value })} placeholder="Applicable setups, one per line" className="staff-control font-normal resize-none p-4 custom-scrollbar whitespace-pre-wrap min-h-[120px]" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </section>
                         </>
                     )}
                 </div>
