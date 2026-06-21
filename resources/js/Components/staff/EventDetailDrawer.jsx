@@ -299,7 +299,7 @@ const EventDetailDrawer = ({
                     {activeTab === 'menu' && (
                         <section className="rounded-lg border border-slate-100 bg-white p-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Menu and package</p>
-                            <p className="text-sm font-black text-slate-900">{booking.package_name || booking.package || booking.event_type || 'Package pending'}</p>
+                            <p className="text-sm font-black text-slate-900">{booking.package_name || (typeof booking.package === 'object' ? booking.package?.name : booking.package) || booking.event_type || 'Package pending'}</p>
                             {dishes.length === 0 ? (
                                 <p className="mt-3 rounded-lg bg-slate-50/50 p-3 text-sm font-semibold text-slate-500 italic">No dishes selected yet.</p>
                             ) : (
