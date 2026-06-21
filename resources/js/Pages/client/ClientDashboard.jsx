@@ -1922,7 +1922,7 @@ const ClientDashboard = () => {
                         ></div>
                         
                         {/* Modal Content */}
-                        <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl border-2 border-[#f0aa0b] bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
+                        <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
                             {/* Decorative background element */}
                             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl pointer-events-none"></div>
                             
@@ -1935,12 +1935,9 @@ const ClientDashboard = () => {
                                 </svg>
                             </button>
 
-                            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                                 <div className="max-w-md">
                                     <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
-                                        <svg className="h-4 w-4 text-[#720101]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                        </svg>
                                         <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
                                     </div>
                                     <h2 className="text-3xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
@@ -1963,7 +1960,7 @@ const ClientDashboard = () => {
                                             ['communication_rating', 'Communication'],
                                             ['value_rating', 'Value'],
                                         ].map(([field, label]) => (
-                                            <label key={field} className="block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80">
+                                            <label key={field} className={`block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80 ${field === 'rating' ? 'sm:col-span-2' : ''}`}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">{label}</span>
                                                     <span className="rounded-full bg-[#fffaf3] px-2 py-0.5 text-[10px] font-black text-[#a16207]">{feedbackForm[field]} / 5</span>
