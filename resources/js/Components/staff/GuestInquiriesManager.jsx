@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { formatDate } from '../../utils/dashboardUtils';
 import useSmartResource from '../../hooks/useSmartResource';
@@ -173,12 +174,12 @@ export default function GuestInquiriesManager() {
                 <StaffPagination page={leadData.meta.current_page} perPage={leadData.meta.per_page} total={leadData.meta.total} onPageChange={(page) => updateFilter('page', page)} onPerPageChange={(perPage) => updateFilter('per_page', perPage)} />
             </div>
 
-            {selectedLead && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedLead(null)}>
+            {selectedLead && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedLead(null)}>
                      <aside className="animate-in slide-in-from-right duration-300 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
                          
                          {/* Header */}
-                         <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/80 p-6 backdrop-blur-md">
+                         <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/80 p-6 backdrop-blur-md pt-8">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#720101] to-[#a30000] text-xl font-black text-white shadow-lg ring-4 ring-rose-50">
                                     {selectedLead.full_name.charAt(0).toUpperCase()}
@@ -302,7 +303,7 @@ export default function GuestInquiriesManager() {
                         </div>
                     </aside>
                 </div>
-            )}
+            , document.body)}
         </div>
     );
 }
