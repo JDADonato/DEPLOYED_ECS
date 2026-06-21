@@ -10469,7 +10469,7 @@ const DashboardAdmin = () => {
                                                                         </span>
                                                                     </td>
                                                                     <td className="admin-audit-result">
-                                                                        <div className="flex flex-col items-start gap-1.5">
+                                                                        <div className="flex flex-col items-center gap-1.5 w-full">
                                                                             <span className={`admin-audit-result-pill ${result.className}`}>
                                                                                 {result.label}
                                                                             </span>
