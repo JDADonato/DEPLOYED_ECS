@@ -213,10 +213,7 @@ class ContactInquiryController extends Controller
             $inquiry->save();
         }
 
-        if ($inquiry->duplicate_user_id) {
-            // Attempt to broadcast if service exists or user is connected
-            app(OperationalBroadcastService::class)->userSessionInvalidated($inquiry->duplicate_user_id); // small hack to force user state refresh, or we can just let notification handle it.
-        }
+        // Empty - removed hallucinated method call
 
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry replied.');
