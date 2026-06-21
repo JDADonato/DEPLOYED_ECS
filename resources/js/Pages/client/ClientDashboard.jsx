@@ -1935,8 +1935,8 @@ const ClientDashboard = () => {
                                 </svg>
                             </button>
 
-                            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                                <div className="max-w-md">
+                            <div className="relative flex flex-col items-center justify-center gap-8 text-center">
+                                <div className="max-w-2xl mx-auto flex flex-col items-center">
                                     <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
                                         <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
                                     </div>
@@ -1950,7 +1950,7 @@ const ClientDashboard = () => {
                                         event.preventDefault();
                                         submitFeedback(feedbackRequests[0].token);
                                     }}
-                                    className="w-full flex flex-col gap-5 lg:max-w-xl"
+                                    className="w-full flex flex-col gap-5 max-w-xl mx-auto"
                                 >
                                     {/* Prominent Overall Rating */}
                                     <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-white/60 p-5 shadow-sm backdrop-blur-md transition-all hover:bg-white/80">
