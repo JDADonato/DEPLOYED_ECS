@@ -381,6 +381,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::get('/api/calendar-availability', [CalendarAvailabilityController::class, 'index']);
     Route::put('/api/calendar-availability/{date}', [CalendarAvailabilityController::class, 'upsert']);
     Route::delete('/api/calendar-availability/{date}', [CalendarAvailabilityController::class, 'destroy']);
+    Route::get('/api/settings/packages', [SettingsController::class, 'packages']);
     Route::post('/api/settings/packages', [SettingsController::class, 'createPackage']);
     Route::put('/api/settings/packages/{id}', [SettingsController::class, 'updatePackage']);
     Route::patch('/api/settings/packages/{id}/archive', [SettingsController::class, 'archivePackage']);

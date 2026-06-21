@@ -1074,7 +1074,7 @@ const DashboardMarketing = () => {
                     ttl: 60000,
                     force,
                 }),
-                fetchSmartResource('/api/packages?per_page=100', {
+                fetchSmartResource('/api/settings/packages', {
                     cacheKey: smartCacheKey('marketing:settings:packages'),
                     ttl: 60000,
                     force,
@@ -1448,6 +1448,93 @@ const DashboardMarketing = () => {
         } catch (error) {
             console.error('Error deleting event type:', error);
             toast.error(error.message || 'Could not delete event type.');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const handleArchivePackage = async (pkg) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: `Archive ${pkg.name}?`,
+            message: 'This hides the package from future customer booking choices while preserving historical bookings.',
+            confirmText: 'Archive',
+            tone: 'danger',
+            onConfirm: () => confirmArchivePackage(pkg)
+        });
+    };
+
+    const confirmArchivePackage = async (pkg) => {
+        closeConfirmDialog();
+        setSettingsSaving(true);
+        try {
+            const response = await csrfFetch(`/api/settings/packages/${pkg.id}/archive`, { method: 'PATCH' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not archive package.');
+            toast.success(data.message || 'Package archived.');
+            bustMarketingSettingsCache();
+            fetchMarketingSettings();
+        } catch (error) {
+            console.error('Error archiving package:', error);
+            toast.error(error.message || 'Could not archive package.');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const handleUnarchivePackage = async (pkg) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: `Restore ${pkg.name}?`,
+            message: 'This will make the package available again for customer booking choices.',
+            confirmText: 'Restore',
+            tone: 'success',
+            onConfirm: () => confirmUnarchivePackage(pkg)
+        });
+    };
+
+    const confirmUnarchivePackage = async (pkg) => {
+        closeConfirmDialog();
+        setSettingsSaving(true);
+        try {
+            const response = await csrfFetch(`/api/settings/packages/${pkg.id}/unarchive`, { method: 'PATCH' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not restore package.');
+            toast.success(data.message || 'Package restored.');
+            bustMarketingSettingsCache();
+            fetchMarketingSettings();
+        } catch (error) {
+            console.error('Error restoring package:', error);
+            toast.error(error.message || 'Could not restore package.');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const handleRealDeletePackage = async (pkg) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: `Permanently delete ${pkg.name}?`,
+            message: 'This action cannot be undone. All bookings linked solely to this package might be affected.',
+            confirmText: 'Delete Forever',
+            tone: 'danger',
+            onConfirm: () => confirmRealDeletePackage(pkg)
+        });
+    };
+
+    const confirmRealDeletePackage = async (pkg) => {
+        closeConfirmDialog();
+        setSettingsSaving(true);
+        try {
+            const response = await csrfFetch(`/api/settings/packages/${pkg.id}`, { method: 'DELETE' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not delete package.');
+            toast.success(data.message || 'Package permanently deleted.');
+            bustMarketingSettingsCache();
+            fetchMarketingSettings();
+        } catch (error) {
+            console.error('Error deleting package:', error);
+            toast.error(error.message || 'Could not delete package.');
         } finally {
             setSettingsSaving(false);
         }
@@ -2863,7 +2950,7 @@ const DashboardMarketing = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {packages.map(pkg => (
-                                        <tr key={pkg.id} className="hover:bg-gray-50">
+                                        <tr key={pkg.id} className={`transition-colors relative ${openDropdownId === 'pkg-'+pkg.id ? 'z-50' : 'z-0'} ${pkg.is_active === false ? 'bg-red-100/80 hover:bg-red-200/80 [&>td:not(:last-child)]:opacity-50' : 'hover:bg-gray-50'}`}>
                                             <td className="px-6 py-4 font-bold text-gray-900">{pkg.name}</td>
                                             <td className="px-6 py-4 text-sm font-bold text-gray-700">{eventTypes.find(type => type.slug === pkg.type)?.label || pkg.type}</td>
                                             <td className="px-6 py-4 text-gray-600">{getCategoryLabel(pkg.package_category)}</td>
@@ -2871,8 +2958,29 @@ const DashboardMarketing = () => {
                                             <td className="px-6 py-4 text-left font-bold text-gray-900">PHP {Number(pkg.base_price_per_head || 0).toLocaleString()}</td>
                                             <td className="px-6 py-4 text-right text-gray-600">{pkg.minimum_pax}</td>
                                             <td className="px-6 py-4 text-gray-600">{pkg.description || 'No description'}</td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button type="button" onClick={() => openPackageDrawer(pkg)} className="staff-row-action">Edit</button>
+                                            <td className={`px-6 py-4 text-right relative ${openDropdownId === 'pkg-'+pkg.id ? 'z-50' : 'z-0'}`}>
+                                                <div className="relative inline-block text-left">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === 'pkg-'+pkg.id ? null : 'pkg-'+pkg.id); }}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#720101]/20">
+                                                        Actions
+                                                        <svg className="h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                                                    </button>
+                                                    {openDropdownId === 'pkg-'+pkg.id && (
+                                                        <div 
+                                                            onClick={(e) => e.stopPropagation()} 
+                                                            className="absolute right-0 mt-1 w-36 origin-top-right flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl ring-1 ring-black/5 focus:outline-none z-50">
+                                                            <button onClick={() => { openPackageDrawer(pkg); setOpenDropdownId(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 hover:text-[#720101]">Edit Package</button>
+                                                            {pkg.is_active === false ? (
+                                                                <button onClick={() => { handleUnarchivePackage(pkg); setOpenDropdownId(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-green-700 transition-colors hover:bg-green-50">Restore</button>
+                                                            ) : (
+                                                                <button onClick={() => { handleArchivePackage(pkg); setOpenDropdownId(null); }} className="px-4 py-2.5 text-left text-xs font-bold text-amber-700 transition-colors hover:bg-amber-50">Archive</button>
+                                                            )}
+                                                            <button onClick={() => { handleRealDeletePackage(pkg); setOpenDropdownId(null); }} className="border-t border-gray-100 px-4 py-2.5 text-left text-xs font-bold text-red-600 transition-colors hover:bg-red-50">Delete</button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
