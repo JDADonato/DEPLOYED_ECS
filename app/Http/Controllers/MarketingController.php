@@ -625,6 +625,9 @@ class MarketingController extends Controller
             ->whereNotNull('event_date')
             ->whereBetween('event_date', [now()->toDateString(), now()->addDays(7)->toDateString()]);
 
+        $leadsOpenQuery = ContactInquiry::query()
+            ->whereIn('status', ['New', 'In Progress']);
+
         return response()->json([
             'pending' => (clone $pendingQuery)->count(),
             'needs_details' => (clone $needsDetailsQuery)->count(),
@@ -632,6 +635,7 @@ class MarketingController extends Controller
             'this_month' => (clone $thisMonthQuery)->count(),
             'urgent' => (clone $urgentQuery)->count(),
             'pipeline' => (float) (clone $pendingQuery)->sum(DB::raw('COALESCE(total_cost, budget, 0)')),
+            'leads_open' => (clone $leadsOpenQuery)->count(),
         ]);
     }
 

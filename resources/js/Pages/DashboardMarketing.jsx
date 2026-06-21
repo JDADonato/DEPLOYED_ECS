@@ -354,11 +354,6 @@ const DashboardMarketing = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
-    const [leadData, setLeadData] = useState({ data: [], meta: { current_page: 1, per_page: 15, total: 0, last_page: 1 }, summary: { open: 0, new: 0, resolved: 0 } });
-    const [leadLoading, setLeadLoading] = useState(false);
-    const [leadFilters, setLeadFilters] = useState({ search: '', status: '', concern_type: '', date_from: '', date_to: '', page: 1, per_page: 15 });
-    const [selectedLead, setSelectedLead] = useState(null);
-    const [leadSaving, setLeadSaving] = useState(false);
     const [feedbackSummary, setFeedbackSummary] = useState({ followUps: 0, testimonials: 0, recent: [] });
     const [bookingTransferStaff, setBookingTransferStaff] = useState([]);
     const [showBookingTransfer, setShowBookingTransfer] = useState(false);
@@ -540,7 +535,6 @@ const DashboardMarketing = () => {
         if (activeTab === 'today') {
             fetchBookings({ scope: 'all' });
             const backgroundTimer = window.setTimeout(() => {
-                fetchContactLeads({ silent: true });
                 fetchFeedbackSummary();
             }, 150);
             return () => window.clearTimeout(backgroundTimer);
@@ -548,8 +542,6 @@ const DashboardMarketing = () => {
             fetchMarketingSettings();
         } else if (activeTab === 'availability') {
             fetchAvailabilityOverrides();
-        } else if (activeTab === 'leads') {
-            fetchContactLeads();
         } else if (activeTab === 'bookings' && bookingsScope !== 'all') {
             fetchBookings({ scope: 'all' });
         } else if (BOOKING_BACKED_TABS.includes(activeTab) && bookings.length === 0) {
@@ -571,11 +563,7 @@ const DashboardMarketing = () => {
         fetchBookings({ scope: 'all', force: true });
     }, [activeTab, bookingReviewView, bookingOwnershipFilter, inquirySort]);
 
-    useEffect(() => {
-        if (activeTab !== 'leads') return;
-        const timer = window.setTimeout(() => fetchContactLeads(), 250);
-        return () => window.clearTimeout(timer);
-    }, [leadFilters, activeTab]);
+
 
     useSmartRefresh({
         enabled: ['today', 'public-content', 'availability', ...BOOKING_BACKED_TABS].includes(activeTab),
@@ -1694,6 +1682,7 @@ const DashboardMarketing = () => {
             upcoming: marketingRemoteSummary?.upcoming ?? upcoming.length,
             urgent: marketingRemoteSummary?.urgent ?? urgent.length,
             pipeline: marketingRemoteSummary?.pipeline ?? pending.reduce((sum, b) => sum + getBookingValue(b), 0),
+            leads_open: marketingRemoteSummary?.leads_open ?? 0,
             pendingRows: pending,
             upcomingRows: upcoming,
             urgentRows: urgent,
@@ -1723,12 +1712,12 @@ const DashboardMarketing = () => {
         },
         {
             id: 'guest-inquiries',
-            priority: (leadData.summary?.open || 0) > 0 ? 'followup' : 'info',
+            priority: marketingSummary.leads_open > 0 ? 'followup' : 'info',
             title: 'Triage guest inquiries',
-            description: (leadData.summary?.open || 0) > 0 ? `${leadData.summary.open} contact-form messages need assignment or follow-up.` : 'No guest inquiries are waiting.',
-            badge: leadData.summary?.open || 0,
+            description: marketingSummary.leads_open > 0 ? `${marketingSummary.leads_open} contact-form messages need assignment or follow-up.` : 'No guest inquiries are waiting.',
+            badge: marketingSummary.leads_open,
             primaryLabel: 'Open',
-            tone: (leadData.summary?.open || 0) > 0 ? 'warn' : 'good',
+            tone: marketingSummary.leads_open > 0 ? 'warn' : 'good',
             onOpen: () => setActiveTab('leads'),
         },
         {
@@ -1751,7 +1740,7 @@ const DashboardMarketing = () => {
             tone: feedbackSummary.followUps > 0 ? 'warn' : 'good',
             onOpen: () => setActiveTab('history'),
         },
-    ]), [feedbackSummary.followUps, leadData.summary?.open, marketingSummary.needsDetails, marketingSummary.pending, marketingSummary.upcoming]);
+    ]), [feedbackSummary.followUps, marketingSummary.leads_open, marketingSummary.needsDetails, marketingSummary.pending, marketingSummary.upcoming]);
 
     const marketingContextBookings = useMemo(() => {
         if (!hasMarketingStaffContext) return [];
@@ -3578,7 +3567,7 @@ const DashboardMarketing = () => {
             navGroups={withNavCounts(MARKETING_WORKSPACE_NAV_GROUPS, {
                 today: marketingSummary.pending + marketingSummary.needsDetails,
                 bookings: dashboardSummary.pending,
-                leads: leadData.summary?.open || 0,
+                leads: marketingSummary.leads_open,
                 calendar: dashboardSummary.monthEvents,
             })}
         >
