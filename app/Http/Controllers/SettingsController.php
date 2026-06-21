@@ -236,6 +236,40 @@ class SettingsController extends Controller
         return response()->json(['message' => 'Package updated successfully.', 'package' => $package->fresh()]);
     }
 
+    public function archivePackage(int $id)
+    {
+        $package = Package::findOrFail($id);
+        $package->forceFill([
+            'is_active' => false,
+        ])->save();
+        $this->bumpCatalogVersion();
+        app(\App\Services\OperationalBroadcastService::class)->adminChanged('catalog', 'package', $package->id, 'archived', 'Package archived.');
+
+        return response()->json(['message' => 'Package archived successfully.', 'package' => $package->fresh()]);
+    }
+
+    public function unarchivePackage(int $id)
+    {
+        $package = Package::findOrFail($id);
+        $package->forceFill([
+            'is_active' => true,
+        ])->save();
+        $this->bumpCatalogVersion();
+        app(\App\Services\OperationalBroadcastService::class)->adminChanged('catalog', 'package', $package->id, 'unarchived', 'Package restored.');
+
+        return response()->json(['message' => 'Package restored successfully.', 'package' => $package->fresh()]);
+    }
+
+    public function destroyPackage(int $id)
+    {
+        $package = Package::findOrFail($id);
+        $package->delete();
+        $this->bumpCatalogVersion();
+        app(\App\Services\OperationalBroadcastService::class)->adminChanged('catalog', 'package', $id, 'deleted', 'Package permanently deleted.');
+
+        return response()->json(['message' => 'Package permanently deleted.']);
+    }
+
     public function updateDishPricing(Request $request, int $id)
     {
         $data = $request->validate([

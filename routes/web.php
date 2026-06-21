@@ -383,6 +383,9 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::delete('/api/calendar-availability/{date}', [CalendarAvailabilityController::class, 'destroy']);
     Route::post('/api/settings/packages', [SettingsController::class, 'createPackage']);
     Route::put('/api/settings/packages/{id}', [SettingsController::class, 'updatePackage']);
+    Route::patch('/api/settings/packages/{id}/archive', [SettingsController::class, 'archivePackage']);
+    Route::patch('/api/settings/packages/{id}/unarchive', [SettingsController::class, 'unarchivePackage']);
+    Route::delete('/api/settings/packages/{id}', [SettingsController::class, 'destroyPackage']);
     Route::post('/api/settings/event-types', [SettingsController::class, 'createEventType']);
     Route::put('/api/settings/event-types/{id}', [SettingsController::class, 'updateEventType']);
     Route::patch('/api/settings/event-types/{id}/archive', [SettingsController::class, 'archiveEventType']);
@@ -492,8 +495,12 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::patch('/api/admin/menu-items/{id}/unarchive', [AdminController::class, 'unarchiveMenuItem']);
     Route::delete('/api/admin/menu-items/{id}', [AdminController::class, 'deleteMenuItem']);
     Route::put('/api/admin/menu-items/{id}/pricing', [SettingsController::class, 'updateDishPricing']);
+    Route::get('/api/admin/packages', [SettingsController::class, 'packages']);
     Route::post('/api/admin/packages', [SettingsController::class, 'createPackage']);
     Route::put('/api/admin/packages/{id}', [SettingsController::class, 'updatePackage']);
+    Route::patch('/api/admin/packages/{id}/archive', [SettingsController::class, 'archivePackage']);
+    Route::patch('/api/admin/packages/{id}/unarchive', [SettingsController::class, 'unarchivePackage']);
+    Route::delete('/api/admin/packages/{id}', [SettingsController::class, 'destroyPackage']);
     Route::post('/api/admin/event-types', [SettingsController::class, 'createEventType']);
     Route::put('/api/admin/event-types/{id}', [SettingsController::class, 'updateEventType']);
     Route::patch('/api/admin/event-types/{id}/archive', [SettingsController::class, 'archiveEventType']);
