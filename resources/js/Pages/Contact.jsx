@@ -15,8 +15,6 @@ const initialForm = (user) => ({
     full_name: user?.full_name || user?.username || '',
     email: user?.email || '',
     phone: user?.phone || '',
-    event_date: '',
-    pax: '',
     event_type: '',
     concern_type: user ? 'active_booking' : 'planning',
     subject: '',
@@ -31,6 +29,8 @@ const safeErrorMessage = (errors = {}) => {
     if (errors.message) return 'Please tell us what you need help with.';
     if (errors.pax) return 'Guest count must be a valid number.';
     if (errors.event_date) return 'Please choose a valid event date.';
+    if (errors.phone) return 'Please enter a valid phone number.';
+    if (errors.website) return 'Spam protection triggered. Please refresh and try again without autofilling hidden fields.';
     return 'Please review the highlighted details and try again.';
 };
 
@@ -74,8 +74,6 @@ const Contact = () => {
                 },
                 body: JSON.stringify({
                     ...form,
-                    pax: form.pax ? Number(form.pax) : null,
-                    event_date: form.event_date || null,
                 }),
             });
 
@@ -187,25 +185,17 @@ const Contact = () => {
                                             <FieldError message={errors.email} />
                                         </div>
                                     </div>
-                                    <div className="grid gap-5 sm:grid-cols-3">
+                                    <div className="grid gap-5 sm:grid-cols-2">
                                         <div>
                                             <input value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={fieldClass(errors, 'phone', 'w-full')} placeholder="Phone number" />
                                             <FieldError message={errors.phone} />
                                         </div>
                                         <div>
-                                            <input type="date" value={form.event_date} onChange={(e) => updateField('event_date', e.target.value)} className={fieldClass(errors, 'event_date', 'w-full')} aria-label="Event date" />
-                                            <FieldError message={errors.event_date} />
-                                        </div>
-                                        <div>
-                                            <input type="number" min="1" value={form.pax} onChange={(e) => updateField('pax', e.target.value)} className={fieldClass(errors, 'pax', 'w-full')} placeholder="Guest count" />
-                                            <FieldError message={errors.pax} />
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-5 sm:grid-cols-2">
-                                        <div>
                                             <input value={form.event_type} onChange={(e) => updateField('event_type', e.target.value)} className={fieldClass(errors, 'event_type', 'w-full')} placeholder="Event type" />
                                             <FieldError message={errors.event_type} />
                                         </div>
+                                    </div>
+                                    <div className="grid gap-5 sm:grid-cols-1">
                                         <div>
                                             <select value={form.concern_type} onChange={(e) => updateField('concern_type', e.target.value)} className={fieldClass(errors, 'concern_type', 'w-full')}>
                                                 <option value="planning">Planning inquiry</option>

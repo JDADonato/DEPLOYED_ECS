@@ -15,7 +15,7 @@ import { saveBookingDraft } from '../../hooks/useBookingDraft';
 import { LiveSyncIndicator, SoftRefreshBoundary } from '../../Components/common/LiveFeedback';
 import { operationalChannelsForUser } from '../../utils/liveChannels';
 import csrfFetch from '../../utils/csrf';
-import CustomerInquiriesPanel from '../Components/client/CustomerInquiriesPanel';
+import CustomerInquiriesPanel from '../../Components/client/CustomerInquiriesPanel';
 
 const ReceiptModal = lazy(() => import('../../Components/common/ReceiptModal'));
 

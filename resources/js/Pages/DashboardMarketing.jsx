@@ -13,7 +13,7 @@ import SmartImage from '../Components/common/SmartImage';
 import StaffPagination from '../Components/staff/StaffPagination';
 import StaffWorkspaceLayout from '../Layouts/StaffWorkspaceLayout';
 import StaffNavbarSearch from '../Components/staff/StaffNavbarSearch';
-import HandoverManager from '../Components/staff/HandoverManager';
+
 import GuestInquiriesManager from '../Components/staff/GuestInquiriesManager';
 import StaffPageHeader from '../Components/staff/StaffPageHeader';
 import StaffEmptyState from '../Components/staff/StaffEmptyState';
