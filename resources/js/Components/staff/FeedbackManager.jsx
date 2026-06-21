@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Star, MessageSquareHeart, Utensils, Users, MessageCircle, DollarSign, Calendar, ChevronRight, Filter } from 'lucide-react';
 import { formatDate } from '../../utils/dashboardUtils';
+import useSmartResource from '../../hooks/useSmartResource';
 import useSmartRefresh from '../../hooks/useSmartRefresh';
 
 const ScoreCard = ({ title, score, icon: Icon, colorClass, delay }) => (
@@ -109,10 +110,16 @@ const FeedbackCard = ({ feedback }) => {
 };
 
 export default function FeedbackManager() {
-    const { data: rawData, isInitialLoading, isRefreshing } = useSmartRefresh('/api/marketing/feedback-responses?paginated=false', {
-        interval: 60000,
+    const { data: rawData, loading: isInitialLoading, refreshing: isRefreshing, reload } = useSmartResource('/api/marketing/feedback-responses', {
+        params: { paginated: false },
         cacheKey: 'staff:feedbacks',
-        staleTime: 300000,
+        ttl: 300000,
+    });
+
+    useSmartRefresh({
+        refresh: reload,
+        interval: 60000,
+        eventNames: ['.marketing.feedbacks.changed'],
     });
 
     const [filter, setFilter] = useState('all'); // all, testimonial, followup
