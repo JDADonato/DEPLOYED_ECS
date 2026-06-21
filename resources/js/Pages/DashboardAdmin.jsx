@@ -63,6 +63,7 @@ const PaymentTermEditorModal = lazy(() => import('../Components/finance/PaymentT
 const PreparationBoard = lazy(() => import('../Components/operations/PreparationBoard'));
 const StaffMessaging = lazy(() => import('../Components/common/StaffMessaging'));
 const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTastingQueue'));
+const FeedbackManager = lazy(() => import('../Components/staff/FeedbackManager'));
 
 const paymentLabel = paymentTypeLabel;
 const Bar = ({ animationDuration = 520, isAnimationActive = false, ...props }) => (
@@ -292,7 +293,7 @@ const ADMIN_EMPLOYEES_URL = '/api/admin/employees';
 const ADMIN_CUSTOMERS_URL = '/api/admin/customers';
 const ADMIN_BOOKINGS_URL = '/api/admin/bookings';
 const CUSTOMER_SUPPORT_TABS = ['customer-lookup', 'customer-dashboard', 'customer-menu', 'customer-payments', 'customer-history', 'customer-messages', 'customer-feedback', 'customer-announcements', 'customer-account-status'];
-const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'public-content', 'availability', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
+const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
 const ADMIN_TAB_ALIASES = {
     dashboard: 'today',
     overview: 'today',
@@ -2574,6 +2575,8 @@ const DashboardAdmin = () => {
                     customerAccountEmail(booking),
                     customerAccountPhone(booking),
                     booking.event_type,
+                    booking.event_name,
+                    booking.event_display_name,
                 ].filter(Boolean).join(' ').toLowerCase();
 
                 return searchable.includes(query);
@@ -9189,6 +9192,11 @@ const DashboardAdmin = () => {
                             </form>
                         </div>
                     )}
+                    {activeTab === 'feedbacks' && (
+                        <Suspense fallback={<StaffSkeleton variant="panel" rows={4} label="Loading feedback manager" />}>
+                            <FeedbackManager />
+                        </Suspense>
+                    )}
                     {activeTab === 'availability' && (
                         <AdminPageSurface className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
                             <form onSubmit={saveAvailabilityOverride} className="bg-white p-6">
@@ -9723,7 +9731,7 @@ const DashboardAdmin = () => {
                                             type="search"
                                             value={bookingSearch}
                                             onChange={(e) => setBookingSearch(e.target.value)}
-                                            placeholder="Search booking ref, client, email, phone, event type..."
+                                            placeholder="Search booking ref, client, email, phone, event name, event type..."
                                             className="staff-control w-full pl-10"
                                         />
                                     </div>
@@ -9967,7 +9975,7 @@ const DashboardAdmin = () => {
                                             <input
                                                 value={financePaymentSearch}
                                                 onChange={(event) => setFinancePaymentSearch(event.target.value)}
-                                                placeholder="Search booking, client, event, payment type, or status"
+                                                placeholder="Search booking, client, event name, payment type, or status"
                                                 className="staff-control w-full pl-12"
                                             />
                                         </div>
@@ -10091,7 +10099,7 @@ const DashboardAdmin = () => {
                                             <input
                                                 value={refundSearch}
                                                 onChange={(event) => setRefundSearch(event.target.value)}
-                                                placeholder="Search booking, client, email, event date, or provider reference"
+                                                placeholder="Search booking, client, email, event name/date, or ref"
                                                 className="staff-control w-full pl-12"
                                             />
                                         </div>

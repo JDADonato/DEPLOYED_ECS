@@ -934,8 +934,20 @@ const ClientDashboard = () => {
     const [submittingClarification, setSubmittingClarification] = useState(false);
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', confirmText: 'Confirm', onConfirm: null });
     const [feedbackRequests, setFeedbackRequests] = useState([]);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [feedbackForm, setFeedbackForm] = useState({ rating: 5, food_rating: 5, service_rating: 5, communication_rating: 5, value_rating: 5, comments: '', testimonial_permission: false });
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+    useEffect(() => {
+        if (feedbackRequests.length > 0 && !sessionStorage.getItem('dismissedFeedbackModal')) {
+            setShowFeedbackModal(true);
+        }
+    }, [feedbackRequests.length]);
+
+    const handleDismissFeedback = () => {
+        setShowFeedbackModal(false);
+        sessionStorage.setItem('dismissedFeedbackModal', 'true');
+    };
     const isEditingRef = React.useRef(false);
     const activeBookingIdRef = React.useRef(activeBookingId);
     useEffect(() => {
@@ -1280,6 +1292,7 @@ const ClientDashboard = () => {
             if (!response.ok) throw new Error(result.error || 'Could not submit feedback.');
             setToast({ message: result.message || 'Thank you for your feedback.', type: 'success' });
             setFeedbackForm({ rating: 5, food_rating: 5, service_rating: 5, communication_rating: 5, value_rating: 5, comments: '', testimonial_permission: false });
+            setShowFeedbackModal(false);
             fetchData();
         } catch (error) {
             console.error(error);
@@ -1886,91 +1899,123 @@ const ClientDashboard = () => {
                     <CustomerAnnouncements />
                 </div>
 
-                {feedbackRequests.length > 0 && (
-                    <div id="feedback-request-panel" className="mb-8 overflow-hidden rounded-3xl border-2 border-[#f0aa0b] bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-xl shadow-[#f0aa0b]/10 relative">
-                        {/* Decorative background element */}
-                        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl"></div>
+                {/* Floating Action Button for Feedback if modal is dismissed */}
+                {feedbackRequests.length > 0 && !showFeedbackModal && (
+                    <button
+                        onClick={() => setShowFeedbackModal(true)}
+                        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f0aa0b] to-[#d99607] px-5 py-3 text-sm font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 active:scale-95 transition-all group animate-bounce hover:animate-none border-2 border-white/20"
+                    >
+                        <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        <span>Leave Feedback</span>
+                    </button>
+                )}
+
+                {/* Floating Feedback Modal */}
+                {showFeedbackModal && feedbackRequests.length > 0 && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                        {/* Backdrop */}
+                        <div 
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+                            onClick={handleDismissFeedback}
+                        ></div>
                         
-                        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
-                                    <svg className="h-4 w-4 text-[#720101]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                    </svg>
-                                    <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
-                                </div>
-                                <h2 className="text-3xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
-                                <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
-                                    Share your experience for <span className="text-[#a16207]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
-                                </p>
-                            </div>
-                            <form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    submitFeedback(feedbackRequests[0].token);
-                                }}
-                                className="w-full space-y-4 lg:max-w-xl"
+                        {/* Modal Content */}
+                        <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl border-2 border-[#f0aa0b] bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
+                            {/* Decorative background element */}
+                            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl pointer-events-none"></div>
+                            
+                            <button 
+                                onClick={handleDismissFeedback}
+                                className="absolute top-4 right-4 z-10 rounded-full bg-white/50 p-2 text-slate-500 hover:bg-white hover:text-slate-900 transition-colors"
                             >
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {[
-                                        ['rating', 'Overall'],
-                                        ['food_rating', 'Food'],
-                                        ['service_rating', 'Service'],
-                                        ['communication_rating', 'Communication'],
-                                        ['value_rating', 'Value'],
-                                    ].map(([field, label]) => (
-                                        <label key={field} className="block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">{label}</span>
-                                                <span className="rounded-full bg-[#fffaf3] px-2 py-0.5 text-[10px] font-black text-[#a16207]">{feedbackForm[field]} / 5</span>
-                                            </div>
-                                            <div className="mt-2 flex items-center justify-between gap-1">
-                                                {[1, 2, 3, 4, 5].map(star => (
-                                                    <button
-                                                        key={star}
-                                                        type="button"
-                                                        onClick={() => setFeedbackForm(prev => ({ ...prev, [field]: star }))}
-                                                        className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
-                                                    >
-                                                        <svg className="h-7 w-7 drop-shadow-sm fill-current" viewBox="0 0 24 24">
-                                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                                        </svg>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                                <textarea
-                                    value={feedbackForm.comments}
-                                    onChange={(event) => setFeedbackForm(prev => ({ ...prev, comments: event.target.value }))}
-                                    placeholder="Tell us what went well or what we can improve."
-                                    rows={3}
-                                    className="w-full resize-none rounded-xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-[#720101]/30 focus:ring-2 focus:ring-[#720101]/15"
-                                />
-                                <label className="flex items-center gap-3 text-sm font-semibold text-gray-600">
-                                    <input
-                                        type="checkbox"
-                                        checked={feedbackForm.testimonial_permission}
-                                        onChange={(event) => setFeedbackForm(prev => ({ ...prev, testimonial_permission: event.target.checked }))}
-                                        className="h-5 w-5 rounded border-slate-300 text-[#720101] shadow-sm focus:border-[#720101] focus:ring focus:ring-[#720101] focus:ring-opacity-50"
-                                    />
-                                    <span className="text-sm font-bold text-slate-600">Eloquente may use my comments as a testimonial.</span>
-                                </label>
-                                <button
-                                    type="submit"
-                                    disabled={submittingFeedback}
-                                    className="group relative flex w-full sm:w-auto items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#720101] to-[#a10101] px-8 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100"
-                                >
-                                    <span className="relative z-10">{submittingFeedback ? 'Submitting...' : 'Submit Feedback'}</span>
-                                    {!submittingFeedback && (
-                                        <svg className="relative z-10 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="max-w-md">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
+                                        <svg className="h-4 w-4 text-[#720101]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                                         </svg>
-                                    )}
-                                    <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
-                                </button>
-                            </form>
+                                        <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
+                                    </div>
+                                    <h2 className="text-3xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
+                                    <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+                                        Share your experience for <span className="text-[#a16207]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
+                                    </p>
+                                </div>
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        submitFeedback(feedbackRequests[0].token);
+                                    }}
+                                    className="w-full space-y-4 lg:max-w-xl"
+                                >
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {[
+                                            ['rating', 'Overall'],
+                                            ['food_rating', 'Food'],
+                                            ['service_rating', 'Service'],
+                                            ['communication_rating', 'Communication'],
+                                            ['value_rating', 'Value'],
+                                        ].map(([field, label]) => (
+                                            <label key={field} className="block rounded-xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm transition-all hover:bg-white/80">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[11px] font-black uppercase tracking-widest text-[#720101]">{label}</span>
+                                                    <span className="rounded-full bg-[#fffaf3] px-2 py-0.5 text-[10px] font-black text-[#a16207]">{feedbackForm[field]} / 5</span>
+                                                </div>
+                                                <div className="mt-2 flex items-center justify-between gap-1">
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setFeedbackForm(prev => ({ ...prev, [field]: star }))}
+                                                            className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
+                                                        >
+                                                            <svg className="h-7 w-7 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                            </svg>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <textarea
+                                        value={feedbackForm.comments}
+                                        onChange={(event) => setFeedbackForm(prev => ({ ...prev, comments: event.target.value }))}
+                                        placeholder="Tell us what went well or what we can improve."
+                                        rows={3}
+                                        className="w-full resize-none rounded-xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-[#720101]/30 focus:ring-2 focus:ring-[#720101]/15"
+                                    />
+                                    <label className="flex items-center gap-3 text-sm font-semibold text-gray-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={feedbackForm.testimonial_permission}
+                                            onChange={(event) => setFeedbackForm(prev => ({ ...prev, testimonial_permission: event.target.checked }))}
+                                            className="h-5 w-5 rounded border-slate-300 text-[#720101] shadow-sm focus:border-[#720101] focus:ring focus:ring-[#720101] focus:ring-opacity-50"
+                                        />
+                                        <span className="text-sm font-bold text-slate-600">Eloquente may use my comments as a testimonial.</span>
+                                    </label>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingFeedback}
+                                        className="group relative flex w-full sm:w-auto items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#720101] to-[#a10101] px-8 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100"
+                                    >
+                                        <span className="relative z-10">{submittingFeedback ? 'Submitting...' : 'Submit Feedback'}</span>
+                                        {!submittingFeedback && (
+                                            <svg className="relative z-10 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        )}
+                                        <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 )}

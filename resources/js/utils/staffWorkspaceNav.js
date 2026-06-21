@@ -15,6 +15,7 @@ export const ADMIN_WORKSPACE_NAV_GROUPS = [
             { id: 'analytics', label: 'Analytics', description: 'Review core forecast methods and performance insights.', aliases: ['insights', 'core analytics', 'forecast', 'forecast methods', 'simple linear regression', 'moving average'] },
             { id: 'analytics-supporting', label: 'Supporting Charts', description: 'Review descriptive dashboard charts and demand breakdowns.', aliases: ['supporting charts', 'charts', 'descriptive charts', 'payment breakdown', 'menu demand'] },
             { id: 'reports', label: 'Reports', description: 'Build exports and formal summaries for admin review.', aliases: ['exports', 'report builder', 'pdf'] },
+            { id: 'feedbacks', label: 'Customer Feedbacks', description: 'Review customer satisfaction scores and feedback.', aliases: ['feedbacks', 'reviews', 'testimonials'] },
             { id: 'system-audit', label: 'System & Audit', description: 'Monitor system health, delivery, sessions, and activity logs.', aliases: ['audit', 'logs', 'system'] },
             { id: 'action-logs', label: 'Activity Logs', description: 'Monitor staff actions and undo dangerous operations.', aliases: ['undo', 'action logs', 'history'] },
             { id: 'settings', label: 'Settings', description: 'Control admin preferences, business profile, and payment rules.', aliases: ['configuration', 'preferences', 'payment rules'] },
@@ -56,6 +57,7 @@ export const MARKETING_WORKSPACE_NAV_GROUPS = [
         items: [
             { id: 'public-content', label: 'Public Content', description: 'Manage customer-facing catalog and announcements.', aliases: ['announcements', 'packages', 'event types', 'menu items'] },
             { id: 'availability', label: 'Availability', description: 'Review availability, date capacity, and closed dates.', aliases: ['slots', 'capacity', 'closed dates'] },
+            { id: 'feedbacks', label: 'Customer Feedbacks', description: 'Review customer satisfaction scores and feedback.', aliases: ['feedbacks', 'reviews', 'testimonials'] },
             { id: 'settings', label: 'Settings', description: 'Control marketing workspace preferences and role settings.', aliases: ['preferences', 'workspace settings'] },
             { id: 'history', label: 'Event History', description: 'Review completed event history and post-event context.', aliases: ['completed events', 'post-event'] },
         ],

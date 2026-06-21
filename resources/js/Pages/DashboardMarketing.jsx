@@ -43,6 +43,7 @@ import { createStaffContext, hasStaffContext } from '../utils/staffContext';
 
 const StaffMessaging = lazy(() => import('../Components/common/StaffMessaging'));
 const AnnouncementManager = lazy(() => import('../Components/content/AnnouncementManager'));
+const FeedbackManager = lazy(() => import('../Components/staff/FeedbackManager'));
 const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTastingQueue'));
 import { getListData } from '../utils/apiResponses';
 import csrfFetch from '../utils/csrf';
@@ -62,7 +63,7 @@ const SECURITY_OPTIONS = [
 ];
 
 const MARKETING_BOOKINGS_URL = '/api/marketing/bookings';
-const MARKETING_WORKSPACE_TABS = ['today', 'bookings', 'tastings', 'messages', 'calendar', 'leads', 'public-content', 'availability', 'settings', 'history'];
+const MARKETING_WORKSPACE_TABS = ['today', 'bookings', 'tastings', 'messages', 'calendar', 'leads', 'public-content', 'availability', 'feedbacks', 'settings', 'history'];
 const MARKETING_CONTEXT_TABS = ['bookings', 'leads', 'messages', 'history'];
 const MARKETING_TAB_ALIASES = {
     intake: 'bookings',
@@ -2659,7 +2660,7 @@ const DashboardMarketing = () => {
                                         type="search"
                                         value={inquirySearch}
                                         onChange={handleInquirySearchChange}
-                                        placeholder="Search booking, customer, phone, or city"
+                                        placeholder="Search booking, customer, event name, phone, or city"
                                         aria-label="Search bookings"
                                     />
                                 </label>
@@ -3806,6 +3807,11 @@ const DashboardMarketing = () => {
                 )}
                 {activeTab === 'availability' && renderAvailability()}
                 {activeTab === 'public-content' && renderPublicContent()}
+                {activeTab === 'feedbacks' && (
+                    <Suspense fallback={<StaffSkeleton variant="panel" rows={4} label="Loading feedback manager" />}>
+                        <FeedbackManager />
+                    </Suspense>
+                )}
                 {activeTab === 'settings' && (
                     <RoleSettingsPanel role="marketing" onNavigate={setActiveTab} />
                 )}

@@ -164,6 +164,7 @@ const inferNotificationDestination = (notification, user) => {
         if (isTasting) return buildRoleDashboardHref('admin', 'tastings', { workspace: 'marketing', ...adminContextParams });
         if (isAvailability) return buildRoleDashboardHref('admin', 'availability', { workspace: 'marketing', ...adminContextParams });
         if (isMenu) return buildRoleDashboardHref('admin', 'bookings', { workspace: 'marketing', ...adminContextParams });
+        if (isFeedback) return buildRoleDashboardHref('admin', 'feedbacks', { workspace: 'marketing', ...adminContextParams });
         if (isAnnouncement) return buildRoleDashboardHref('admin', 'announcements', { workspace: 'customer', ...adminContextParams });
         if (notification.customer_id && !bookingId && !conversationId) {
             return buildRoleDashboardHref('admin', 'dashboard', { workspace: 'customer', ...adminContextParams });
@@ -177,6 +178,7 @@ const inferNotificationDestination = (notification, user) => {
         if (isTasting) return buildRoleDashboardHref('marketing', 'tastings', staffContextParams);
         if (isAvailability) return buildRoleDashboardHref('marketing', 'availability', staffContextParams);
         if (isAnnouncement) return buildRoleDashboardHref('marketing', 'public-content', staffContextParams);
+        if (isFeedback) return buildRoleDashboardHref('marketing', 'feedbacks', staffContextParams);
         return buildRoleDashboardHref('marketing', bookingId ? 'bookings' : 'today', staffContextParams);
     }
 
@@ -447,6 +449,13 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
                 return (
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center">
                         <svg className="w-3.5 h-3.5 text-[#720101]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                );
+            case 'feedback_follow_up':
+            case 'feedback':
+                return (
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-pink-500 fill-pink-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     </div>
                 );
             default:
