@@ -10469,21 +10469,23 @@ const DashboardAdmin = () => {
                                                                         </span>
                                                                     </td>
                                                                     <td className="admin-audit-result">
-                                                                        <span className={`admin-audit-result-pill ${result.className}`}>
-                                                                            {result.label}
-                                                                        </span>
-                                                                        {metadata.undo_data && !metadata.undo_data.original_log_id && (
-                                                                            <button
-                                                                                type="button"
-                                                                                className="ml-2 px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] uppercase font-bold tracking-wider rounded transition-colors"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setUndoModal({ open: true, auditId: audit.id, busy: false });
-                                                                                }}
-                                                                            >
-                                                                                Undo
-                                                                            </button>
-                                                                        )}
+                                                                        <div className="flex flex-col items-start gap-1.5">
+                                                                            <span className={`admin-audit-result-pill ${result.className}`}>
+                                                                                {result.label}
+                                                                            </span>
+                                                                            {metadata.undo_data && !metadata.undo_data.original_log_id && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] uppercase font-bold tracking-wider rounded transition-colors"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setUndoModal({ open: true, auditId: audit.id, busy: false });
+                                                                                    }}
+                                                                                >
+                                                                                    Undo
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
                                                                     </td>
                                                                 </tr>
                                                                 {expanded && (
