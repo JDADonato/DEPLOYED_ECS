@@ -1631,7 +1631,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
 
             <ConfirmModal
                 isOpen={showBudgetWarningModal}
-                onClose={() => setShowBudgetWarningModal(false)}
+                onCancel={() => setShowBudgetWarningModal(false)}
                 onConfirm={() => {
                     setShowBudgetWarningModal(false);
                     handleConfirmMenu();
@@ -1640,7 +1640,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                 message={`Your current selection exceeds your planned budget of ${money(budget)}. Are you sure you want to continue?`}
                 confirmText="Continue Anyway"
                 cancelText="Review Menu"
-                isDanger={true}
+                tone="danger"
             />
         </div>
     );
