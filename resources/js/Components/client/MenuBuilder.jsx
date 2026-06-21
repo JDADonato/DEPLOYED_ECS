@@ -1093,9 +1093,20 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2">Build Around a Budget</h3>
-                                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                                    The system will choose dishes that fit within your <strong className="text-green-700">₱{parseInt(budget || 0).toLocaleString()}</strong> target. You can still review and adjust the result.
-                                </p>
+                                {budget && parseInt(budget) > 0 && parseInt(budget) < budgetMinimum ? (
+                                    <p className="text-sm font-semibold text-red-600 mb-4 leading-relaxed bg-red-50 p-3 rounded-lg border border-red-100 flex gap-2">
+                                        <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span>
+                                            Your inputted budget of {money(budget)} is below the recommended minimum of {money(budgetMinimum)} for {pax} guests. The system may not be able to build a complete menu.
+                                        </span>
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                                        The system will choose dishes that fit within your <strong className="text-green-700">₱{parseInt(budget || 0).toLocaleString()}</strong> target. You can still review and adjust the result.
+                                    </p>
+                                )}
                                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Target budget</label>
                                 <input
                                     type="number"
@@ -1109,17 +1120,6 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                                 <div className={`mb-5 rounded-xl border px-3 py-2 text-xs font-bold leading-relaxed ${isBudgetReady ? 'border-green-100 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
                                     {budgetStatusMessage}
                                 </div>
-                                
-                                {budget && parseInt(budget) > 0 && parseInt(budget) < budgetMinimum && (
-                                    <div className="mb-5 flex gap-2 items-start text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
-                                        <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        <p className="text-xs font-semibold leading-relaxed">
-                                            Your inputted budget of {money(budget)} is below the recommended minimum of {money(budgetMinimum)} for {pax} guests. The system may not be able to build a complete menu.
-                                        </p>
-                                    </div>
-                                )}
 
                                 <ul className="space-y-2 text-xs text-gray-500 mb-5">
                                     <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Auto-selects dishes to fit your budget</li>
