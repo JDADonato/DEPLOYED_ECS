@@ -164,7 +164,7 @@ class ContactInquiryController extends Controller
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry updated.');
 
-        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'];
+        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser'];
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
                 $eagerLoads[] = 'replies';
@@ -229,7 +229,7 @@ class ContactInquiryController extends Controller
         app(OperationalBroadcastService::class)
             ->staffQueueChanged('contact_inquiries', 'contact_inquiry', $inquiry->id, 'updated', 'Contact inquiry replied.');
 
-        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser:id,full_name,username,email,phone,account_status'];
+        $eagerLoads = ['assignee:id,full_name,username', 'duplicateUser'];
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('contact_inquiry_replies')) {
                 $eagerLoads[] = 'replies';
