@@ -1922,7 +1922,7 @@ const ClientDashboard = () => {
                         ></div>
                         
                         {/* Modal Content */}
-                        <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-8 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
+                        <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-6 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
                             {/* Decorative background element */}
                             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl pointer-events-none"></div>
                             
@@ -1935,13 +1935,13 @@ const ClientDashboard = () => {
                                 </svg>
                             </button>
 
-                            <div className="relative flex flex-col items-center justify-center gap-8 text-center">
+                            <div className="relative flex flex-col items-center justify-center gap-6 text-center">
                                 <div className="max-w-2xl mx-auto flex flex-col items-center">
-                                    <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-4">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-3">
                                         <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
                                     </div>
-                                    <h2 className="text-3xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
-                                    <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+                                    <h2 className="text-2xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
+                                    <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600">
                                         Share your experience for <span className="text-[#a16207]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
                                     </p>
                                 </div>
@@ -1953,7 +1953,7 @@ const ClientDashboard = () => {
                                     className="w-full flex flex-col gap-5 max-w-xl mx-auto"
                                 >
                                     {/* Prominent Overall Rating */}
-                                    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-white/60 p-5 shadow-sm backdrop-blur-md transition-all hover:bg-white/80">
+                                    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-white/60 p-4 shadow-sm backdrop-blur-md transition-all hover:bg-white/80">
                                         <h3 className="mb-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">Overall Experience</h3>
                                         <div className="mb-3 rounded-full bg-[#fffaf3] px-3 py-1 text-xs font-black text-[#a16207]">{feedbackForm.rating} / 5</div>
                                         <div className="flex items-center gap-2">
