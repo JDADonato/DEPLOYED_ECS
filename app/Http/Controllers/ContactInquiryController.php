@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ContactInquiry;
 use App\Models\ContactInquiryReply;
-use App\Models\Notification;
 use App\Models\User;
 use App\Mail\GuestInquiryReplyMail;
 use App\Services\OperationalBroadcastService;
@@ -215,13 +214,6 @@ class ContactInquiryController extends Controller
         }
 
         if ($inquiry->duplicate_user_id) {
-            Notification::create([
-                'user_id' => $inquiry->duplicate_user_id,
-                'title' => 'Reply to your inquiry',
-                'message' => 'We have replied to your inquiry: "' . str($inquiry->subject)->limit(40) . '"',
-                'action_url' => '/dashboard',
-                'type' => 'customer_message',
-            ]);
             // Attempt to broadcast if service exists or user is connected
             app(OperationalBroadcastService::class)->userSessionInvalidated($inquiry->duplicate_user_id); // small hack to force user state refresh, or we can just let notification handle it.
         }
