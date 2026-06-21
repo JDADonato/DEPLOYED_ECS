@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { clearSmartCacheForPrefix } from '../utils/smartResource';
 import ClientNavbar from '../Components/common/ClientNavbar';
 import Footer from '../Components/common/Footer';
 import StaffPreviewBanner from '../Components/common/StaffPreviewBanner';
@@ -87,6 +88,7 @@ const Contact = () => {
             }
 
             setSentInquiryId(payload.inquiry_id || true);
+            clearSmartCacheForPrefix('staff:guest-inquiries');
             toast.success('Your inquiry was sent to our planning team.');
         } catch (error) {
             toast.error('We could not send your inquiry. Please try again in a moment.');
