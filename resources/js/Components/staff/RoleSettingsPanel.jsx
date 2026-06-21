@@ -38,7 +38,6 @@ const TAB_OPTIONS = {
         ['today', 'Command Center'],
         ['bookings-intake', 'Bookings & Intake'],
         ['calendar', 'Calendar'],
-        ['handoff', 'Handoff'],
         ['tastings', 'Food Tastings'],
         ['finance', 'Finance'],
         ['messages-inquiries', 'Messages & Inquiries'],

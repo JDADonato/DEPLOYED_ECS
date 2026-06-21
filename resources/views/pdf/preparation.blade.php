@@ -124,36 +124,7 @@
         @endif
     </section>
 
-    <section class="section">
-        <h2 class="section-title">Handoff Checklist</h2>
-        @if ($taskGroups->isEmpty())
-            <div class="note">No handoff tasks recorded yet.</div>
-        @else
-            @foreach ($taskGroups as $area => $tasks)
-                <div class="avoid-break" style="margin-top: 10px;">
-                    <p class="eyebrow">{{ $area }}</p>
-                    <table class="flat-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 52%;">Task</th>
-                                <th style="width: 18%;">Status</th>
-                                <th style="width: 30%;">Due</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($tasks as $task)
-                                <tr>
-                                    <td>{{ $task->label ?? $task->title ?? 'Handoff task' }}</td>
-                                    <td>{{ $task->status ?? 'Pending' }}</td>
-                                    <td>{{ $task->due_at ? $task->due_at->format('M j, Y') : 'No due date' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endforeach
-        @endif
-    </section>
+
 
     <p class="footer-note">Prepared for staff coordination. Verify details with the customer before final service execution.</p>
 </body>

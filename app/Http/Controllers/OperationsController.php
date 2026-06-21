@@ -513,14 +513,14 @@ class OperationsController extends Controller
             'headcount' => 'Ask the customer to confirm final pax.',
             'tasting' => 'Record or confirm the tasting outcome.',
             'customer_messages' => 'Resolve or reply to the linked customer conversation.',
-            default => 'Review this handoff item.',
+            default => 'Review this preparation item.',
         };
     }
 
     private function taskActionHint(EventPreparationTask $task, ?string $role = null): string
     {
         if ($this->canUpdateTask($role, $task)) {
-            return 'You can mark this task done when the handoff work is complete.';
+            return 'You can mark this task done when the preparation work is complete.';
         }
 
         return match ($this->responsibleArea($task->department)) {
@@ -645,8 +645,8 @@ class OperationsController extends Controller
                     ? 'Complete '.$pendingTask['label']
                     : 'Follow up with '.$owner,
                 'description' => ($pendingTask['can_update'] ?? false)
-                    ? 'Mark this task done once the handoff work is complete.'
-                    : (($pendingTask['action_hint'] ?? null) ?: $owner.' owns this handoff task.'),
+                    ? 'Mark this task done once the preparation work is complete.'
+                    : (($pendingTask['action_hint'] ?? null) ?: $owner.' owns this preparation task.'),
                 'owner_department' => $owner,
                 'primary_action_label' => $owner === 'Service prep' ? 'Download prep list' : 'Open booking',
                 'primary_action_url' => $owner === 'Service prep'
@@ -659,7 +659,7 @@ class OperationsController extends Controller
             'kind' => 'ready',
             'tone' => 'good',
             'label' => 'Ready for service prep',
-            'description' => 'Readiness checks are clear and handoff tasks are complete.',
+            'description' => 'Readiness checks are clear and preparation tasks are complete.',
             'owner_department' => 'Service prep',
             'primary_action_label' => 'Download prep list',
             'primary_action_url' => "/documents/bookings/{$booking->id}/preparation.pdf",
@@ -718,15 +718,15 @@ class OperationsController extends Controller
                 'kind' => 'customer_messages',
                 'tone' => 'warn',
                 'label' => 'Resolve the open customer conversation',
-                'description' => 'Customer messages are still active, so the handoff is not fully settled.',
+                'description' => 'Customer messages are still active, so preparation is not fully settled.',
                 'owner_department' => 'Marketing',
                 'primary_action_label' => 'Open messages',
                 'primary_action_url' => $this->messagesUrl($role),
             ],
             default => [
-                'kind' => 'handoff',
+                'kind' => 'preparation',
                 'tone' => 'warn',
-                'label' => 'Review this handoff item',
+                'label' => 'Review this preparation item',
                 'description' => $blocker['action_hint'] ?? 'One readiness item needs staff attention.',
                 'owner_department' => $blocker['owner_department'] ?? 'Staff',
                 'primary_action_label' => 'Open booking',

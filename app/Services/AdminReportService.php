@@ -530,7 +530,7 @@ class AdminReportService
         }
 
         if ($forecastPax > 0) {
-            return $this->insight('Predictive analytics are usable for preparation.', 'Revenue is trending upward with an expected trajectory of '.$this->peso($nextRevenue).', while SMA demand projects '.number_format($forecastPax).' guests.', 'Share the revenue and demand projections with finance, handoff, and operations planning.', 'watch');
+            return $this->insight('Predictive analytics are usable for preparation.', 'Revenue is trending upward with an expected trajectory of '.$this->peso($nextRevenue).', while SMA demand projects '.number_format($forecastPax).' guests.', 'Share the revenue and demand projections with finance and operations planning.', 'watch');
         }
 
         return $this->insight('Forecast needs more history.', 'There is not enough visible demand to make this projection very useful yet.', 'Use actual booking queues until more history is available.', 'good');

@@ -61,7 +61,6 @@ import { createStaffContext, getStaffContextSearchText, hasStaffContext } from '
 
 const AnnouncementManager = lazy(() => import('../Components/content/AnnouncementManager'));
 const PaymentTermEditorModal = lazy(() => import('../Components/finance/PaymentTermEditorModal'));
-const PreparationBoard = lazy(() => import('../Components/operations/PreparationBoard'));
 const StaffMessaging = lazy(() => import('../Components/common/StaffMessaging'));
 const FoodTastingQueue = lazy(() => import('../Components/operations/FoodTastingQueue'));
 const FeedbackManager = lazy(() => import('../Components/staff/FeedbackManager'));
@@ -294,18 +293,15 @@ const ADMIN_EMPLOYEES_URL = '/api/admin/employees';
 const ADMIN_CUSTOMERS_URL = '/api/admin/customers';
 const ADMIN_BOOKINGS_URL = '/api/admin/bookings';
 const CUSTOMER_SUPPORT_TABS = ['customer-lookup', 'customer-dashboard', 'customer-menu', 'customer-payments', 'customer-history', 'customer-messages', 'customer-feedback', 'customer-announcements', 'customer-account-status'];
-const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'handoff', 'tastings', 'finance', 'messages-inquiries', 'guest-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
+const ADMIN_FULL_SURFACE_TABS = ['bookings-intake', 'calendar', 'tastings', 'finance', 'messages-inquiries', 'guest-inquiries', 'public-content', 'availability', 'feedbacks', 'accounts', 'settings', 'system-audit', 'action-logs', 'history', ...CUSTOMER_SUPPORT_TABS];
 const ADMIN_TAB_ALIASES = {
     dashboard: 'today',
     overview: 'today',
     bookings: 'bookings-intake',
     intake: 'bookings-intake',
-    preparation: 'handoff',
     tasting: 'tastings',
     food: 'tastings',
-    'calendar-handoff': 'calendar',
     calendar: 'calendar',
-    handoff: 'handoff',
     refunds: 'finance',
     accounting: 'finance',
     ledger: 'finance',
@@ -329,7 +325,6 @@ const ADMIN_TAB_ALIASES = {
 const ADMIN_SEARCH_ALIASES = {
     today: ['dashboard', 'overview', 'home', 'command', 'priority', 'urgent', 'owner'],
     'bookings-intake': ['bookings', 'booking', 'intake', 'reservations', 'approve', 'review', 'customer booking'],
-    handoff: ['handoff', 'preparation', 'prep', 'readiness', 'tasks', 'operations'],
     tastings: ['tasting', 'tastings', 'food tasting', 'customer experience', 'sampling'],
     finance: ['finance', 'accounting', 'payments', 'refunds', 'ledger', 'money', 'billing'],
     'finance:payments': ['payment', 'payments', 'proofs', 'pending payments', 'overdue', 'exceptions'],
@@ -402,7 +397,6 @@ const WORKSPACE_TAB_TO_INTERNAL_TAB = {
         leads: 'guest-inquiries',
         tastings: 'tastings',
         calendar: 'calendar',
-        handoff: 'handoff',
         messages: 'messages-inquiries',
         'public-content': 'public-content',
         availability: 'availability',
@@ -445,7 +439,6 @@ const LEGACY_TAB_DESTINATIONS = {
     'bookings-intake': { workspace: 'marketing', tab: 'bookings' },
     bookings: { workspace: 'marketing', tab: 'bookings' },
     calendar: { workspace: 'marketing', tab: 'calendar' },
-    handoff: { workspace: 'marketing', tab: 'handoff' },
     tastings: { workspace: 'marketing', tab: 'tastings' },
     tasting: { workspace: 'marketing', tab: 'tastings' },
     'messages-inquiries': { workspace: 'marketing', tab: 'messages' },
@@ -490,9 +483,6 @@ const normalizeWorkspaceTab = (workspace, tab) => {
     const aliasedTab = WORKSPACE_TAB_ALIASES[workspace]?.[tab] || tab;
     return allowedTabs[aliasedTab] ? aliasedTab : DEFAULT_WORKSPACE_TABS[workspace];
 };
-const handoffResponsibleArea = (department) => (
-    ['Operations', 'Admin', 'Service prep', undefined, null, ''].includes(department) ? 'Service prep' : department
-);
 const adminEmployeesUrl = (filters = {}) => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -1549,7 +1539,7 @@ const DashboardAdmin = () => {
         if (!searchText) return;
 
         if (normalizedWorkspace === 'marketing') {
-            if (['bookings', 'handoff'].includes(normalizedTab)) {
+            if (normalizedTab === 'bookings') {
                 setBookingSearch(searchText);
             } else if (normalizedTab === 'calendar') {
                 setAdminCalendarSearch(searchText);
@@ -1937,7 +1927,6 @@ const DashboardAdmin = () => {
                 bookings: marketingRemoteSummary ? marketingRemoteSummary.pending : pendingBookings,
                 tastings: 0,
                 calendar: confirmedBookings,
-                handoff: confirmedBookings,
             },
             accounting: {
                 today: accountingQueueCounts.total + refundQueue.length,
@@ -2668,7 +2657,6 @@ const DashboardAdmin = () => {
         if (sourceText.includes('chat') || sourceText.includes('conversation') || sourceText.includes('message')) return 'Messages';
         if (sourceText.includes('payment')) return 'Payments';
         if (sourceText.includes('refund')) return 'Refunds';
-        if (sourceText.includes('preparation') || sourceText.includes('handoff')) return 'Event handoff';
         if (sourceText.includes('calendar-availability') || sourceText.includes('availability')) return 'Availability calendar';
         if (sourceText.includes('booking')) return 'Bookings';
         if (sourceText.includes('menu')) return 'Menu';
@@ -3006,7 +2994,7 @@ const DashboardAdmin = () => {
         } else if (activeTab === 'finance' || activeTab === 'accounting-today') {
             fetchBookings();
             fetchRefundQueue();
-        } else if (activeTab === 'calendar' || activeTab === 'handoff') {
+        } else if (activeTab === 'calendar') {
             fetchBookings();
         } else if (activeTab === 'availability') {
             fetchAvailabilityOverrides();
@@ -3022,7 +3010,7 @@ const DashboardAdmin = () => {
     }, [activeTab, peakSeasonFilters]);
 
     useSmartRefresh({
-        enabled: activeWorkspace === 'customer' || ['today', 'analytics', 'reports', 'bookings-intake', 'marketing-today', 'calendar', 'handoff', 'finance', 'accounting-today', 'accounts', 'public-content', 'availability', 'system-audit'].includes(activeTab),
+        enabled: activeWorkspace === 'customer' || ['today', 'analytics', 'reports', 'bookings-intake', 'marketing-today', 'calendar', 'finance', 'accounting-today', 'accounts', 'public-content', 'availability', 'system-audit'].includes(activeTab),
         interval: activeTab === 'today' || activeTab === 'analytics' || activeTab === 'reports' ? 120000 : 90000,
         idleAfter: 180000,
         channels: liveChannels,
@@ -7403,7 +7391,6 @@ const DashboardAdmin = () => {
                     <button type="button" onClick={() => navigateToWorkspaceTab('marketing', 'bookings')} className="admin-flat-strip-item admin-flat-strip-action"><strong>{bookingStats.pending}</strong><span>Bookings</span></button>
                     <button type="button" onClick={() => navigateToWorkspaceTab('marketing', 'calendar')} className="admin-flat-strip-item admin-flat-strip-action"><strong>{bookingStats.active}</strong><span>Calendar</span></button>
                     <button type="button" onClick={() => navigateToWorkspaceTab('marketing', 'messages')} className="admin-flat-strip-item admin-flat-strip-action"><strong>{adminMessageMetrics.open}</strong><span>Messages</span></button>
-                    <button type="button" onClick={() => navigateToWorkspaceTab('marketing', 'handoff')} className="admin-flat-strip-item admin-flat-strip-action"><strong>{bookingStats.active}</strong><span>Event Handoff</span></button>
                 </div>
             ) : (
                 <div className="admin-flat-strip">
@@ -7588,9 +7575,6 @@ const DashboardAdmin = () => {
                                         </div>
                                         <div className="admin-command-actions">
                                             <div className="admin-primary-actions">
-                                                <button onClick={() => setActiveTab('handoff')} className="admin-button-secondary inline-flex items-center justify-center px-3 py-2.5 text-sm font-black">
-                                                    Handoff
-                                                </button>
                                                 <button onClick={() => setActiveTab('reports')} className="admin-button-secondary inline-flex items-center justify-center px-3 py-2.5 text-sm font-black">
                                                     Reports
                                                 </button>
@@ -10025,13 +10009,6 @@ const DashboardAdmin = () => {
                         )
                     }
                     {activeTab === 'calendar' && renderMarketingCalendar()}
-                    {activeTab === 'handoff' && (
-                        <AdminPageSurface>
-                            <Suspense fallback={<StaffSkeleton variant="panel" rows={3} label="Loading handoff board" />}>
-                                <PreparationBoard surfaceMode="admin-full" onToast={(message, type) => type === 'error' ? toast.error(message) : toast.success(message)} />
-                            </Suspense>
-                        </AdminPageSurface>
-                    )}
                     {activeTab === 'guest-inquiries' && (
                         <AdminPageSurface>
                             <GuestInquiriesManager />
@@ -10750,7 +10727,7 @@ const DashboardAdmin = () => {
                                 <div key={task.id} className={`rounded-lg border px-4 py-3 ${task.status === 'Done' ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-[#fffaf3]'}`}>
                                     <p className="text-sm font-bold text-gray-900">{task.label}</p>
                                     <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                        {task.responsible_area || handoffResponsibleArea(task.department)} / {task.status}
+                                        {task.responsible_area || task.department} / {task.status}
                                     </p>
                                 </div>
                             ))}
@@ -11081,7 +11058,7 @@ const DashboardAdmin = () => {
                                     insight={expandedPanelMeta[expandedAnalyticsPanel]?.[1] || {
                                         headline: 'No interpretation available yet',
                                         meaning: 'Use the trend and filters to compare current performance while this chart waits for a dedicated insight rule.',
-                                        recommended_action: 'Compare this chart with current bookings, payments, and handoff queues before acting.',
+                                        recommended_action: 'Compare this chart with current bookings and payments before acting.',
                                         severity: 'watch',
                                     }}
                                     compact={false}
