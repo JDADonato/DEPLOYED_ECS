@@ -473,17 +473,22 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
             return sum + (cheapest * pax);
         }, 0);
         
-        // 2. Add realistic fees (VAT, Service Charge, Contingency)
-        const vatRate = packageContextFields.package_vat_rate || 0;
-        const serviceChargeRate = packageContextFields.package_service_charge_rate || 0;
-        const securityRate = packageContextFields.package_security_rate || 0;
-        const cashBond = packageContextFields.package_cash_bond || 0;
+        // 2. Add realistic fees matching applyBudgetMaximizer exactly
+        const sRate = packageContextFields.package_service_charge_rate || 0;
+        const vRate = packageContextFields.package_vat_rate || 0;
+        const lRate = ['outside-16-30', 'outside-31-50'].includes(bookingData.venueDistance) ? (packageContextFields.package_location_surcharge_rate || 0.20) : 0;
+        const hRate = bookingData.isHighRise ? (packageContextFields.package_floor_surcharge_rate || 0.03) : 0;
+        const secRate = packageContextFields.package_security_type === 'contingency' ? (packageContextFields.package_security_rate || 0) : 0;
         
-        const feeMultiplier = 1 + vatRate + serviceChargeRate + securityRate;
-        const realisticMinimum = Math.ceil(rawFoodMinimum * feeMultiplier) + cashBond;
+        const C = packageContextFields.package_security_type === 'cash_bond' ? (packageContextFields.package_cash_bond || 0) : 0;
+        const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
+        const D = bookingData.date && packageContextFields.package_december_surcharge && new Date(bookingData.date).getMonth() === 11 ? packageContextFields.package_december_surcharge : 0;
+
+        const feeMultiplier = (1 + sRate + vRate + lRate + hRate) * (1 + secRate);
+        const fixedFees = C + O + (D * (1 + secRate));
         
-        return realisticMinimum;
-    }, [mergedDishes, pax, pricingOverrides, packageContextFields]);
+        return Math.ceil(rawFoodMinimum * feeMultiplier) + fixedFees;
+    }, [mergedDishes, pax, pricingOverrides, packageContextFields, bookingData.venueDistance, bookingData.isHighRise, bookingData.duration, bookingData.date, businessRules]);
 
     const budgetNumber = parseInt(budget || 0, 10);
     const isBudgetReady = budgetMinimum > 0 && budgetNumber >= budgetMinimum;
@@ -1104,6 +1109,18 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                                 <div className={`mb-5 rounded-xl border px-3 py-2 text-xs font-bold leading-relaxed ${isBudgetReady ? 'border-green-100 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
                                     {budgetStatusMessage}
                                 </div>
+                                
+                                {budget && parseInt(budget) > 0 && parseInt(budget) < budgetMinimum && (
+                                    <div className="mb-5 flex gap-2 items-start text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
+                                        <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <p className="text-xs font-semibold leading-relaxed">
+                                            Your inputted budget of {money(budget)} is below the recommended minimum of {money(budgetMinimum)} for {pax} guests. The system may not be able to build a complete menu.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <ul className="space-y-2 text-xs text-gray-500 mb-5">
                                     <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Auto-selects dishes to fit your budget</li>
                                     <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Evenly spreads across all categories</li>
