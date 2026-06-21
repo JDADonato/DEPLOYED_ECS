@@ -916,6 +916,18 @@ const ChatBubble = ({ user, openOnMount = false }) => {
 
     const renderBookingCard = (text, isMine) => {
         const booking = parseBookingCard(text);
+        
+        const formatDate = (dateString) => {
+            if (!dateString || dateString === 'TBD') return 'TBD';
+            try {
+                const d = new Date(dateString.includes('T') ? dateString.split('T')[0] + 'T12:00:00' : dateString);
+                if (isNaN(d.getTime())) return dateString;
+                return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            } catch {
+                return dateString;
+            }
+        };
+
         return (
             <div className={`overflow-hidden rounded-2xl border ${isMine ? 'border-white/20 bg-white/10' : 'border-amber-100 bg-white shadow-sm'}`}>
                 <div className={`px-4 py-3 ${isMine ? 'bg-white/10 text-white' : 'bg-[#fff7e8] text-[#720101]'}`}>
@@ -923,7 +935,7 @@ const ChatBubble = ({ user, openOnMount = false }) => {
                     <p className="mt-1 text-sm font-black">{booking.title || booking.event_type || 'Eloquente event'}</p>
                 </div>
                 <div className={`grid grid-cols-2 gap-2 px-4 py-3 text-xs ${isMine ? 'text-white/85' : 'text-slate-600'}`}>
-                    <p><span className="block font-black uppercase opacity-60">Date</span>{booking.date || 'TBD'}</p>
+                    <p><span className="block font-black uppercase opacity-60">Date</span>{formatDate(booking.date)}</p>
                     <p><span className="block font-black uppercase opacity-60">Time</span>{booking.time || 'TBD'}</p>
                     <p><span className="block font-black uppercase opacity-60">Guests</span>{booking.pax || 'TBD'}{Number(booking.pax) ? ' pax' : ''}</p>
                     <p><span className="block font-black uppercase opacity-60">Venue</span>{booking.venue || 'TBD'}</p>
