@@ -2116,9 +2116,11 @@ const ClientDashboard = () => {
                             <div className="pt-4 border-t border-gray-200">
                                 <button 
                                     onClick={() => setEditCoreModalOpen(true)}
-                                    disabled={activeBooking.status === 'Cancelled'}
-                                    className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm mb-3 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                    disabled={activeBooking.status === 'Cancelled' || activeBooking.hasPaid}
+                                    title={activeBooking.hasPaid ? "Cannot modify pax/date after payment is made. Contact your Marketing Executive." : "Update your date and guest count."}
+                                    className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm mb-3 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
+                                    {activeBooking.hasPaid && <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
                                     Update Date / Pax
                                 </button>
                                 <button 
@@ -2417,8 +2419,12 @@ const ClientDashboard = () => {
                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-black uppercase tracking-widest text-red-800">14-Day Menu Freeze</p>
-                                                        <p className="text-xs font-medium text-red-700/80 mt-1 leading-relaxed">Your menu is locked for final sourcing. Contact your Marketing Executive for critical adjustments.</p>
+                                                        <p className="text-sm font-black uppercase tracking-widest text-red-800">
+                                                            {activeBooking.menuLockReason?.includes('14 days') ? '14-Day Menu Freeze' : 'Menu Locked'}
+                                                        </p>
+                                                        <p className="text-xs font-medium text-red-700/80 mt-1 leading-relaxed">
+                                                            {activeBooking.menuLockReason || 'Your menu is locked for final sourcing. Contact your Marketing Executive for critical adjustments.'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             )}

@@ -185,6 +185,7 @@ class ClientDashboardController extends Controller
                 $bookingArray['canEditSupplementary'] = $bookingService->canEditSupplementary($booking);
                 $bookingArray['canEditMenu'] = $bookingService->canEditMenu($booking);
                 $bookingArray['menuLockReason'] = $bookingService->getMenuLockReason($booking);
+                $bookingArray['hasPaid'] = $booking->payments->whereIn('status', ['Paid', 'Verified'])->isNotEmpty();
                 $bookingArray['cancellationImpact'] = $this->calculateCancellationImpactFromLoadedPayments($booking);
 
                 return $bookingArray;
