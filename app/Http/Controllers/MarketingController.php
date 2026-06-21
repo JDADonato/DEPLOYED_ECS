@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\BookingSummaryResource;
 use App\Mail\BookingLiveStatusUpdate;
-use App\Models\ActionLog;
+
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\BookingHistoryNote;

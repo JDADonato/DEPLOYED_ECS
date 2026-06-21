@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AnnouncementBroadcastEmail;
-use App\Models\ActionLog;
+
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
 use App\Models\User;

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\BookingSummaryResource;
 use App\Http\Resources\PublicMenuItemResource;
 use App\Http\Resources\UserSummaryResource;
-use App\Models\ActionLog;
+
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\MenuItem;
@@ -1309,4 +1309,5 @@ class AdminController extends Controller
             Log::error('Undo failed: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to undo action: ' . $e->getMessage()], 400);
         }
+    }
 }
