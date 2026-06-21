@@ -308,6 +308,24 @@ const resolvePackagePricing = (pkg, pax = 0) => {
 };
 
 const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, onBack, mode = 'full' }) => {
+    // Clear package selection if user is on the package selection step.
+    useEffect(() => {
+        if (mode === 'packages' && bookingData.package_id) {
+            updateBooking({
+                package_id: null,
+                package_name: null,
+                package_base_price: null,
+                package_flat_price: null,
+                package_pricing_type: null,
+                package_tier_code: null,
+                package_allowances: null,
+                selectedDishes: { starter: [], main: [], side: [], dessert: [], drink: [] },
+                customMenu: {},
+                totalCost: 0
+            });
+        }
+    }, [mode, bookingData.package_id]);
+
     const { pax, selectedDishes: existingDishes } = bookingData;
     const toast = useToast();
     const [phase, setPhase] = useState(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { fetchMenuItemsFromAPI } from '../../utils/menuUtils';
 
 const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], maxSelections = 5 }) => {
@@ -67,7 +68,7 @@ const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], ma
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm animate-fadeIn">
             <div className="w-full max-w-4xl overflow-hidden rounded-[1.75rem] border border-[#720101]/10 bg-white shadow-2xl transform transition-all scale-100 animate-scaleIn">
                 <div className="p-6">
@@ -136,7 +137,8 @@ const MenuPickerModal = ({ isOpen, onClose, onSelect, initialSelections = [], ma
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

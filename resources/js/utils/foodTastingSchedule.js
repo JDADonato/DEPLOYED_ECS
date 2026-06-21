@@ -6,8 +6,6 @@ export const TASTING_TIME_OPTIONS = [
     { value: '13:00', label: '1:00 PM' },
     { value: '13:30', label: '1:30 PM' },
     { value: '14:00', label: '2:00 PM' },
-    { value: '14:30', label: '2:30 PM' },
-    { value: '15:00', label: '3:00 PM' },
 ];
 
 export const formatDateInput = (date) => {
