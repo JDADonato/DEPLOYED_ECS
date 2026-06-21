@@ -1903,7 +1903,7 @@ const ClientDashboard = () => {
                 {feedbackRequests.length > 0 && !showFeedbackModal && (
                     <button
                         onClick={() => setShowFeedbackModal(true)}
-                        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f0aa0b] to-[#d99607] px-5 py-3 text-sm font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 active:scale-95 transition-all group animate-bounce hover:animate-none border-2 border-white/20"
+                        className="fixed bottom-24 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f0aa0b] to-[#d99607] px-5 py-3 text-sm font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 active:scale-95 transition-all group border-2 border-white/20"
                     >
                         <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
                             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
