@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { fetchMenuItemsFromAPI } from '../../utils/menuUtils';
 import { useToast } from '../../context/ToastContext';
 import SmartImage from '../common/SmartImage';
-
+import ConfirmModal from '../common/ConfirmModal';
 const CATEGORY_TABS = [
     { key: 'starter', label: 'Starter' },
     { key: 'main', label: 'Main Course' },
@@ -594,6 +594,25 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
         return total;
     }, [selections, pax, pricingOverrides, bookingData.package_base_price, bookingData.package_flat_price, bookingData.package_pricing_type, bookingData.package_allowances]);
 
+    const projectedTotal = useMemo(() => {
+        if (!budget || parseInt(budget) <= 0) return 0;
+        
+        const sRate = packageContextFields.package_service_charge_rate || 0;
+        const vRate = packageContextFields.package_vat_rate || 0;
+        const lRate = ['outside-16-30', 'outside-31-50'].includes(bookingData.venueDistance) ? (packageContextFields.package_location_surcharge_rate || 0.20) : 0;
+        const hRate = bookingData.isHighRise ? (packageContextFields.package_floor_surcharge_rate || 0.03) : 0;
+        const secRate = packageContextFields.package_security_type === 'contingency' ? (packageContextFields.package_security_rate || 0) : 0;
+        
+        const C = packageContextFields.package_security_type === 'cash_bond' ? (packageContextFields.package_cash_bond || 0) : 0;
+        const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
+        const D = bookingData.date && packageContextFields.package_december_surcharge && new Date(bookingData.date).getMonth() === 11 ? packageContextFields.package_december_surcharge : 0;
+        
+        return Math.ceil(menuTotal * (1 + sRate + vRate + lRate + hRate) * (1 + secRate) + D * (1 + secRate) + C + O);
+    }, [budget, menuTotal, packageContextFields, bookingData.venueDistance, bookingData.isHighRise, bookingData.duration, bookingData.date, businessRules]);
+
+    const isOverBudget = budget && parseInt(budget) > 0 && projectedTotal > parseInt(budget);
+    const [showBudgetWarningModal, setShowBudgetWarningModal] = useState(false);
+
     // Update parent whenever selections change
     useEffect(() => {
         if (phase === 'menu') {
@@ -866,7 +885,11 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
     };
     const goToNextCategory = () => {
         if (!isGuidedMenu || isLastCategory) {
-            handleConfirmMenu();
+            if (isOverBudget) {
+                setShowBudgetWarningModal(true);
+            } else {
+                handleConfirmMenu();
+            }
             return;
         }
         setActiveTab(CATEGORY_TABS[activeCategoryIndex + 1].key);
@@ -1376,21 +1399,7 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
 
             {/* Over Budget Warning */}
             {(() => {
-                if (!budget || parseInt(budget) <= 0) return null;
-                
-                const sRate = packageContextFields.package_service_charge_rate || 0;
-                const vRate = packageContextFields.package_vat_rate || 0;
-                const lRate = ['outside-16-30', 'outside-31-50'].includes(bookingData.venueDistance) ? (packageContextFields.package_location_surcharge_rate || 0.20) : 0;
-                const hRate = bookingData.isHighRise ? (packageContextFields.package_floor_surcharge_rate || 0.03) : 0;
-                const secRate = packageContextFields.package_security_type === 'contingency' ? (packageContextFields.package_security_rate || 0) : 0;
-                
-                const C = packageContextFields.package_security_type === 'cash_bond' ? (packageContextFields.package_cash_bond || 0) : 0;
-                const O = Math.max(0, (bookingData.duration || 4) - 4) * (packageContextFields.package_extra_service_hours_fee !== undefined ? Number(packageContextFields.package_extra_service_hours_fee) : (businessRules?.extra_service_hours_fee !== undefined ? Number(businessRules.extra_service_hours_fee) : 5000));
-                const D = bookingData.date && packageContextFields.package_december_surcharge && new Date(bookingData.date).getMonth() === 11 ? packageContextFields.package_december_surcharge : 0;
-                
-                const projectedTotal = Math.ceil(menuTotal * (1 + sRate + vRate + lRate + hRate) * (1 + secRate) + D * (1 + secRate) + C + O);
-                
-                if (projectedTotal <= parseInt(budget)) return null;
+                if (!isOverBudget) return null;
 
                 return (
                 <div className="mx-4 mt-4 mb-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 animate-fadeIn">
@@ -1619,6 +1628,20 @@ const MenuBuilder = ({ bookingData, businessRules = {}, updateBooking, onNext, o
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showBudgetWarningModal}
+                onClose={() => setShowBudgetWarningModal(false)}
+                onConfirm={() => {
+                    setShowBudgetWarningModal(false);
+                    handleConfirmMenu();
+                }}
+                title="Exceeded Budget"
+                message={`Your current selection exceeds your planned budget of ${money(budget)}. Are you sure you want to continue?`}
+                confirmText="Continue Anyway"
+                cancelText="Review Menu"
+                isDanger={true}
+            />
         </div>
     );
 };
