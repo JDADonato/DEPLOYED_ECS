@@ -59,7 +59,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     <div>
                         <p className="booking-step-kicker">Guests</p>
                         <h2>Enter your estimated headcount.</h2>
-                        <p>A close estimate is enough. You can refine the count with the team later.</p>
+                        <p>A close estimate is enough. You can update your guest count later from your dashboard before making a payment.</p>
                     </div>
 
                     <div className="booking-compact-number">
