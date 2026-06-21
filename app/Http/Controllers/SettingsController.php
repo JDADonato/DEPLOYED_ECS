@@ -37,7 +37,13 @@ class SettingsController extends Controller
             'settings' => ['required', 'array'],
         ]);
 
+        $previousSettings = [];
         foreach ($data['settings'] as $key => $value) {
+            $existing = BusinessSetting::where('key', $key)->first();
+            if ($existing) {
+                $previousSettings[$key] = $existing->value;
+            }
+
             BusinessSetting::updateOrCreate(
                 ['key' => $key],
                 [
@@ -47,6 +53,15 @@ class SettingsController extends Controller
                 ]
             );
         }
+
+        $request->attributes->set('undo_data', [
+            'action_type' => 'update_business_settings',
+            'target_type' => BusinessSetting::class,
+            'target_id' => $data['group'],
+            'details' => ['message' => 'Updated business settings group: ' . $data['group']],
+            'previous_state' => ['settings' => $previousSettings],
+            'new_state' => ['settings' => $data['settings']],
+        ]);
 
         app(OperationalBroadcastService::class)
             ->adminChanged('settings', 'business_settings', $data['group'], 'updated', 'Business settings updated.');
@@ -235,8 +250,18 @@ class SettingsController extends Controller
             $data['menu_structure'] = $this->normalizeMenuStructure($data['menu_structure']);
         }
 
+        $previousState = $package->toArray();
         $package->update($data);
         $this->bumpCatalogVersion();
+
+        $request->attributes->set('undo_data', [
+            'action_type' => 'update_package',
+            'target_type' => Package::class,
+            'target_id' => $package->id,
+            'details' => ['message' => 'Updated package: ' . $package->name],
+            'previous_state' => ['package' => $previousState],
+            'new_state' => ['package' => $package->toArray()],
+        ]);
 
         app(OperationalBroadcastService::class)
             ->adminChanged('catalog', 'package', $package->id, 'updated', 'Package updated.');
@@ -271,9 +296,19 @@ class SettingsController extends Controller
     public function destroyPackage(int $id)
     {
         $package = Package::findOrFail($id);
+        $packageData = $package->toArray();
         $package->delete();
         $this->bumpCatalogVersion();
         app(\App\Services\OperationalBroadcastService::class)->adminChanged('catalog', 'package', $id, 'deleted', 'Package permanently deleted.');
+
+        request()->attributes->set('undo_data', [
+            'action_type' => 'delete_package',
+            'target_type' => Package::class,
+            'target_id' => $id,
+            'details' => ['message' => 'Deleted package: ' . $packageData['name']],
+            'previous_state' => ['package' => $packageData],
+            'new_state' => null,
+        ]);
 
         return response()->json(['message' => 'Package permanently deleted.']);
     }

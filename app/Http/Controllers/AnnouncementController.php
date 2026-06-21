@@ -114,6 +114,16 @@ class AnnouncementController extends Controller
         $data['updated_by'] = $request->user()->id;
 
         $announcement = Announcement::create($data);
+
+        request()->attributes->set('undo_data', [
+            'action_type' => 'create_announcement',
+            'target_type' => Announcement::class,
+            'target_id' => $announcement->id,
+            'details' => ['message' => 'Created announcement: ' . $announcement->title],
+            'previous_state' => null,
+            'new_state' => ['announcement' => $announcement->toArray()],
+        ]);
+
         app(OperationalBroadcastService::class)
             ->adminChanged('announcements', 'announcement', $announcement->id, 'created', 'Announcement created.');
 
@@ -127,7 +137,18 @@ class AnnouncementController extends Controller
         $data['slug'] = $this->service->uniqueSlug($data['title'], $announcement->id);
         $data['updated_by'] = $request->user()->id;
 
+        $previousState = $announcement->toArray();
         $announcement->update($data);
+
+        request()->attributes->set('undo_data', [
+            'action_type' => 'update_announcement',
+            'target_type' => Announcement::class,
+            'target_id' => $announcement->id,
+            'details' => ['message' => 'Updated announcement: ' . $announcement->title],
+            'previous_state' => ['announcement' => $previousState],
+            'new_state' => ['announcement' => $announcement->toArray()],
+        ]);
+
         app(OperationalBroadcastService::class)
             ->adminChanged('announcements', 'announcement', $announcement->id, 'updated', 'Announcement updated.');
 

@@ -202,7 +202,17 @@ class AdminController extends Controller
         }
 
         $originalRole = $user->role;
+        $previousState = $user->toArray();
         $user->update($updates);
+
+        $request->attributes->set('undo_data', [
+            'action_type' => 'update_employee',
+            'target_type' => User::class,
+            'target_id' => $user->id,
+            'details' => ['message' => 'Updated employee: ' . $user->username],
+            'previous_state' => ['user' => array_diff_key($previousState, array_flip(['password', 'remember_token', 'temporary_password_secret']))],
+            'new_state' => ['user' => array_diff_key($user->toArray(), array_flip(['password', 'remember_token', 'temporary_password_secret']))],
+        ]);
 
         $emailDelivery = null;
         if (isset($updates['role']) && $updates['role'] !== $originalRole) {
@@ -255,6 +265,15 @@ class AdminController extends Controller
         ]);
         app(OperationalBroadcastService::class)
             ->adminChanged('accounts', 'user', $user->id, 'deactivated', 'Staff account deactivated.');
+
+        request()->attributes->set('undo_data', [
+            'action_type' => 'deactivate_employee',
+            'target_type' => User::class,
+            'target_id' => $user->id,
+            'details' => ['message' => 'Deactivated employee account'],
+            'previous_state' => ['user' => ['username' => $user->getOriginal('username'), 'email' => $originalEmail, 'account_status' => 'active']],
+            'new_state' => ['user' => ['account_status' => 'deactivated']],
+        ]);
 
         return response()->json([
             'message' => 'Employee account deactivated successfully',
@@ -1128,7 +1147,17 @@ class AdminController extends Controller
             $updates['image'] = CatalogImage::normalize($updates['image']);
         }
 
+        $previousState = $item->toArray();
         $item->update($updates);
+
+        $request->attributes->set('undo_data', [
+            'action_type' => 'update_menu_item',
+            'target_type' => MenuItem::class,
+            'target_id' => $item->id,
+            'details' => ['message' => 'Updated menu item: ' . $item->name],
+            'previous_state' => ['menu_item' => $previousState],
+            'new_state' => ['menu_item' => $item->toArray()],
+        ]);
         $this->bumpCatalogVersion();
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
         app(OperationalBroadcastService::class)
@@ -1148,11 +1177,21 @@ class AdminController extends Controller
             return response()->json(['error' => 'Cannot delete menu item because it is used in existing bookings. Please archive it instead.'], 400);
         }
 
+        $menuItemData = $item->toArray();
         $item->delete();
         $this->bumpCatalogVersion();
         Cache::put('admin.analytics.version', (int) Cache::get('admin.analytics.version', 1) + 1);
         app(OperationalBroadcastService::class)
-            ->adminChanged('catalog', 'menu_item', $item->id, 'deleted', 'Menu item permanently deleted.');
+            ->adminChanged('catalog', 'menu_item', $id, 'deleted', 'Menu item permanently deleted.');
+
+        request()->attributes->set('undo_data', [
+            'action_type' => 'delete_menu_item',
+            'target_type' => MenuItem::class,
+            'target_id' => $id,
+            'details' => ['message' => 'Deleted menu item: ' . $menuItemData['name']],
+            'previous_state' => ['menu_item' => $menuItemData],
+            'new_state' => null,
+        ]);
 
         return response()->json(['message' => 'Menu item permanently deleted']);
     }
@@ -1221,7 +1260,12 @@ class AdminController extends Controller
 
         $actionType = $undoData['action_type'] ?? null;
 
-        if ($actionType !== 'update_booking_status' && $actionType !== 'delete_announcement') {
+        $allowedActionTypes = [
+            'update_booking_status', 'delete_announcement', 'create_announcement', 'update_announcement',
+            'update_menu_item', 'delete_menu_item', 'update_employee', 'deactivate_employee',
+            'update_package', 'delete_package', 'update_business_settings'
+        ];
+        if (!in_array($actionType, $allowedActionTypes)) {
             return response()->json(['error' => 'This type of action cannot be undone.'], 400);
         }
 
@@ -1300,6 +1344,111 @@ class AdminController extends Controller
                         throw new \Exception('Announcement data not found for restoration.');
                     }
                 }
+            } elseif ($actionType === 'create_announcement') {
+                $announcement = \App\Models\Announcement::find($undoData['target_id']);
+                if ($announcement) {
+                    $announcement->forceDelete();
+                    $request->attributes->set('undo_data', [
+                        'action_type' => 'undo_create_announcement',
+                        'target_type' => \App\Models\Announcement::class,
+                        'target_id' => $undoData['target_id'],
+                        'details' => ['message' => 'Deleted created announcement'],
+                        'original_log_id' => $audit->id,
+                    ]);
+                }
+            } elseif ($actionType === 'update_announcement') {
+                $announcement = \App\Models\Announcement::findOrFail($undoData['target_id']);
+                $announcement->update($undoData['previous_state']['announcement']);
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_update_announcement',
+                    'target_type' => \App\Models\Announcement::class,
+                    'target_id' => $announcement->id,
+                    'details' => ['message' => 'Reverted announcement changes'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'update_menu_item') {
+                $item = \App\Models\MenuItem::findOrFail($undoData['target_id']);
+                $item->update($undoData['previous_state']['menu_item']);
+                $this->bumpCatalogVersion();
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_update_menu_item',
+                    'target_type' => \App\Models\MenuItem::class,
+                    'target_id' => $item->id,
+                    'details' => ['message' => 'Reverted menu item changes'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'delete_menu_item') {
+                $menuItemData = $undoData['previous_state']['menu_item'];
+                $existing = \App\Models\MenuItem::where('name', $menuItemData['name'])->first();
+                if ($existing) throw new \Exception('A menu item with this name already exists.');
+                $item = \App\Models\MenuItem::create($menuItemData);
+                $this->bumpCatalogVersion();
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_delete_menu_item',
+                    'target_type' => \App\Models\MenuItem::class,
+                    'target_id' => $item->id,
+                    'details' => ['message' => 'Restored menu item'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'update_employee') {
+                $user = User::findOrFail($undoData['target_id']);
+                $user->update($undoData['previous_state']['user']);
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_update_employee',
+                    'target_type' => User::class,
+                    'target_id' => $user->id,
+                    'details' => ['message' => 'Reverted employee changes'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'deactivate_employee') {
+                $user = User::findOrFail($undoData['target_id']);
+                $user->forceFill($undoData['previous_state']['user'])->save();
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_deactivate_employee',
+                    'target_type' => User::class,
+                    'target_id' => $user->id,
+                    'details' => ['message' => 'Restored employee account'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'update_package') {
+                $package = \App\Models\Package::findOrFail($undoData['target_id']);
+                $package->update($undoData['previous_state']['package']);
+                $this->bumpCatalogVersion();
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_update_package',
+                    'target_type' => \App\Models\Package::class,
+                    'target_id' => $package->id,
+                    'details' => ['message' => 'Reverted package changes'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'delete_package') {
+                $packageData = $undoData['previous_state']['package'];
+                $existing = \App\Models\Package::where('name', $packageData['name'])->first();
+                if ($existing) throw new \Exception('A package with this name already exists.');
+                $package = \App\Models\Package::create($packageData);
+                $this->bumpCatalogVersion();
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_delete_package',
+                    'target_type' => \App\Models\Package::class,
+                    'target_id' => $package->id,
+                    'details' => ['message' => 'Restored package'],
+                    'original_log_id' => $audit->id,
+                ]);
+            } elseif ($actionType === 'update_business_settings') {
+                $group = $undoData['target_id'];
+                foreach ($undoData['previous_state']['settings'] as $key => $value) {
+                    \App\Models\BusinessSetting::updateOrCreate(
+                        ['key' => $key],
+                        ['value' => is_array($value) ? $value : ['value' => $value], 'group' => $group]
+                    );
+                }
+                $request->attributes->set('undo_data', [
+                    'action_type' => 'undo_update_business_settings',
+                    'target_type' => \App\Models\BusinessSetting::class,
+                    'target_id' => $group,
+                    'details' => ['message' => 'Reverted business settings'],
+                    'original_log_id' => $audit->id,
+                ]);
             }
 
             \Illuminate\Support\Facades\DB::commit();
