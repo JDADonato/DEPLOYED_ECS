@@ -72,9 +72,11 @@ export default function GuestInquiriesManager() {
         try {
             const response = await csrfFetch(`/api/marketing/contact-inquiries/${id}`, {
                 method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
             const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Could not update this inquiry.');
             setSelectedLead(result.inquiry);
             reload({ silent: true, force: true });
             toast.success('Inquiry updated.');
@@ -94,16 +96,18 @@ export default function GuestInquiriesManager() {
         try {
             const response = await csrfFetch(`/api/marketing/contact-inquiries/${selectedLead.id}/reply`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: replyText.trim() }),
             });
             const result = await response.json();
+            if (!response.ok) throw new Error(result.message || result.error || 'Could not send reply.');
             setSelectedLead(result.inquiry);
             setReplyText('');
+            toast.success('Reply sent successfully.');
             reload({ silent: true, force: true });
-            toast.success('Reply sent via email.');
         } catch (error) {
             console.error(error);
-            toast.error(error.message || 'Failed to send reply.');
+            toast.error(error.message || 'Could not send reply.');
         } finally {
             setReplying(false);
         }
