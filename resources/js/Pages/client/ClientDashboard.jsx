@@ -1921,18 +1921,18 @@ const ClientDashboard = () => {
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                         {/* Backdrop */}
                         <div 
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+                            className="absolute inset-0 bg-slate-900/70 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
                             onClick={handleDismissFeedback}
                         ></div>
                         
                         {/* Modal Content */}
-                        <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#fffaf3] to-[#fff7e8] p-6 shadow-2xl shadow-black/40 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
+                        <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-300 slide-in-from-bottom-8">
                             {/* Decorative background element */}
-                            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/20 to-[#720101]/5 blur-3xl pointer-events-none"></div>
+                            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[#f0aa0b]/10 to-[#720101]/5 blur-3xl pointer-events-none"></div>
                             
                             <button 
                                 onClick={handleDismissFeedback}
-                                className="absolute top-4 right-4 z-10 rounded-full bg-white/50 p-2 text-slate-500 hover:bg-white hover:text-slate-900 transition-colors"
+                                className="absolute top-4 right-4 z-10 rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-colors"
                             >
                                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1944,9 +1944,9 @@ const ClientDashboard = () => {
                                     <div className="inline-flex items-center gap-2 rounded-full bg-[#720101]/10 px-3 py-1 mb-3">
                                         <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Feedback Request</p>
                                     </div>
-                                    <h2 className="text-2xl font-display font-black text-slate-900 drop-shadow-sm">How did your event go?</h2>
+                                    <h2 className="text-3xl font-display font-black text-slate-900">How did your event go?</h2>
                                     <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600">
-                                        Share your experience for <span className="text-[#a16207]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
+                                        Share your experience for <span className="text-[#720101]">{feedbackRequests[0].booking?.event_name || feedbackRequests[0].booking?.event_type || 'your completed event'}</span>. Your input helps us make every Eloquente event extraordinary!
                                     </p>
                                 </div>
                                 <form
@@ -1954,21 +1954,21 @@ const ClientDashboard = () => {
                                         event.preventDefault();
                                         submitFeedback(feedbackRequests[0].token);
                                     }}
-                                    className="w-full flex flex-col gap-5 max-w-xl mx-auto"
+                                    className="w-full flex flex-col gap-6 max-w-xl mx-auto"
                                 >
                                     {/* Prominent Overall Rating */}
-                                    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/50 bg-white/60 p-4 shadow-sm backdrop-blur-md transition-all hover:bg-white/80">
-                                        <h3 className="mb-1 text-[11px] font-black uppercase tracking-widest text-[#720101]">Overall Experience</h3>
-                                        <div className="mb-3 rounded-full bg-[#fffaf3] px-3 py-1 text-xs font-black text-[#a16207]">{feedbackForm.rating} / 5</div>
+                                    <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 p-6 shadow-sm transition-all hover:bg-slate-100/50">
+                                        <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-[#720101]">Overall Experience</h3>
+                                        <div className="mb-4 rounded-full bg-white ring-1 ring-slate-200 px-3 py-1 text-xs font-black text-slate-700">{feedbackForm.rating} / 5</div>
                                         <div className="flex items-center gap-2">
                                             {[1, 2, 3, 4, 5].map(star => (
                                                 <button
                                                     key={star}
                                                     type="button"
                                                     onClick={() => setFeedbackForm(prev => ({ ...prev, rating: star }))}
-                                                    className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm.rating ? 'text-[#f0aa0b]' : 'text-gray-200 hover:text-gray-300'}`}
+                                                    className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm.rating ? 'text-[#f0aa0b]' : 'text-slate-200 hover:text-slate-300'}`}
                                                 >
-                                                    <svg className="h-10 w-10 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                    <svg className="h-12 w-12 drop-shadow-sm fill-current" viewBox="0 0 24 24">
                                                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                                                     </svg>
                                                 </button>
@@ -1977,27 +1977,27 @@ const ClientDashboard = () => {
                                     </div>
 
                                     {/* Sub-ratings */}
-                                    <div className="flex flex-col gap-2 rounded-2xl border border-white/50 bg-white/40 p-4 shadow-inner backdrop-blur-sm">
+                                    <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-5 shadow-sm">
                                         {[
                                             ['food_rating', 'Food'],
                                             ['service_rating', 'Service'],
                                             ['communication_rating', 'Communication'],
                                             ['value_rating', 'Value'],
                                         ].map(([field, label]) => (
-                                            <div key={field} className="flex items-center justify-between border-b border-white/40 pb-2 last:border-0 last:pb-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">{label}</span>
-                                                    <span className="text-[10px] font-black text-[#a16207] opacity-60">{feedbackForm[field]} / 5</span>
+                                            <div key={field} className="flex items-center justify-between border-b border-slate-200/60 pb-3 last:border-0 last:pb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">{label}</span>
+                                                    <span className="text-[10px] font-black text-slate-400 bg-white ring-1 ring-slate-200 px-1.5 py-0.5 rounded">{feedbackForm[field]} / 5</span>
                                                 </div>
-                                                <div className="flex items-center gap-1">
+                                                <div className="flex items-center gap-1.5">
                                                     {[1, 2, 3, 4, 5].map(star => (
                                                         <button
                                                             key={star}
                                                             type="button"
                                                             onClick={() => setFeedbackForm(prev => ({ ...prev, [field]: star }))}
-                                                            className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-gray-300 hover:text-gray-400'}`}
+                                                            className={`transition-all duration-200 hover:scale-110 focus:outline-none ${star <= feedbackForm[field] ? 'text-[#f0aa0b]' : 'text-slate-200 hover:text-slate-300'}`}
                                                         >
-                                                            <svg className="h-6 w-6 drop-shadow-sm fill-current" viewBox="0 0 24 24">
+                                                            <svg className="h-7 w-7 drop-shadow-sm fill-current" viewBox="0 0 24 24">
                                                                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                                                             </svg>
                                                         </button>
@@ -2011,22 +2011,24 @@ const ClientDashboard = () => {
                                         value={feedbackForm.comments}
                                         onChange={(event) => setFeedbackForm(prev => ({ ...prev, comments: event.target.value }))}
                                         placeholder="Tell us what went well or what we can improve."
-                                        rows={3}
-                                        className="w-full resize-none rounded-xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-[#720101]/30 focus:ring-2 focus:ring-[#720101]/15"
+                                        rows={4}
+                                        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm outline-none focus:border-[#720101] focus:ring-1 focus:ring-[#720101]"
                                     />
-                                    <label className="flex items-center gap-3 text-sm font-semibold text-gray-600">
+                                    
+                                    <label className="flex items-start gap-3 text-sm font-semibold text-slate-600 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={feedbackForm.testimonial_permission}
                                             onChange={(event) => setFeedbackForm(prev => ({ ...prev, testimonial_permission: event.target.checked }))}
-                                            className="h-5 w-5 rounded border-slate-300 text-[#720101] shadow-sm focus:border-[#720101] focus:ring focus:ring-[#720101] focus:ring-opacity-50"
+                                            className="mt-0.5 h-5 w-5 rounded border-slate-300 text-[#720101] shadow-sm focus:border-[#720101] focus:ring focus:ring-[#720101]/20 cursor-pointer"
                                         />
-                                        <span className="text-sm font-bold text-slate-600">Eloquente may use my comments as a testimonial.</span>
+                                        <span className="text-sm leading-snug text-slate-600 text-left">Eloquente may use my comments as a public testimonial to help other customers.</span>
                                     </label>
+                                    
                                     <button
                                         type="submit"
                                         disabled={submittingFeedback}
-                                        className="group relative flex w-full sm:w-auto items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#720101] to-[#a10101] px-8 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100"
+                                        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#720101] px-8 py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-[#8a0101] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#720101] focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100 mt-2"
                                     >
                                         <span className="relative z-10">{submittingFeedback ? 'Submitting...' : 'Submit Feedback'}</span>
                                         {!submittingFeedback && (
@@ -2034,7 +2036,6 @@ const ClientDashboard = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                             </svg>
                                         )}
-                                        <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
                                     </button>
                                 </form>
                             </div>
