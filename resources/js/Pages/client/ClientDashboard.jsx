@@ -248,7 +248,7 @@ const buildJourneySteps = (booking, payments) => {
     const needsMenuSelection = !hasSelectedMenu(booking.selected_menu);
 
     const manualUnlocks = booking.manual_unlocks || {};
-    const paymentsUnlocked = isApproved || manualUnlocks.payments;
+    const paymentsUnlocked = manualUnlocks.payments === 'unlocked' ? true : (manualUnlocks.payments === 'locked' ? false : isApproved);
 
     const steps = [
         { label: 'Booking approved', done: isApproved, action: 'Awaiting Marketing Executive approval', tab: 'details', target: 'approval-status-panel', isPendingGate: !isApproved },
@@ -2616,14 +2616,16 @@ const ClientDashboard = () => {
                                                                 })}
                                                             </div>
                                                             {activeBooking.nextPaymentDue ? (
-                                                                <div className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.status === 'Pending' && !activeBooking.manual_unlocks?.payments ? 'opacity-80' : ''}`}>
-                                                                    {activeBooking.status === 'Pending' && !activeBooking.manual_unlocks?.payments && (
+                                                                <div className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked') ? 'opacity-80' : ''}`}>
+                                                                    {(activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked')) && (
                                                                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-6 text-center">
                                                                             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0aa0b] text-[#1a1a1a] shadow-lg">
                                                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                                                             </div>
                                                                             <h5 className="text-sm font-black uppercase tracking-widest text-white">Payment Locked</h5>
-                                                                            <p className="mt-1 text-xs font-bold text-white/80 leading-relaxed max-w-[240px]">Payments are disabled until your booking is officially approved by our team.</p>
+                                                                            <p className="mt-1 text-xs font-bold text-white/80 leading-relaxed max-w-[240px]">
+                                                                                {activeBooking.manual_unlocks?.payments === 'locked' ? 'Payments have been manually locked by our team.' : 'Payments are disabled until your booking is officially approved by our team.'}
+                                                                            </p>
                                                                         </div>
                                                                     )}
                                                                     <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -2648,17 +2650,17 @@ const ClientDashboard = () => {
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={(e) => handlePaymentSubmit(e, activeBooking.nextPaymentDue, false)}
-                                                                                disabled={submittingPayment || activeBooking.status === 'Pending'}
-                                                                                className={`rounded-xl bg-[#f0aa0b] px-6 py-3.5 text-sm font-black text-[#1a1a1a] shadow-lg shadow-black/20 transition-all hover:bg-[#d99a08] ${submittingPayment || activeBooking.status === 'Pending' ? 'cursor-not-allowed opacity-70' : ''}`}
+                                                                                disabled={submittingPayment || activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked')}
+                                                                                className={`rounded-xl bg-[#f0aa0b] px-6 py-3.5 text-sm font-black text-[#1a1a1a] shadow-lg shadow-black/20 transition-all hover:bg-[#d99a08] ${submittingPayment || activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked') ? 'cursor-not-allowed opacity-70' : ''}`}
                                                                             >
-                                                                                {submittingPayment ? 'Opening Checkout...' : activeBooking.status === 'Pending' ? 'Awaiting Approval' : 'Proceed to Checkout'}
+                                                                                {submittingPayment ? 'Opening Checkout...' : (activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked')) ? 'Payment Locked' : 'Proceed to Checkout'}
                                                                             </button>
                                                                             {payments.filter(p => !p.voided_at && ['Pending', 'Failed', 'Rejected'].includes(p.status)).length > 1 && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={(e) => handlePaymentSubmit(e, activeBooking.nextPaymentDue, true)}
-                                                                                    disabled={submittingPayment || activeBooking.status === 'Pending'}
-                                                                                    className={`rounded-xl border border-[#f0aa0b]/40 bg-black/20 px-6 py-3 text-sm font-bold text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/10 ${submittingPayment || activeBooking.status === 'Pending' ? 'cursor-not-allowed opacity-70' : ''}`}
+                                                                                    disabled={submittingPayment || activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked')}
+                                                                                    className={`rounded-xl border border-[#f0aa0b]/40 bg-black/20 px-6 py-3 text-sm font-bold text-[#f0aa0b] transition-all hover:bg-[#f0aa0b]/10 ${submittingPayment || activeBooking.manual_unlocks?.payments === 'locked' || (activeBooking.status === 'Pending' && activeBooking.manual_unlocks?.payments !== 'unlocked') ? 'cursor-not-allowed opacity-70' : ''}`}
                                                                                 >
                                                                                     Pay Full Balance ({peso(balance)})
                                                                                 </button>

@@ -59,6 +59,11 @@ class BookingSummaryResource extends JsonResource
             'status' => $this->normalizedBookingStatus(),
             'review_status' => $this->review_status ?? 'Submitted',
             'manual_unlocks' => $this->manual_unlocks ?? [],
+            'default_locks' => [
+                'details' => !app(\App\Services\BookingManagementService::class)->canEditSupplementary($this->resource),
+                'menu' => !app(\App\Services\BookingManagementService::class)->canEditMenu($this->resource),
+                'payments' => !in_array($this->status, ['Confirmed', 'Completed']),
+            ],
             'assigned_to' => $this->assigned_to,
             'assigned_name' => $this->assignee?->full_name ?: ($this->assignee->username ?? null),
             'owner_id' => $this->assigned_to,

@@ -10,6 +10,7 @@ import {
 } from '../../utils/statusLabels';
 import { bookingContactEmail, bookingContactName, bookingContactPhone, customerAccountEmail, customerAccountHandle, customerAccountName, customerAccountPhone, hasDifferentBookingContact } from '../../utils/customerIdentity';
 import SmartImage from '../common/SmartImage';
+import ConfirmModal from '../common/ConfirmModal';
 
 const formatDate = (value) => {
     if (!value) return 'Date pending';
@@ -100,10 +101,40 @@ const EventDetailDrawer = ({
     const showCustomerAccount = hasDifferentBookingContact(booking);
 
     const [unlocks, setUnlocks] = React.useState(booking.manual_unlocks || {});
+    const [pendingUnlockChange, setPendingUnlockChange] = React.useState(null);
+    const [isUpdatingUnlock, setIsUpdatingUnlock] = React.useState(false);
     
     React.useEffect(() => {
         setUnlocks(booking.manual_unlocks || {});
     }, [booking.manual_unlocks]);
+
+    const handleConfirmUnlockChange = async () => {
+        if (!pendingUnlockChange) return;
+        const { key, value } = pendingUnlockChange;
+        const newUnlocks = { ...unlocks, [key]: value };
+        
+        setIsUpdatingUnlock(true);
+        try {
+            const res = await fetch(`/api/marketing/bookings/${booking.id}/unlocks`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({ manual_unlocks: newUnlocks })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUnlocks(newUnlocks);
+                window.dispatchEvent(new CustomEvent('booking-updated', { detail: data.booking }));
+            }
+        } catch (error) {
+            console.error("Failed to update unlock", error);
+        } finally {
+            setIsUpdatingUnlock(false);
+            setPendingUnlockChange(null);
+        }
+    };
 
     const displayTitle = title === 'Event brief' || title === 'Event details'
         ? `Booking #${String(booking.id || '').padStart(4, '0')}`
@@ -380,53 +411,53 @@ const EventDetailDrawer = ({
                         <div className="space-y-4">
                             <section className="rounded-lg border border-slate-100 bg-white p-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Client Workflow Overrides</p>
-                                <p className="text-xs text-slate-600 mb-4">Manually unlock specific actions for the client dashboard. This overrides standard workflow locks (like preparation locks or menu freezes).</p>
+                                <p className="text-xs text-slate-600 mb-4">Manually lock or unlock specific actions for the client dashboard. This overrides standard workflow logic.</p>
                                 
-                                <div className="grid gap-3">
+                                <div className="grid gap-4">
                                     {['details', 'menu', 'payments'].map((key) => {
                                         const labels = {
-                                            details: 'Unlock Event Details',
-                                            menu: 'Unlock Menu Customization',
-                                            payments: 'Unlock Payments'
+                                            details: 'Event Details',
+                                            menu: 'Menu Customization',
+                                            payments: 'Payments'
                                         };
-                                        const isUnlocked = unlocks?.[key] === true;
+                                        const currentValue = unlocks?.[key] || null; // 'locked', 'unlocked', or null
+                                        const defaultIsLocked = booking.default_locks?.[key] === true;
+
                                         return (
-                                            <label key={key} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                                                <span className="text-sm font-bold text-slate-800">{labels[key]}</span>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isUnlocked}
-                                                    onChange={async (e) => {
-                                                        const val = e.target.checked;
-                                                        const newUnlocks = { ...unlocks, [key]: val };
-                                                        setUnlocks(newUnlocks);
-                                                        
-                                                        try {
-                                                            const res = await fetch(`/api/marketing/bookings/${booking.id}/unlocks`, {
-                                                                method: 'PUT',
-                                                                headers: {
-                                                                    'Content-Type': 'application/json',
-                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                                                                },
-                                                                body: JSON.stringify({
-                                                                    manual_unlocks: newUnlocks
-                                                                })
-                                                            });
-                                                            if (res.ok) {
-                                                                const data = await res.json();
-                                                                window.dispatchEvent(new CustomEvent('booking-updated', { detail: data.booking }));
-                                                            } else {
-                                                                // Revert on failure
-                                                                setUnlocks(unlocks);
-                                                            }
-                                                        } catch (error) {
-                                                            console.error("Failed to update unlock", error);
-                                                            setUnlocks(unlocks);
-                                                        }
-                                                    }}
-                                                    className="h-4 w-4 rounded border-slate-300 text-[#720101] focus:ring-[#720101]"
-                                                />
-                                            </label>
+                                            <div key={key} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-sm font-bold text-slate-800">{labels[key]}</span>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                                                            Currently: {defaultIsLocked ? 'Locked by Workflow' : 'Unlocked by Workflow'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="mt-2 flex items-center rounded-xl bg-slate-200/50 p-1 w-fit">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPendingUnlockChange({ key, value: null, label: labels[key], actionName: 'Auto' })}
+                                                        className={`rounded-lg px-4 py-1.5 text-xs font-black transition ${!currentValue ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Auto
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPendingUnlockChange({ key, value: 'locked', label: labels[key], actionName: 'Force Lock' })}
+                                                        className={`rounded-lg px-4 py-1.5 text-xs font-black transition ${currentValue === 'locked' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Force Lock
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPendingUnlockChange({ key, value: 'unlocked', label: labels[key], actionName: 'Force Unlock' })}
+                                                        className={`rounded-lg px-4 py-1.5 text-xs font-black transition ${currentValue === 'unlocked' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Force Unlock
+                                                    </button>
+                                                </div>
+                                            </div>
                                         );
                                     })}
                                 </div>
@@ -435,6 +466,16 @@ const EventDetailDrawer = ({
                     )}
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={!!pendingUnlockChange}
+                title="Confirm Workflow Override"
+                message={`Are you sure you want to change the override state of ${pendingUnlockChange?.label} to "${pendingUnlockChange?.actionName}"?`}
+                confirmText="Yes, Change State"
+                onConfirm={handleConfirmUnlockChange}
+                onCancel={() => setPendingUnlockChange(null)}
+                busy={isUpdatingUnlock}
+            />
         </StaffDrawer>
     );
 };

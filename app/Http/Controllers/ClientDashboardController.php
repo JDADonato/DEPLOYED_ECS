@@ -183,9 +183,9 @@ class ClientDashboardController extends Controller
                     'status' => $nextPayment->status,
                     'description' => $tranches->get($nextPayment->payment_type)['description'] ?? 'Payment due.',
                 ] : null;
-                $bookingArray['canEditSupplementary'] = $bookingService->canEditSupplementary($booking) || !empty($booking->manual_unlocks['details']);
-                $bookingArray['canEditMenu'] = $bookingService->canEditMenu($booking) || !empty($booking->manual_unlocks['menu']);
-                $bookingArray['menuLockReason'] = !empty($booking->manual_unlocks['menu']) ? null : $bookingService->getMenuLockReason($booking);
+                $bookingArray['canEditSupplementary'] = (!empty($booking->manual_unlocks['details']) && $booking->manual_unlocks['details'] === 'locked') ? false : ($bookingService->canEditSupplementary($booking) || (!empty($booking->manual_unlocks['details']) && $booking->manual_unlocks['details'] === 'unlocked'));
+                $bookingArray['canEditMenu'] = (!empty($booking->manual_unlocks['menu']) && $booking->manual_unlocks['menu'] === 'locked') ? false : ($bookingService->canEditMenu($booking) || (!empty($booking->manual_unlocks['menu']) && $booking->manual_unlocks['menu'] === 'unlocked'));
+                $bookingArray['menuLockReason'] = (!empty($booking->manual_unlocks['menu']) && $booking->manual_unlocks['menu'] === 'unlocked') ? null : ((!empty($booking->manual_unlocks['menu']) && $booking->manual_unlocks['menu'] === 'locked') ? 'Your menu has been manually locked by our staff.' : $bookingService->getMenuLockReason($booking));
                 $bookingArray['hasPaid'] = $booking->payments->whereIn('status', ['Paid', 'Verified'])->isNotEmpty();
                 $bookingArray['cancellationImpact'] = $this->calculateCancellationImpactFromLoadedPayments($booking);
 

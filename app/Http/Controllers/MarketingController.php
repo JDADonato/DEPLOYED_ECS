@@ -1331,9 +1331,9 @@ class MarketingController extends Controller
 
         $data = $request->validate([
             'manual_unlocks' => ['required', 'array'],
-            'manual_unlocks.details' => ['nullable', 'boolean'],
-            'manual_unlocks.menu' => ['nullable', 'boolean'],
-            'manual_unlocks.payments' => ['nullable', 'boolean'],
+            'manual_unlocks.details' => ['nullable', 'string', 'in:locked,unlocked'],
+            'manual_unlocks.menu' => ['nullable', 'string', 'in:locked,unlocked'],
+            'manual_unlocks.payments' => ['nullable', 'string', 'in:locked,unlocked'],
         ]);
 
         $booking->manual_unlocks = $data['manual_unlocks'];
