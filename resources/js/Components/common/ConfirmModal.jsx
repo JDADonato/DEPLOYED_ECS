@@ -40,15 +40,17 @@ const ConfirmModal = ({
                     <p className="mt-3 text-sm font-medium leading-6 text-slate-500">{message}</p>
                     {children && <div className="mt-4 text-left">{children}</div>}
                 </div>
-                <div className="grid grid-cols-2 gap-3 p-6">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={busy}
-                        className="rounded-xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:bg-[#fff7e8] disabled:opacity-60"
-                    >
-                        {cancelText}
-                    </button>
+                <div className={`grid ${onCancel ? 'grid-cols-2' : 'grid-cols-1'} gap-3 p-6`}>
+                    {onCancel && (
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            disabled={busy}
+                            className="rounded-xl border border-[#720101]/10 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:bg-[#fff7e8] disabled:opacity-60"
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={onConfirm}
