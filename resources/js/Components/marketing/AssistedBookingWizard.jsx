@@ -724,7 +724,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                         {bookingData.package_name && (
                             <div className="booking-review-package">
                                 <strong>{bookingData.package_name}</strong>
-                                <b>{money(bookingData.package_pricing_type === 'flat' ? bookingData.package_flat_price : (bookingData.package_base_price || 0) * (bookingData.pax || 0))}</b>
+                                <b>{bookingData.package_pricing_type === 'budget' ? 'Custom' : money(bookingData.package_pricing_type === 'flat' ? bookingData.package_flat_price : (bookingData.package_base_price || 0) * (bookingData.pax || 0))}</b>
                             </div>
                         )}
                         {menuRows.length ? (
@@ -738,6 +738,22 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                             </ul>
                         ) : <p className="booking-review-muted">No dishes selected yet.</p>}
                     </div>
+
+                    {(reviewCosts.serviceCharge > 0 || reviewCosts.vatFee > 0 || reviewCosts.locationSurcharge > 0 || reviewCosts.highRiseFee > 0 || reviewCosts.decemberSurcharge > 0 || reviewCosts.contingencyFee > 0 || reviewCosts.cashBond > 0 || reviewCosts.overtimeFee > 0) && (
+                        <div className="booking-review-card">
+                            <span>Fees & Surcharges</span>
+                            <ul className="booking-review-menu">
+                                {reviewCosts.serviceCharge > 0 && <li><span>Service Charge</span><strong>{money(reviewCosts.serviceCharge)}</strong></li>}
+                                {reviewCosts.vatFee > 0 && <li><span>VAT</span><strong>{money(reviewCosts.vatFee)}</strong></li>}
+                                {reviewCosts.locationSurcharge > 0 && <li><span>Location Surcharge</span><strong>{money(reviewCosts.locationSurcharge)}</strong></li>}
+                                {reviewCosts.highRiseFee > 0 && <li><span>High-Rise Surcharge</span><strong>{money(reviewCosts.highRiseFee)}</strong></li>}
+                                {reviewCosts.decemberSurcharge > 0 && <li><span>December Surcharge</span><strong>{money(reviewCosts.decemberSurcharge)}</strong></li>}
+                                {reviewCosts.contingencyFee > 0 && <li><span>Security / Contingency Fee</span><strong>{money(reviewCosts.contingencyFee)}</strong></li>}
+                                {reviewCosts.cashBond > 0 && <li><span>Refundable Cash Bond</span><strong>{money(reviewCosts.cashBond)}</strong></li>}
+                                {reviewCosts.overtimeFee > 0 && <li><span>Overtime Fee</span><strong>{money(reviewCosts.overtimeFee)}</strong></li>}
+                            </ul>
+                        </div>
+                    )}
 
                     <div className="booking-review-card">
                         <div className="mb-4 flex items-center justify-between">
