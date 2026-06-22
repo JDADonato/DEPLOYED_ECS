@@ -724,7 +724,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                         {bookingData.package_name && (
                             <div className="booking-review-package">
                                 <strong>{bookingData.package_name}</strong>
-                                <b>{bookingData.package_pricing_type === 'budget' ? 'Custom' : money(bookingData.package_pricing_type === 'flat' ? bookingData.package_flat_price : (bookingData.package_base_price || 0) * (bookingData.pax || 0))}</b>
+                                <b>{bookingData.package_pricing_type === 'budget' ? money(bookingData.budget || 0) : money(bookingData.package_pricing_type === 'flat' ? bookingData.package_flat_price : (bookingData.package_base_price || 0) * (bookingData.pax || 0))}</b>
                             </div>
                         )}
                         {menuRows.length ? (

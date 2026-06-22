@@ -495,7 +495,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
                                 {reviewData.package_name && (
                                     <div className="booking-review-package">
                                         <strong>{reviewData.package_name}</strong>
-                                        <b>{reviewData.package_pricing_type === 'budget' ? 'Custom' : money(reviewData.package_pricing_type === 'flat' ? reviewData.package_flat_price : (reviewData.package_base_price || 0) * (reviewData.pax || 0))}</b>
+                                        <b>{reviewData.package_pricing_type === 'budget' ? money(reviewData.budget || 0) : money(reviewData.package_pricing_type === 'flat' ? reviewData.package_flat_price : (reviewData.package_base_price || 0) * (reviewData.pax || 0))}</b>
                                     </div>
                                 )}
                                 {reviewMenuRows.length > 0 ? (
