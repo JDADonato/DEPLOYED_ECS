@@ -811,11 +811,11 @@ class AccountingController extends Controller
                 'payments' => fn ($query) => $query
                     ->select(['id', 'booking_id', 'amount', 'status', 'payment_type', 'voided_at'])
                     ->active()
-                    ->whereIn('status', ['Verified', 'Paid']),
+                    ->whereIn('status', ['Verified', 'Paid', 'Refunded']),
                 'refundCases:id,booking_id,payment_id,amount,non_refundable_amount,status,last_action,provider_refund_id,provider_refund_status,provider_synced_at,notes,updated_at',
             ])
             ->where('status', 'Cancelled')
-            ->whereHas('payments', fn ($query) => $query->active()->whereIn('status', ['Verified', 'Paid']))
+            ->whereHas('payments', fn ($query) => $query->active()->whereIn('status', ['Verified', 'Paid', 'Refunded']))
             ->get()
             ->map(function (Booking $booking) {
                 $refundCases = $booking->refundCases;
