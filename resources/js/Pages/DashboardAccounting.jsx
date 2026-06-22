@@ -1529,7 +1529,7 @@ const DashboardAccounting = () => {
                 onClose={() => setSelectedFinanceBooking(null)}
                 footer={(
                     <div className="flex items-center gap-3">
-                        {booking.requires_accounting_review && (
+                        {!!booking.requires_accounting_review && (
                             <button
                                 type="button"
                                 onClick={() => handleAcknowledgeChangeOrder(booking.id)}
@@ -1555,7 +1555,7 @@ const DashboardAccounting = () => {
                     </div>
                 )}
             >
-                {booking.requires_accounting_review && (
+                {!!booking.requires_accounting_review && (
                     <div className="mb-4 bg-amber-50 rounded-lg p-3 sm:p-4 border border-amber-200">
                         <div className="flex gap-3">
                             <div className="text-xl shrink-0 mt-0.5">⚠️</div>
@@ -1746,7 +1746,7 @@ const DashboardAccounting = () => {
                                                         <div className="font-black text-[#720101] text-xs tracking-tight bg-[#720101]/5 px-1.5 py-0.5 rounded border border-[#720101]/10 w-fit">
                                                             #{booking.id}
                                                         </div>
-                                                        {booking.requires_accounting_review && (
+                                                        {!!booking.requires_accounting_review && (
                                                             <div className="text-[10px] uppercase tracking-wide font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 w-fit">
                                                                 Modified
                                                             </div>
@@ -1827,7 +1827,7 @@ const DashboardAccounting = () => {
                                                 <div className="font-black text-[#720101] text-xs tracking-tight bg-[#720101]/5 px-1.5 py-0.5 rounded border border-[#720101]/10 w-fit">
                                                     #{booking.id}
                                                 </div>
-                                                {booking.requires_accounting_review && (
+                                                {!!booking.requires_accounting_review && (
                                                     <div className="text-[10px] uppercase tracking-wide font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 w-fit">
                                                         Modified
                                                     </div>
