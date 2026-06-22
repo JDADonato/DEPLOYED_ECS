@@ -370,7 +370,7 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
                         </div>
                     </Section>
 
-                    {package_security_label && (
+                    {package_security_label && paymentSchedule && (
                         <Section id="terms" title="Payment terms" meta={`${paymentSchedule.rows.length} part${paymentSchedule.rows.length === 1 ? '' : 's'}`}>
                             <div className="space-y-2 rounded-lg bg-white p-3 text-xs font-bold text-slate-500 ring-1 ring-[#720101]/10">
                                 {paymentSchedule.rows.map(row => (
