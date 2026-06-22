@@ -1863,6 +1863,10 @@ const DashboardAdmin = () => {
         } else if (activeTab === 'today') {
             if (shouldBustCache) bustAdminCache('/api/admin/analytics/summary');
             fetchAnalyticsSummary({ silent, force });
+            fetchBookings({ silent });
+            fetchCustomers({ silent });
+            fetchEmployees({ silent });
+            fetchRefundQueue({ silent });
         } else if (activeTab === 'analytics' || activeTab === 'reports') {
             if (shouldBustCache) bustAdminCache('/api/admin/analytics');
             fetchAnalytics({ silent, force });
@@ -3009,6 +3013,10 @@ const DashboardAdmin = () => {
         } else if (activeTab === 'today') {
             if (!eventTypes.length) fetchPackages();
             fetchAnalyticsSummary();
+            fetchBookings();
+            fetchCustomers();
+            fetchEmployees();
+            fetchRefundQueue();
         } else if (activeTab === 'analytics' || activeTab === 'reports') {
             if (!packages.length || !eventTypes.length) fetchPackages();
             fetchAnalytics();
