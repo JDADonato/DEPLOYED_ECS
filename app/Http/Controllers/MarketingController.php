@@ -1325,8 +1325,9 @@ class MarketingController extends Controller
             return response()->json(['error' => 'Booking not found'], 404);
         }
 
-        if ($guard = $this->ensureCanMutateBooking($booking)) {
-            return $guard;
+        $user = auth()->user();
+        if (! $user || ! in_array($user->role, ['Marketing', 'Admin', 'Accounting'], true)) {
+            return response()->json(['error' => 'Only Marketing, Admin, or Accounting can update manual unlocks.'], 403);
         }
 
         $data = $request->validate([
