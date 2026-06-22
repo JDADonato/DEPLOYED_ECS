@@ -965,6 +965,22 @@ class AccountingController extends Controller
                     continue;
                 }
 
+                // If it was paid via PayMongo, try to fetch missing payment ID
+                if (! $payment->paymongo_payment_id && $payment->paymongo_checkout_session_id) {
+                    try {
+                        $session = $payMongo->retrieveCheckoutSession($payment->paymongo_checkout_session_id);
+                        $fetchedPaymentId = \Illuminate\Support\Arr::get($session, 'data.attributes.payments.0.id')
+                            ?? \Illuminate\Support\Arr::get($session, 'data.attributes.payment_intent.attributes.payments.0.id');
+                        
+                        if ($fetchedPaymentId) {
+                            $payment->update(['paymongo_payment_id' => $fetchedPaymentId]);
+                            $payment->paymongo_payment_id = $fetchedPaymentId;
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Could not retrieve checkout session to find payment ID.', ['error' => $e->getMessage()]);
+                    }
+                }
+
                 // If it was paid via PayMongo and has a payment ID, issue a real refund
                 if ($payment->paymongo_payment_id) {
                     try {
@@ -1041,7 +1057,7 @@ class AccountingController extends Controller
 
                         continue; // Skip local update if the real refund failed
                     }
-                } elseif (str_contains(strtolower((string) $payment->payment_method), 'paymongo')) {
+                } elseif ($payment->paymongo_checkout_session_id || $payment->paymongo_payment_intent_id || str_contains(strtolower((string) $payment->payment_method), 'paymongo')) {
                     Log::warning('PayMongo refund skipped because provider payment ID is missing.', [
                         'payment_id' => $payment->id,
                         'booking_id' => $bookingId,
