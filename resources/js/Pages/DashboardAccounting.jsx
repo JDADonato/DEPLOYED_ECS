@@ -494,6 +494,17 @@ const DashboardAccounting = () => {
                 fetchLedger({ silent: true });
                 fetchReconciliation({ silent: true });
                 fetchRefundQueue({ silent: true });
+                
+                setSelectedFinanceBooking(prev => {
+                    if (prev && prev.payments) {
+                        return {
+                            ...prev,
+                            payments: prev.payments.map(p => p.id === id ? { ...p, status: action === 'Verify' ? 'Verified' : 'Rejected' } : p)
+                        };
+                    }
+                    return prev;
+                });
+
                 setToast({
                     message: 'Payment ' + (action === 'Verify' ? 'Verified' : 'Rejected') + ' successfully!',
                     type: action === 'Verify' ? 'success' : 'error'
