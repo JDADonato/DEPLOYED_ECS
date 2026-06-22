@@ -247,11 +247,14 @@ const buildJourneySteps = (booking, payments) => {
     const needsClarification = Boolean(booking.clarification_request && !booking.clarification_response);
     const needsMenuSelection = !hasSelectedMenu(booking.selected_menu);
 
+    const manualUnlocks = booking.manual_unlocks || {};
+    const paymentsUnlocked = isApproved || manualUnlocks.payments;
+
     const steps = [
         { label: 'Booking approved', done: isApproved, action: 'Awaiting Marketing Executive approval', tab: 'details', target: 'approval-status-panel', isPendingGate: !isApproved },
-        { label: 'Reservation payment', done: hasReservation, action: 'Complete the reservation fee', tab: 'payments', locked: !isApproved },
+        { label: 'Reservation payment', done: hasReservation, action: 'Complete the reservation fee', tab: 'payments', locked: !paymentsUnlocked },
         { label: 'Event details', done: eventDetailsDone, action: 'Add timeline, venue notes, and motif', tab: 'details', target: 'event-details-panel' },
-        { label: 'Payment balance', done: paymentsDone, action: booking.nextPaymentDue ? `Pay ${paymentLabel(booking.nextPaymentDue.payment_type)}` : 'No remaining payment', tab: 'payments', locked: !isApproved },
+        { label: 'Payment balance', done: paymentsDone, action: booking.nextPaymentDue ? `Pay ${paymentLabel(booking.nextPaymentDue.payment_type)}` : 'No remaining payment', tab: 'payments', locked: !paymentsUnlocked },
     ];
 
     if (needsMenuSelection) {
@@ -2613,8 +2616,8 @@ const ClientDashboard = () => {
                                                                 })}
                                                             </div>
                                                             {activeBooking.nextPaymentDue ? (
-                                                                <div className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.status === 'Pending' ? 'opacity-80' : ''}`}>
-                                                                    {activeBooking.status === 'Pending' && (
+                                                                <div className={`mt-6 rounded-2xl border border-[#f0aa0b]/25 bg-white/[0.07] p-5 relative overflow-hidden ${activeBooking.status === 'Pending' && !activeBooking.manual_unlocks?.payments ? 'opacity-80' : ''}`}>
+                                                                    {activeBooking.status === 'Pending' && !activeBooking.manual_unlocks?.payments && (
                                                                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm p-6 text-center">
                                                                             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0aa0b] text-[#1a1a1a] shadow-lg">
                                                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>

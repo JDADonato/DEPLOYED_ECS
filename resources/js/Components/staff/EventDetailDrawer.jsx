@@ -99,6 +99,12 @@ const EventDetailDrawer = ({
     const payments = booking.payments || [];
     const showCustomerAccount = hasDifferentBookingContact(booking);
 
+    const [unlocks, setUnlocks] = React.useState(booking.manual_unlocks || {});
+    
+    React.useEffect(() => {
+        setUnlocks(booking.manual_unlocks || {});
+    }, [booking.manual_unlocks]);
+
     const displayTitle = title === 'Event brief' || title === 'Event details'
         ? `Booking #${String(booking.id || '').padStart(4, '0')}`
         : title;
@@ -112,6 +118,7 @@ const EventDetailDrawer = ({
         { id: 'menu', label: 'Menu & Package' },
         { id: 'finances', label: 'Finances' },
         journeySlot ? { id: 'journey', label: 'Customer Journey' } : null,
+        { id: 'controls', label: 'Controls' },
     ].filter(Boolean);
 
     React.useEffect(() => {
@@ -366,6 +373,64 @@ const EventDetailDrawer = ({
                             {journeySlot || (
                                 <p className="text-sm font-semibold text-slate-500 italic">No customer journey summary available.</p>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'controls' && (
+                        <div className="space-y-4">
+                            <section className="rounded-lg border border-slate-100 bg-white p-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Client Workflow Overrides</p>
+                                <p className="text-xs text-slate-600 mb-4">Manually unlock specific actions for the client dashboard. This overrides standard workflow locks (like preparation locks or menu freezes).</p>
+                                
+                                <div className="grid gap-3">
+                                    {['details', 'menu', 'payments'].map((key) => {
+                                        const labels = {
+                                            details: 'Unlock Event Details',
+                                            menu: 'Unlock Menu Customization',
+                                            payments: 'Unlock Payments'
+                                        };
+                                        const isUnlocked = unlocks?.[key] === true;
+                                        return (
+                                            <label key={key} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 cursor-pointer hover:bg-slate-100 transition-colors">
+                                                <span className="text-sm font-bold text-slate-800">{labels[key]}</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isUnlocked}
+                                                    onChange={async (e) => {
+                                                        const val = e.target.checked;
+                                                        const newUnlocks = { ...unlocks, [key]: val };
+                                                        setUnlocks(newUnlocks);
+                                                        
+                                                        try {
+                                                            const res = await fetch(`/api/marketing/bookings/${booking.id}/unlocks`, {
+                                                                method: 'PUT',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                                                                },
+                                                                body: JSON.stringify({
+                                                                    manual_unlocks: newUnlocks
+                                                                })
+                                                            });
+                                                            if (res.ok) {
+                                                                const data = await res.json();
+                                                                window.dispatchEvent(new CustomEvent('booking-updated', { detail: data.booking }));
+                                                            } else {
+                                                                // Revert on failure
+                                                                setUnlocks(unlocks);
+                                                            }
+                                                        } catch (error) {
+                                                            console.error("Failed to update unlock", error);
+                                                            setUnlocks(unlocks);
+                                                        }
+                                                    }}
+                                                    className="h-4 w-4 rounded border-slate-300 text-[#720101] focus:ring-[#720101]"
+                                                />
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </section>
                         </div>
                     )}
                 </div>

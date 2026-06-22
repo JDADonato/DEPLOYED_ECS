@@ -58,6 +58,7 @@ class BookingSummaryResource extends JsonResource
             'totalCost' => (float) ($this->total_cost ?? $this->budget ?? 0),
             'status' => $this->normalizedBookingStatus(),
             'review_status' => $this->review_status ?? 'Submitted',
+            'manual_unlocks' => $this->manual_unlocks ?? [],
             'assigned_to' => $this->assigned_to,
             'assigned_name' => $this->assignee?->full_name ?: ($this->assignee->username ?? null),
             'owner_id' => $this->assigned_to,

@@ -65,6 +65,7 @@ class Booking extends Model
         'discount_type',
         'expires_at',
         'milestone_step',
+        'manual_unlocks',
     ];
 
     /**
@@ -90,6 +91,7 @@ class Booking extends Model
             'budget' => 'integer',
             'outsourced_services' => 'array',
             'selected_menu' => 'array',
+            'manual_unlocks' => 'array',
         ];
     }
 

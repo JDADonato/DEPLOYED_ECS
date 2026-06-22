@@ -63,6 +63,7 @@ class ClientDashboardController extends Controller
                 'clarification_request',
                 'clarification_response',
                 'hidden_from_customer_history_at',
+                'manual_unlocks',
                 'created_at',
                 'updated_at',
             ])
@@ -182,9 +183,9 @@ class ClientDashboardController extends Controller
                     'status' => $nextPayment->status,
                     'description' => $tranches->get($nextPayment->payment_type)['description'] ?? 'Payment due.',
                 ] : null;
-                $bookingArray['canEditSupplementary'] = $bookingService->canEditSupplementary($booking);
-                $bookingArray['canEditMenu'] = $bookingService->canEditMenu($booking);
-                $bookingArray['menuLockReason'] = $bookingService->getMenuLockReason($booking);
+                $bookingArray['canEditSupplementary'] = $bookingService->canEditSupplementary($booking) || !empty($booking->manual_unlocks['details']);
+                $bookingArray['canEditMenu'] = $bookingService->canEditMenu($booking) || !empty($booking->manual_unlocks['menu']);
+                $bookingArray['menuLockReason'] = !empty($booking->manual_unlocks['menu']) ? null : $bookingService->getMenuLockReason($booking);
                 $bookingArray['hasPaid'] = $booking->payments->whereIn('status', ['Paid', 'Verified'])->isNotEmpty();
                 $bookingArray['cancellationImpact'] = $this->calculateCancellationImpactFromLoadedPayments($booking);
 

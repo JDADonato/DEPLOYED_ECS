@@ -363,6 +363,7 @@ Route::middleware(['auth', 'role:Marketing,Admin'])->group(function () {
     Route::post('/api/marketing/bookings/{id}/reminder', [MarketingController::class, 'sendReminder']);
     Route::patch('/api/marketing/bookings/{bookingId}/review-tasks/{taskId}', [MarketingController::class, 'updateReviewTask']);
     Route::put('/api/marketing/bookings/{id}/livestatus', [MarketingController::class, 'updateLiveStatus']);
+    Route::put('/api/marketing/bookings/{id}/unlocks', [MarketingController::class, 'updateManualUnlocks']);
     Route::get('/api/marketing/bookings/{id}', [MarketingController::class, 'show']);
     Route::get('/api/marketing/food-tastings', [FoodTastingController::class, 'staffIndex']);
     Route::post('/api/marketing/food-tastings/{tasting}/claim', [FoodTastingController::class, 'staffClaim']);

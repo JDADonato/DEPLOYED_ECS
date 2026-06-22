@@ -1317,6 +1317,35 @@ class MarketingController extends Controller
             'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
         ], 403);
     }
+    public function updateManualUnlocks(Request $request, int $id)
+    {
+        $booking = Booking::find($id);
+
+        if (! $booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        if ($guard = $this->ensureCanMutateBooking($booking)) {
+            return $guard;
+        }
+
+        $data = $request->validate([
+            'manual_unlocks' => ['required', 'array'],
+            'manual_unlocks.details' => ['nullable', 'boolean'],
+            'manual_unlocks.menu' => ['nullable', 'boolean'],
+            'manual_unlocks.payments' => ['nullable', 'boolean'],
+        ]);
+
+        $booking->manual_unlocks = $data['manual_unlocks'];
+        $booking->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Manual workflow unlocks updated.',
+            'booking' => new BookingSummaryResource($booking->fresh(['user', 'assignee', 'reviewTasks', 'preparationTasks', 'historyNotes'])),
+        ]);
+    }
+
 
     private function sendLiveStatusUpdates(Booking $booking, string $liveStatus): void
     {
