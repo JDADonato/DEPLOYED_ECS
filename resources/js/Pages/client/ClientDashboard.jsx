@@ -2111,7 +2111,7 @@ const ClientDashboard = () => {
                                         onClick={() => {
                                             setActiveSection(section.id);
                                             setTimeout(() => {
-                                                const el = document.getElementById('dashboard-content-area');
+                                                const el = document.getElementById('dashboard-tab-content');
                                                 if (el) {
                                                     const y = el.getBoundingClientRect().top + window.scrollY - 80;
                                                     window.scrollTo({ top: y, behavior: 'smooth' });
@@ -2316,6 +2316,7 @@ const ClientDashboard = () => {
                                     )}
 
                                     {/* Content based on Active Section */}
+                                    <div id="dashboard-tab-content"></div>
                                     {activeSection === 'details' && (
                                         <SmartEventDetailsPanel
                                             activeBooking={activeBooking}
