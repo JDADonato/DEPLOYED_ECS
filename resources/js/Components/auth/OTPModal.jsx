@@ -9,6 +9,7 @@ const OTPModal = () => {
     const user = auth?.user;
     const toast = useToast();
     const [otpValues, setOtpValues] = useState(Array(6).fill(''));
+    const [otpError, setOtpError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [expiresAt, setExpiresAt] = useState(user?.otp_expires_at || null);
     const [resendAvailableAt, setResendAvailableAt] = useState(user?.otp_resend_available_at || null);
@@ -63,6 +64,7 @@ const OTPModal = () => {
     const handleChange = (index, value) => {
         // Only allow numbers
         if (!/^\d*$/.test(value)) return;
+        setOtpError('');
 
         const newOtpValues = [...otpValues];
         // Only take the last character if multiple are entered (except for paste)
@@ -84,6 +86,7 @@ const OTPModal = () => {
 
     const handlePaste = (e) => {
         e.preventDefault();
+        setOtpError('');
         const pastedData = e.clipboardData.getData('text').trim();
         // Extract only numbers up to 6 digits
         const numbersOnly = pastedData.replace(/\D/g, '').slice(0, 6);
@@ -117,7 +120,7 @@ const OTPModal = () => {
             onError: (errors) => {
                 setIsSubmitting(false);
                 if (errors.otp) {
-                    toast.error(errors.otp);
+                    setOtpError(errors.otp);
                 }
                 // Optional: Clear inputs on error to let them try again easily
                 // setOtpValues(Array(6).fill(''));
@@ -192,11 +195,16 @@ const OTPModal = () => {
                                     value={digit}
                                     onChange={(e) => handleChange(index, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(index, e)}
-                                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:bg-white focus:ring-2 focus:ring-[#720101] focus:border-transparent outline-none transition-all duration-200"
+                                    className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold text-gray-800 bg-gray-50 border ${otpError ? 'border-red-500 ring-2 ring-red-500/50' : 'border-gray-200'} rounded-xl shadow-sm focus:bg-white focus:ring-2 focus:ring-[#720101] focus:border-transparent outline-none transition-all duration-200`}
                                     autoComplete="off"
                                 />
                             ))}
                         </div>
+                        {otpError && (
+                            <div className="text-red-600 text-sm font-bold text-center">
+                                {otpError}
+                            </div>
+                        )}
                         <button 
                             type="submit" 
                             disabled={isSubmitting || !isComplete || !hasUsableExpiry || expired}
