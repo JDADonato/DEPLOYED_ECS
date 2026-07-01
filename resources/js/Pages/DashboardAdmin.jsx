@@ -690,7 +690,7 @@ const ChartGuide = ({ x, y, items = [] }) => (
     </div>
 );
 
-const DownloadDropdown = ({ exportId, onDownload }) => {
+const DownloadDropdown = ({ exportId, onDownload, isGlobal = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -705,15 +705,25 @@ const DownloadDropdown = ({ exportId, onDownload }) => {
     }, []);
 
     return (
-        <div className="relative inline-block text-left ml-1" ref={dropdownRef}>
+        <div className={`relative inline-block text-left ${isGlobal ? '' : 'ml-1'}`} ref={dropdownRef}>
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]/20"
-                title="Download Analytics"
-                aria-label="Download Analytics"
+                className={isGlobal 
+                    ? "inline-flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]"
+                    : "p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]/20"}
+                title={isGlobal ? "Export All Analytics" : "Download Analytics"}
+                aria-label={isGlobal ? "Export All Analytics" : "Download Analytics"}
             >
-                <Download className="h-4 w-4" />
+                {isGlobal ? (
+                    <>
+                        <FileDown className="h-4 w-4 text-gray-500" />
+                        Export All
+                        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </>
+                ) : (
+                    <Download className="h-4 w-4" />
+                )}
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100] admin-export-dropdown">
@@ -5424,14 +5434,7 @@ const DashboardAdmin = () => {
                         {activeAnalyticsView === 'supporting' && 'Supporting Metrics'}
                     </h2>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => handleAnalyticsDownload('all', 'pdf')}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]"
-                        >
-                            <FileDown className="h-4 w-4 text-gray-500" />
-                            Export All
-                        </button>
+                        <DownloadDropdown exportId="all" onDownload={handleAnalyticsDownload} isGlobal={true} />
                         <button
                             type="button"
                             onClick={() => fetchAnalytics({ force: true })}
