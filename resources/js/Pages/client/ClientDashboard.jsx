@@ -2108,7 +2108,16 @@ const ClientDashboard = () => {
                                 ].map(section => (
                                     <button 
                                         key={section.id} 
-                                        onClick={() => setActiveSection(section.id)}
+                                        onClick={() => {
+                                            setActiveSection(section.id);
+                                            setTimeout(() => {
+                                                const el = document.getElementById('dashboard-content-area');
+                                                if (el) {
+                                                    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                                }
+                                            }, 50);
+                                        }}
                                         className={`relative w-full flex items-center gap-3 px-5 py-4 text-sm font-bold border-l-4 transition-all ${activeSection === section.id ? 'border-[#720101] bg-[#720101]/5 text-[#720101]' : 'border-transparent text-[#1a1a1a]/60 hover:bg-gray-50 hover:text-[#1a1a1a]'}`}
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={section.icon} /></svg>
@@ -2140,7 +2149,7 @@ const ClientDashboard = () => {
                         </div>
 
                         {/* RIGHT COLUMN: Content */}
-                        <div className="min-w-0 flex-1 space-y-6">
+                        <div id="dashboard-content-area" className="min-w-0 flex-1 space-y-6">
                             {activeBooking && (
                                 <>
                                     {/* Event Snapshot */}
