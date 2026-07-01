@@ -101,23 +101,37 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     };
 
     const handleConfirm = () => {
-        if (!formData.client_full_name.trim()) {
-            setModal({ isOpen: true, type: 'error', title: 'Missing Information', message: 'Please enter your full name.' });
+        const nameRegex = /^[a-zA-Z\s\-.]{2,}$/;
+        const name = formData.client_full_name.trim();
+        if (!name || name.length < 2 || !nameRegex.test(name)) {
+            setModal({ isOpen: true, type: 'error', title: 'Invalid Name', message: 'Please enter a valid full name (at least 2 characters, letters only).' });
             return;
         }
-        if ((requireEmail && !formData.client_email.trim()) || !formData.client_phone.trim()) {
-            setModal({
-                isOpen: true,
-                type: 'error',
-                title: 'Contact details needed',
-                message: requireEmail
-                    ? 'Please add the email and mobile number we should use for booking updates.'
-                    : 'Please add the mobile number we should use for booking updates.',
-            });
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (requireEmail && (!formData.client_email.trim() || !emailRegex.test(formData.client_email.trim()))) {
+            setModal({ isOpen: true, type: 'error', title: 'Invalid Email', message: 'Please enter a valid email address with at least 3 characters before the @ symbol.' });
             return;
         }
-        if (!formData.venue_address_line.trim() || !formData.venue_city) {
-            setModal({ isOpen: true, type: 'error', title: 'Missing Address', message: 'Please fill in the address and select a city.' });
+
+        const phoneRegex = /^(09|\+639)\d{9}$/;
+        if (!formData.client_phone.trim() || !phoneRegex.test(formData.client_phone.trim())) {
+            setModal({ isOpen: true, type: 'error', title: 'Invalid Mobile Number', message: 'Please enter a valid 11-digit Philippine mobile number (e.g., 09123456789).' });
+            return;
+        }
+
+        if (!formData.venue_address_line.trim() || formData.venue_address_line.trim().length < 3) {
+            setModal({ isOpen: true, type: 'error', title: 'Invalid Venue Address', message: 'Please enter a detailed venue address (minimum 3 characters).' });
+            return;
+        }
+
+        if (!formData.venue_street.trim() || formData.venue_street.trim().length < 3) {
+            setModal({ isOpen: true, type: 'error', title: 'Invalid Street Name', message: 'Please enter a valid street name (minimum 3 characters).' });
+            return;
+        }
+
+        if (!formData.venue_city) {
+            setModal({ isOpen: true, type: 'error', title: 'Missing City', message: 'Please select a city or municipality from the dropdown list.' });
             return;
         }
 
@@ -159,23 +173,23 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Full name</span>
-                            <input type="text" name="client_full_name" placeholder="Enter your full name" value={formData.client_full_name} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="client_full_name" placeholder="Enter your full name" minLength="2" pattern="^[a-zA-Z\s\-.]{2,}$" value={formData.client_full_name} onChange={handleChange} className="booking-input" />
                         </label>
                         <label>
                             <span className="booking-field-label">Email address</span>
-                            <input type="email" name="client_email" placeholder="your@email.com" value={formData.client_email} onChange={handleChange} className="booking-input" />
+                            <input type="email" name="client_email" placeholder="your@email.com" minLength="7" pattern="^[a-zA-Z0-9._%+\-]{3,}@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" value={formData.client_email} onChange={handleChange} className="booking-input" />
                         </label>
                         <label>
                             <span className="booking-field-label">Mobile number</span>
-                            <input type="tel" name="client_phone" placeholder="Mobile number" value={formData.client_phone} onChange={handleChange} className="booking-input" pattern="^(09|\+639)\d{9}$" title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)" />
+                            <input type="tel" name="client_phone" placeholder="Mobile number" minLength="11" maxLength="13" value={formData.client_phone} onChange={handleChange} className="booking-input" pattern="^(09|\+639)\d{9}$" title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)" />
                         </label>
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Venue address</span>
-                            <input type="text" name="venue_address_line" placeholder="Building, block, lot, unit, or venue name" value={formData.venue_address_line} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="venue_address_line" placeholder="Building, block, lot, unit, or venue name" minLength="3" value={formData.venue_address_line} onChange={handleChange} className="booking-input" />
                         </label>
                         <label>
                             <span className="booking-field-label">Street</span>
-                            <input type="text" name="venue_street" placeholder="Street name" value={formData.venue_street} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="venue_street" placeholder="Street name" minLength="3" value={formData.venue_street} onChange={handleChange} className="booking-input" />
                         </label>
                         <div>
                             <span className="booking-field-label">City or municipality</span>
