@@ -1164,6 +1164,8 @@ class AdminReportService
             'interpretation' => $this->insight(
                 'Simple Linear Regression revenue forecast is ready.',
                 'Verified revenue is trending '.$direction.' with an expected trajectory of '.$this->peso($nextForecast).' for the next '.$period.' period.',
+                'Revenue forecasts inform proactive purchasing and staffing decisions.',
+                'Calculated from cumulative historical verified revenue patterns.',
                 'Consider adjusting operational buffers and purchasing commitments before the next planning cycle.',
                 $direction === 'downward' ? 'warning' : 'watch'
             ),
@@ -1334,6 +1336,8 @@ class AdminReportService
             'interpretation' => $this->insight(
                 'Simple Moving Average pax demand projection is ready.',
                 'The moving average projects a baseline requirement for '.number_format($nextForecast).' total guests in the next '.$period.' period.',
+                'Pax demand projections help mitigate supply chain shortages and food waste.',
+                'Averaged from recent historical event sizes and frequency.',
                 'Ensure raw ingredient inventory aligns with this baseline before supplier commitments are finalized.',
                 'watch'
             ),
@@ -1505,6 +1509,8 @@ class AdminReportService
                 $totalEvents > 0
                     ? 'The busiest month is '.($busiestMonth['month'] ?? 'unknown').' and the leading event type is '.($busiestEventType['label'] ?? 'unknown').'.'
                     : 'No pending, confirmed, or completed bookings match the selected filters yet.',
+                'Understanding seasonal peaks helps optimize resource allocation.',
+                'Based on historical frequency of events across different months.',
                 $totalEvents > 0
                     ? 'Use the high-intensity cells to plan staffing, purchasing, and campaign timing.'
                     : 'Broaden the filters or wait for more booking records before using seasonal heatmap decisions.',
@@ -1725,6 +1731,8 @@ class AdminReportService
             'insight' => $this->insight(
                 $top ? ($top['label'].' leads verified package volume.') : 'Package category distribution needs more data.',
                 $meaning,
+                'Identifying the most popular packages helps refine marketing and operational focus.',
+                'Driven by customer demand and successful promotions.',
                 $top ? 'Use the leading category for campaign targeting and package recommendation defaults.' : 'Keep the chart visible while more verified payments arrive.',
                 $isFallback ? 'warning' : 'watch'
             ),
@@ -1788,6 +1796,8 @@ class AdminReportService
             'interpretation' => $this->insight(
                 'Simple Linear Regression needs more verified revenue history.',
                 'At least two periods with verified revenue are required before the system can draw a defensible regression line.',
+                'Sufficient historical data is necessary for reliable forecasting models.',
+                'Insufficient data points in the selected timeframe.',
                 'Use actual booking and payment queues until more verified payment periods are available.',
                 'good'
             ),
@@ -1827,6 +1837,8 @@ class AdminReportService
             'interpretation' => $this->insight(
                 'Simple Moving Average needs more pax history.',
                 'The selected moving-average window requires at least '.$window.' periods with guest demand before a defensible projection can be shown.',
+                'A minimum data threshold ensures moving averages accurately reflect trends rather than anomalies.',
+                'Not enough historical data points to satisfy the moving average window requirements.',
                 'Use confirmed upcoming events until more historical demand periods are available.',
                 'good'
             ),
