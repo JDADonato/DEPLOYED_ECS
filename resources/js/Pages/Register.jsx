@@ -14,6 +14,7 @@ const Register = () => {
         confirmPassword: ''
     });
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const [showTerms, setShowTerms] = useState(false);
@@ -30,7 +31,7 @@ const Register = () => {
         ? confirmPasswordMatches
             ? 'auth-field-valid'
             : 'auth-field-warning'
-        : '';
+        : fieldErrors.confirmPassword ? 'auth-field-warning' : '';
 
     useEffect(() => {
         if (showTerms && termsRef.current) {
@@ -57,24 +58,29 @@ const Register = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(formData.email)) {
+            setFieldErrors({ email: true });
             setError('Please enter a valid email address (e.g., yourname@example.com).');
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
+            setFieldErrors({ confirmPassword: true });
             setError('Passwords do not match');
             return;
         }
 
         if (!passwordEvaluation.valid) {
+            setFieldErrors({ password: true });
             setError('Please complete the password requirements before creating your account.');
             return;
         }
 
         if (!agreedToTerms) {
+            setFieldErrors({ terms: true });
             setError('You must agree to the Terms and Conditions to register.');
             return;
         }
@@ -88,6 +94,7 @@ const Register = () => {
             phone: formData.phone,
         }, {
             onError: (errors) => {
+                setFieldErrors(errors);
                 const msg = errors.username || errors.password || errors.email || errors.phone || 'We could not create your account. Please try again.';
                 setError(msg);
                 setLoading(false);
@@ -119,7 +126,7 @@ const Register = () => {
                 <form className="auth-register-form space-y-3" onSubmit={handleSubmit}>
                     <div className="auth-register-field auth-register-username">
                         <label htmlFor="username" className="auth-label">Username</label>
-                        <div className="auth-field auth-field-compact">
+                        <div className={`auth-field auth-field-compact ${fieldErrors.username ? 'auth-field-warning' : ''}`.trim()}>
                             <input
                                 id="username" name="username" type="text" required
                                 className="auth-input"
@@ -131,7 +138,7 @@ const Register = () => {
                     <div className="auth-register-grid auth-register-contact-grid grid gap-3 sm:grid-cols-2">
                         <div className="auth-register-field">
                             <label htmlFor="email" className="auth-label">Email</label>
-                            <div className="auth-field auth-field-compact">
+                            <div className={`auth-field auth-field-compact ${fieldErrors.email ? 'auth-field-warning' : ''}`.trim()}>
                                 <input
                                     id="email" name="email" type="email" required
                                     className="auth-input"
@@ -143,7 +150,7 @@ const Register = () => {
                         </div>
                         <div className="auth-register-field">
                             <label htmlFor="phone" className="auth-label">Mobile Number</label>
-                            <div className="auth-field auth-field-compact">
+                            <div className={`auth-field auth-field-compact ${fieldErrors.phone ? 'auth-field-warning' : ''}`.trim()}>
                                 <input
                                     id="phone" name="phone" type="tel" required
                                     className="auth-input"
