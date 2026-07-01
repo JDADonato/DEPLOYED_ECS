@@ -118,8 +118,10 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string|unique:users,username',
             'password' => ['required', 'string', new BalancedPassword($request->input('username'), $request->input('email'))],
-            'email' => 'required|email|unique:users,email',
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', 'unique:users,email'],
             'phone' => 'nullable|string',
+        ], [
+            'email.regex' => 'Please enter a valid email address (e.g., yourname@example.com).',
         ]);
 
         $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);

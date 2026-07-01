@@ -58,6 +58,12 @@ const Register = () => {
         e.preventDefault();
         setError('');
 
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(formData.email)) {
+            setError('Please enter a valid email address (e.g., yourname@example.com).');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             return;
@@ -130,6 +136,8 @@ const Register = () => {
                                     id="email" name="email" type="email" required
                                     className="auth-input"
                                     placeholder="your@email.com" value={formData.email} onChange={handleChange}
+                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                                    title="Please enter a valid email address (e.g., yourname@example.com)."
                                 />
                             </div>
                         </div>
