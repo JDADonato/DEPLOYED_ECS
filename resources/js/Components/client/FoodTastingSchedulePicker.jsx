@@ -41,7 +41,7 @@ const fetchMonthAvailability = async (monthDate) => {
     return fullDates;
 };
 
-const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}, disabled = false }) => {
+const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}, disabled = false, maxDateValue }) => {
     const [visibleMonth, setVisibleMonth] = useState(() => startOfVisibleMonth(dateValue));
     const [fullDates, setFullDates] = useState([]);
     const [loadingDates, setLoadingDates] = useState(false);
@@ -86,8 +86,9 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
             const full = fullDateSet.has(value);
             const outsideMonth = !sameMonth(date, visibleMonth);
             const tooSoon = value < minDate;
+            const tooLate = maxDateValue ? value > maxDateValue : false;
             const wrongDay = !isFoodTastingDay(date);
-            const disabledDate = outsideMonth || tooSoon || wrongDay || full;
+            const disabledDate = outsideMonth || tooSoon || tooLate || wrongDay || full;
 
             return {
                 value,
@@ -96,10 +97,10 @@ const FoodTastingSchedulePicker = ({ dateValue, timeValue, onChange, errors = {}
                 outsideMonth,
                 disabled: disabledDate,
                 selected: value === dateValue,
-                label: full ? 'Fully booked' : tooSoon ? 'Needs 3 days lead time' : wrongDay ? 'Friday to Sunday only' : 'Available',
+                label: full ? 'Fully booked' : tooSoon ? 'Needs 3 days lead time' : tooLate ? 'Must be before your event' : wrongDay ? 'Friday to Sunday only' : 'Available',
             };
         });
-    }, [dateValue, fullDateSet, minDate, visibleMonth]);
+    }, [dateValue, fullDateSet, minDate, visibleMonth, maxDateValue]);
 
     const selectDate = (value) => {
         if (disabled || !isFoodTastingDateAllowed(value, fullDates)) return;
