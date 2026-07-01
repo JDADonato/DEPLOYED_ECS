@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Modal from '../common/Modal';
+
 
 const CITY_OPTIONS = [
     { value: 'caloocan', label: 'Caloocan', zone: 'metro-manila', fee: 0 },
@@ -53,7 +53,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     const [isHighRise, setIsHighRise] = useState(bookingData.isHighRise || false);
     const [citySearch, setCitySearch] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (user) {
@@ -80,6 +80,10 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
         const updated = { ...formData, [event.target.name]: event.target.value };
         setFormData(updated);
 
+        if (errors[event.target.name]) {
+            setErrors(prev => ({ ...prev, [event.target.name]: '' }));
+        }
+
         if (event.target.name === 'venue_city') {
             const city = CITY_OPTIONS.find(option => option.value === event.target.value);
             updateBooking({ ...updated, venueDistance: city?.zone || 'metro-manila' });
@@ -101,53 +105,48 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     };
 
     const handleConfirm = () => {
+        const newErrors = {};
         const nameRegex = /^[a-zA-Z\s\-.]{2,}$/;
         const name = formData.client_full_name.trim();
         if (!name || name.length < 2 || !nameRegex.test(name)) {
-            setModal({ isOpen: true, type: 'error', title: 'Invalid Name', message: 'Please enter a valid full name (at least 2 characters, letters only).' });
-            return;
+            newErrors.client_full_name = 'Please enter a valid full name (at least 2 characters, letters only).';
         }
 
         const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (requireEmail && (!formData.client_email.trim() || !emailRegex.test(formData.client_email.trim()))) {
-            setModal({ isOpen: true, type: 'error', title: 'Invalid Email', message: 'Please enter a valid email address with at least 3 characters before the @ symbol.' });
-            return;
+            newErrors.client_email = 'Please enter a valid email address with at least 3 characters before the @ symbol.';
         }
 
         const phoneRegex = /^(09|\+639)\d{9}$/;
         if (!formData.client_phone.trim() || !phoneRegex.test(formData.client_phone.trim())) {
-            setModal({ isOpen: true, type: 'error', title: 'Invalid Mobile Number', message: 'Please enter a valid 11-digit Philippine mobile number (e.g., 09123456789).' });
-            return;
+            newErrors.client_phone = 'Please enter a valid 11-digit Philippine mobile number (e.g., 09123456789).';
         }
 
         if (!formData.venue_address_line.trim() || formData.venue_address_line.trim().length < 3) {
-            setModal({ isOpen: true, type: 'error', title: 'Invalid Venue Address', message: 'Please enter a detailed venue address (minimum 3 characters).' });
-            return;
+            newErrors.venue_address_line = 'Please enter a detailed venue address (minimum 3 characters).';
         }
 
         if (!formData.venue_street.trim() || formData.venue_street.trim().length < 3) {
-            setModal({ isOpen: true, type: 'error', title: 'Invalid Street Name', message: 'Please enter a valid street name (minimum 3 characters).' });
-            return;
+            newErrors.venue_street = 'Please enter a valid street name (minimum 3 characters).';
         }
 
         if (!formData.venue_city) {
-            setModal({ isOpen: true, type: 'error', title: 'Missing City', message: 'Please select a city or municipality from the dropdown list.' });
+            newErrors.venue_city = 'Please select a city or municipality from the dropdown list.';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
+        setErrors({});
         updateBooking({ ...formData, venueDistance, isHighRise });
         onNext(true);
     };
 
     return (
         <div className="booking-step animate-fadeIn">
-            <Modal
-                isOpen={modal.isOpen}
-                onClose={() => setModal({ ...modal, isOpen: false })}
-                title={modal.title}
-                message={modal.message}
-                type={modal.type}
-            />
+
 
             <div className="booking-step-grid">
                 <section className="booking-step-panel">
@@ -173,33 +172,39 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Full name</span>
-                            <input type="text" name="client_full_name" placeholder="Enter your full name" minLength="2" pattern="^[a-zA-Z\s\-.]{2,}$" value={formData.client_full_name} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="client_full_name" placeholder="Enter your full name" minLength="2" pattern="^[a-zA-Z\s\-.]{2,}$" value={formData.client_full_name} onChange={handleChange} className={`booking-input ${errors.client_full_name ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            {errors.client_full_name && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_full_name}</p>}
                         </label>
                         <label>
                             <span className="booking-field-label">Email address</span>
-                            <input type="email" name="client_email" placeholder="your@email.com" minLength="7" pattern="^[a-zA-Z0-9._%+\-]{3,}@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" value={formData.client_email} onChange={handleChange} className="booking-input" />
+                            <input type="email" name="client_email" placeholder="your@email.com" minLength="7" pattern="^[a-zA-Z0-9._%+\-]{3,}@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" value={formData.client_email} onChange={handleChange} className={`booking-input ${errors.client_email ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            {errors.client_email && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_email}</p>}
                         </label>
                         <label>
                             <span className="booking-field-label">Mobile number</span>
-                            <input type="tel" name="client_phone" placeholder="Mobile number" minLength="11" maxLength="13" value={formData.client_phone} onChange={handleChange} className="booking-input" pattern="^(09|\+639)\d{9}$" title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)" />
+                            <input type="tel" name="client_phone" placeholder="Mobile number" minLength="11" maxLength="13" value={formData.client_phone} onChange={handleChange} className={`booking-input ${errors.client_phone ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} pattern="^(09|\+639)\d{9}$" title="Please enter a valid Philippine mobile number (e.g., 09123456789 or +639123456789)" />
+                            {errors.client_phone && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_phone}</p>}
                         </label>
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Venue address</span>
-                            <input type="text" name="venue_address_line" placeholder="Building, block, lot, unit, or venue name" minLength="3" value={formData.venue_address_line} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="venue_address_line" placeholder="Building, block, lot, unit, or venue name" minLength="3" value={formData.venue_address_line} onChange={handleChange} className={`booking-input ${errors.venue_address_line ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            {errors.venue_address_line && <p className="mt-1 text-xs font-semibold text-red-600">{errors.venue_address_line}</p>}
                         </label>
                         <label>
                             <span className="booking-field-label">Street</span>
-                            <input type="text" name="venue_street" placeholder="Street name" minLength="3" value={formData.venue_street} onChange={handleChange} className="booking-input" />
+                            <input type="text" name="venue_street" placeholder="Street name" minLength="3" value={formData.venue_street} onChange={handleChange} className={`booking-input ${errors.venue_street ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            {errors.venue_street && <p className="mt-1 text-xs font-semibold text-red-600">{errors.venue_street}</p>}
                         </label>
                         <div>
                             <span className="booking-field-label">City or municipality</span>
                             <div className="relative">
-                                <button type="button" onClick={() => setIsDropdownOpen(true)} className="booking-input flex items-center justify-between text-left">
+                                <button type="button" onClick={() => setIsDropdownOpen(true)} className={`booking-input flex items-center justify-between text-left ${errors.venue_city ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}>
                                     <span className={selectedCity ? 'text-gray-900' : 'text-gray-400'}>
                                         {selectedCity ? selectedCity.label : 'Search or select a city'}
                                     </span>
                                     <span className="text-gray-400">v</span>
                                 </button>
+                                {errors.venue_city && <p className="mt-1 text-xs font-semibold text-red-600">{errors.venue_city}</p>}
 
                                 {isDropdownOpen && (
                                     <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">

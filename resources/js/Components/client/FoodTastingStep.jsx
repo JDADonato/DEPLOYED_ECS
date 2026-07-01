@@ -225,7 +225,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
                             </label>
                             <FoodTastingSchedulePicker
                                 dateValue={tastingData.preferred_date}
-                                maxDateValue={bookingData.event_date}
+                                maxDateValue={bookingData.date}
                                 timeValue={tastingData.preferred_time}
                                 onChange={handleScheduleChange}
                                 errors={errors}
