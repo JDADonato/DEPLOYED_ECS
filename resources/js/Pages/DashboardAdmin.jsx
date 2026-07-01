@@ -584,12 +584,27 @@ const normalizeInsight = (insight, fallbackHeadline = 'Review this chart for con
     if (typeof insight === 'string') {
         return {
             headline: fallbackHeadline,
-            meaning: insight,
-            recommended_action: 'Use this trend alongside current queues before making decisions.',
+            what_is_happening: insight,
+            why_it_matters: 'Metrics help inform decision-making.',
+            root_cause: 'Data aggregated from system records.',
+            what_to_do_next: 'Use this trend alongside current queues before making decisions.',
             severity: 'watch',
         };
     }
-    return insight;
+    
+    // Ensure all 4 parts exist even for legacy insights
+    const what_is_happening = insight.what_is_happening || insight.meaning || 'Review the chart for current activity.';
+    const why_it_matters = insight.why_it_matters || 'Metrics help inform decision-making and resource allocation.';
+    const root_cause = insight.root_cause || 'Data aggregated from system records and current queues.';
+    const what_to_do_next = insight.what_to_do_next || insight.recommended_action || 'Use this trend alongside current queues before making decisions.';
+    
+    return {
+        ...insight,
+        what_is_happening,
+        why_it_matters,
+        root_cause,
+        what_to_do_next,
+    };
 };
 
 const readableInsightText = (text) => {
@@ -604,25 +619,11 @@ const readableInsightText = (text) => {
     return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 };
 
-const insightBriefWeights = (signalText, actionText) => {
-    const clampWeight = (value) => Math.min(1.45, Math.max(0.85, value));
-    const signalLength = Math.max(String(signalText || '').trim().replace(/\s+/g, ' ').length, 1);
-    const actionLength = Math.max(String(actionText || '').trim().replace(/\s+/g, ' ').length, 1);
-    const averageLength = (signalLength + actionLength) / 2;
-
-    return {
-        signalWeight: `${clampWeight(signalLength / averageLength).toFixed(2)}fr`,
-        actionWeight: `${clampWeight(actionLength / averageLength).toFixed(2)}fr`,
-    };
-};
-
 const InsightLine = ({ insight, compact = true }) => {
     const normalized = normalizeInsight(insight);
     if (!normalized) return null;
     const severity = ['critical', 'warning', 'watch', 'good'].includes(normalized.severity) ? normalized.severity : 'neutral';
     const severityLabel = insightSeverityLabel(severity);
-    const hasAction = Boolean(normalized.recommended_action);
-    const briefWeights = hasAction ? insightBriefWeights(normalized.meaning, normalized.recommended_action) : null;
 
     if (compact) {
         return (
@@ -635,23 +636,23 @@ const InsightLine = ({ insight, compact = true }) => {
 
     return (
         <div className={`admin-insight-line is-${severity} is-detailed`}>
-            <div
-                className={`admin-insight-line-grid ${hasAction ? 'has-action' : ''}`}
-                style={hasAction ? {
-                    '--signal-weight': briefWeights.signalWeight,
-                    '--action-weight': briefWeights.actionWeight,
-                } : undefined}
-            >
+            <div className="admin-insight-line-grid has-action">
                 <div className="admin-insight-block">
-                    <span className="admin-insight-label">Signal</span>
-                    <p>{normalized.meaning}</p>
+                    <span className="admin-insight-label">What is happening</span>
+                    <p>{readableInsightText(normalized.what_is_happening)}</p>
                 </div>
-                {hasAction && (
-                    <div className="admin-insight-block is-action">
-                        <span className="admin-insight-label">Next move</span>
-                        <p>{normalized.recommended_action}</p>
-                    </div>
-                )}
+                <div className="admin-insight-block">
+                    <span className="admin-insight-label">Why it matters</span>
+                    <p>{readableInsightText(normalized.why_it_matters)}</p>
+                </div>
+                <div className="admin-insight-block">
+                    <span className="admin-insight-label">Root cause</span>
+                    <p>{readableInsightText(normalized.root_cause)}</p>
+                </div>
+                <div className="admin-insight-block is-action">
+                    <span className="admin-insight-label">What to do next</span>
+                    <p>{readableInsightText(normalized.what_to_do_next)}</p>
+                </div>
             </div>
         </div>
     );
@@ -659,8 +660,10 @@ const InsightLine = ({ insight, compact = true }) => {
 
 const chartInsight = (headline, meaning, recommended_action = 'Use this chart together with the active queues before making decisions.', severity = 'watch') => ({
     headline,
-    meaning,
-    recommended_action,
+    what_is_happening: meaning,
+    why_it_matters: 'Metrics help inform decision-making and resource allocation.',
+    root_cause: 'Data aggregated from system records and current queues.',
+    what_to_do_next: recommended_action,
     severity,
 });
 
