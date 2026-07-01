@@ -1158,6 +1158,17 @@ const ChatBubble = ({ user, openOnMount = false }) => {
                         </button>
                     </div>
 
+                    {/* Expectation Indicator */}
+                    <div className="flex flex-shrink-0 items-center justify-between border-b border-[#ead8cc] bg-amber-50/80 px-4 py-2.5">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wide text-amber-900 uppercase">
+                            <div className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+                            </div>
+                            Estimated time for reply: <span className="font-bold text-[#720101]">~3 mins</span>
+                        </div>
+                    </div>
+
                     {/* Messages Body */}
                     <div className="flex-1 overflow-y-auto bg-[#fffaf3]">
                         {loadingConv ? (
