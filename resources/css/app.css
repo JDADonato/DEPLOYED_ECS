@@ -436,8 +436,8 @@
   }
 
   .booking-event-option-active {
-    border-color: var(--ecs-red);
-    box-shadow: 0 0 0 3px rgba(240,170,11,.35), 0 14px 28px rgba(74,20,0,.12);
+    border-color: var(--ecs-gold);
+    box-shadow: 0 0 0 4px rgba(240,170,11,.5), 0 14px 28px rgba(74,20,0,.12);
   }
 
   .booking-event-image {
