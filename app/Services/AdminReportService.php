@@ -463,6 +463,8 @@ class AdminReportService
                 ($data['overdueRevenue'] ?? 0) > 0
                     ? 'Some expected revenue is already overdue, so cash collection is the main finance risk.'
                     : 'No overdue revenue is visible in this filter, so the team can focus on upcoming milestones.',
+                'Overdue collections negatively impact cash flow for upcoming events.',
+                'Usually caused by clients delaying milestone payments.',
                 ($data['overdueRevenue'] ?? 0) > 0 ? 'Open Finance and follow up overdue payment milestones.' : 'Keep monitoring pending balances as event dates approach.',
                 ($data['overdueRevenue'] ?? 0) > 0 ? 'warning' : 'good'
             ),
@@ -472,20 +474,24 @@ class AdminReportService
             'upcoming_workload' => $this->insight(
                 empty($data['rows'] ?? []) ? 'No near-term workload is queued.' : 'Upcoming events are ready for daily review.',
                 empty($data['rows'] ?? []) ? 'There are no upcoming pending or confirmed events in this report view.' : 'The report contains near-term events that may need logistics and customer follow-up.',
+                'Visibility into near-term workload is necessary for staffing and scheduling.',
+                'Driven by the volume of bookings hitting their scheduled dates.',
                 empty($data['rows'] ?? []) ? 'Use this section as a quiet-period confirmation.' : 'Review upcoming events with missing details first.',
                 empty($data['rows'] ?? []) ? 'good' : 'watch'
             ),
-            'package_performance' => $this->rankedRowsInsight($data['rows'] ?? [], 'Package demand is concentrated.', 'Use top packages in recommendations and promotions.'),
-            'menu_performance' => $this->rankedRowsInsight($data['rows'] ?? [], 'Menu demand has clear leaders.', 'Use top dishes for package defaults and purchasing preparation.'),
-            'customer_growth' => $this->rankedRowsInsight($data['rows'] ?? [], 'Customer growth is visible in the selected period.', 'Compare low-growth months with marketing activity.'),
+            'package_performance' => $this->rankedRowsInsight($data['rows'] ?? [], 'Package demand is concentrated.', 'Focusing marketing and purchasing on popular items is more efficient.', 'Use top packages in recommendations and promotions.'),
+            'menu_performance' => $this->rankedRowsInsight($data['rows'] ?? [], 'Menu demand has clear leaders.', 'Predictable supply chain ordering prevents out-of-stock items.', 'Use top dishes for package defaults and purchasing preparation.'),
+            'customer_growth' => $this->rankedRowsInsight($data['rows'] ?? [], 'Customer growth is visible in the selected period.', 'Evaluating customer growth identifies successful marketing seasons.', 'Compare low-growth months with marketing activity.'),
             'refunds_cancellations' => $this->insight(
                 (($data['cancelledValue'] ?? 0) + ($data['refundedAmount'] ?? 0)) > 0 ? 'Cancellation and refund exposure exists.' : 'No refund exposure is visible.',
                 (($data['cancelledValue'] ?? 0) + ($data['refundedAmount'] ?? 0)) > 0 ? 'Cancelled value and refunds can reduce realized revenue if not reviewed.' : 'This report view has no visible cancellation/refund pressure.',
+                'High refund exposure directly impacts net revenue.',
+                'Customer dissatisfaction or unforeseen scheduling conflicts.',
                 (($data['cancelledValue'] ?? 0) + ($data['refundedAmount'] ?? 0)) > 0 ? 'Review cancellation reasons and refund cases.' : 'Keep refund checks in the normal finance review.',
                 (($data['cancelledValue'] ?? 0) + ($data['refundedAmount'] ?? 0)) > 0 ? 'watch' : 'good'
             ),
             'operational_alerts' => $this->operationalAlertsInsight($data['rows'] ?? []),
-            default => $this->insight('Report block is ready.', 'This section has data for the selected filters.', 'Review the values and compare them with current operations.', 'good'),
+            default => $this->insight('Report block is ready.', 'This section has data for the selected filters.', 'Provides general operational visibility.', 'Standard report generation.', 'Review the values and compare them with current operations.', 'good'),
         };
     }
 
@@ -496,18 +502,18 @@ class AdminReportService
         $lowFollowUps = (int) ($conversion['low_feedback_followups'] ?? 0);
 
         if ($lowFollowUps > 0) {
-            return $this->insight('Feedback needs follow-up.', 'Some completed events produced low ratings, which can affect trust and referrals.', 'Open Event History and resolve low-rating follow-ups.', 'warning');
+            return $this->insight('Feedback needs follow-up.', 'Some completed events produced low ratings.', 'Low ratings can affect trust and future referrals.', 'Usually stems from service mishaps or misaligned expectations.', 'Open Event History and resolve low-rating follow-ups.', 'warning');
         }
 
         if ($bookingRate > 0 && $bookingRate < 45) {
-            return $this->insight('Booking completion is dropping.', 'Many customers start the booking flow but do not reach submission.', 'Review booking steps, validation messages, and abandoned draft recovery.', 'warning');
+            return $this->insight('Booking completion is dropping.', 'Many customers start the booking flow but do not reach submission.', 'High drop-offs pinpoint where potential revenue is being lost due to friction.', 'Usually stems from a poor user experience or unclear pricing.', 'Review booking steps, validation messages, and abandoned draft recovery.', 'warning');
         }
 
         if ($paymentRate > 0 && $paymentRate < 60) {
-            return $this->insight('Payment completion needs support.', 'Customers may need clearer payment reminders or easier next-payment actions.', 'Open Finance and review reminders for pending balances.', 'watch');
+            return $this->insight('Payment completion needs support.', 'Customers may need clearer payment reminders or easier next-payment actions.', 'A high proportion of pending payments creates cash flow bottlenecks.', 'Caused by overdue milestone dates or delayed final settlements.', 'Open Finance and review reminders for pending balances.', 'watch');
         }
 
-        return $this->insight('Conversion signals are stable.', 'Booking, payment, and feedback signals do not show an urgent conversion risk.', 'Keep monitoring the funnel after each demo/test flow.', 'good');
+        return $this->insight('Conversion signals are stable.', 'Booking, payment, and feedback signals do not show an urgent conversion risk.', 'A smooth funnel indicates predictable pipeline yield.', 'Consistent execution of sales workflows.', 'Keep monitoring the funnel after each demo/test flow.', 'good');
     }
 
     private function insightForForecasts(array $revenueForecast, array $paxProjection): array
@@ -516,6 +522,8 @@ class AdminReportService
             return $this->insight(
                 'Predictive analytics need more historical data.',
                 'The named analytics are available, but the current filters do not expose enough real records for both the Simple Linear Regression and Simple Moving Average models.',
+                'Data sufficiency is required for accurate predictive models.',
+                'Insufficient volume of historical data over the selected periods.',
                 'Broaden the filter window or keep collecting verified payments and completed booking demand before using the forecast for planning.',
                 'good'
             );
@@ -526,14 +534,14 @@ class AdminReportService
         $forecastPax = (int) ($paxProjection['summary']['nextForecast'] ?? $paxProjection['summary']['forecastPax'] ?? 0);
 
         if ($direction === 'downward') {
-            return $this->insight('Simple Linear Regression is trending downward.', 'Revenue is trending downward with an expected trajectory of '.$this->peso($nextRevenue).' in the next forecast period.', 'Check upcoming confirmed bookings and payment schedules before planning expenses.', 'warning');
+            return $this->insight('Simple Linear Regression is trending downward.', 'Revenue is trending downward with an expected trajectory of '.$this->peso($nextRevenue).' in the next forecast period.', 'Revenue trajectory dictates capacity for operational expansion.', 'Seasonal booking patterns and payment collection efficiency.', 'Check upcoming confirmed bookings and payment schedules before planning expenses.', 'warning');
         }
 
         if ($forecastPax > 0) {
-            return $this->insight('Predictive analytics are usable for preparation.', 'Revenue is trending upward with an expected trajectory of '.$this->peso($nextRevenue).', while SMA demand projects '.number_format($forecastPax).' guests.', 'Share the revenue and demand projections with finance and operations planning.', 'watch');
+            return $this->insight('Predictive analytics are usable for preparation.', 'Revenue is trending upward with an expected trajectory of '.$this->peso($nextRevenue).', while SMA demand projects '.number_format($forecastPax).' guests.', 'Forecasts inform staffing and operational scaling.', 'Consistent historical growth applied to the regression model.', 'Share the revenue and demand projections with finance and operations planning.', 'watch');
         }
 
-        return $this->insight('Forecast needs more history.', 'There is not enough visible demand to make this projection very useful yet.', 'Use actual booking queues until more history is available.', 'good');
+        return $this->insight('Forecast needs more history.', 'There is not enough visible demand to make this projection very useful yet.', 'Predictions are highly variant with sparse data.', 'Not enough historical data points in the selected range.', 'Use actual booking queues until more history is available.', 'good');
     }
 
     private function paymentBreakdownInsight(array $rows): array
@@ -545,6 +553,8 @@ class AdminReportService
         return $this->insight(
             $pending > 0 ? 'Some payments still need action.' : 'Payment records look settled.',
             $pending > 0 ? 'There are unpaid or unverified payment records in this view.' : 'No pending payment amount is visible in this breakdown.',
+            'Understanding the composition of collected versus pending funds clarifies actual liquidity.',
+            'Reflects the normal progression of booking downpayments through to final settlements.',
             $pending > 0 ? 'Open Finance and prioritize pending, overdue, or unverified payments.' : 'Use this as a settled-payment confirmation.',
             $pending > 0 ? 'watch' : 'good'
         );
@@ -558,6 +568,8 @@ class AdminReportService
         return $this->insight(
             $oldValue > 0 ? 'Old unpaid balances need escalation.' : 'No long-aged unpaid balance is visible.',
             $oldValue > 0 ? 'Balances older than 15 days are the highest collection risk in this view.' : 'The oldest unpaid-balance bucket is clear for this report.',
+            'Unpaid balances directly reduce operational cash flow.',
+            'Caused by unresponsive clients or lack of follow-up on milestone payments.',
             $oldValue > 0 ? 'Send reminders or review payment terms for oldest unpaid balances.' : 'Continue normal due-date monitoring.',
             $oldValue > 0 ? 'critical' : 'good'
         );
@@ -571,18 +583,22 @@ class AdminReportService
         return $this->insight(
             $pendingCount > 0 ? 'Pending bookings are waiting.' : 'No pending booking queue is visible.',
             $pendingCount > 0 ? 'Pending bookings are the clearest conversion opportunity because customers already submitted interest.' : 'The selected booking status view has no visible intake backlog.',
+            'Pipeline distribution reveals where administrative focus should be concentrated to push bookings forward.',
+            'Driven by the current throughput rate of sales processing and customer confirmation speeds.',
             $pendingCount > 0 ? 'Open Bookings & Intake and resolve pending requests.' : 'Use the booking status overview for monitoring rather than urgent action.',
             $pendingCount > 0 ? 'watch' : 'good'
         );
     }
 
-    private function rankedRowsInsight(array $rows, string $headline, string $action): array
+    private function rankedRowsInsight(array $rows, string $headline, string $whyItMatters, string $action): array
     {
         $top = collect($rows)->first();
 
         return $this->insight(
             $top ? $headline : 'No demand pattern is visible yet.',
             $top ? (($top['label'] ?? $top['name'] ?? 'The top item').' is leading this report view.') : 'The selected filters did not return enough rows for a useful ranking.',
+            $top ? $whyItMatters : 'Identifying leaders is essential for focusing marketing and operations.',
+            $top ? 'Driven by customer preferences and successful marketing campaigns.' : 'Insufficient booking data in this window.',
             $top ? $action : 'Broaden the filters or wait for more booking activity.',
             $top ? 'watch' : 'good'
         );
@@ -595,18 +611,31 @@ class AdminReportService
         return $this->insight(
             $urgent ? 'Operations has an active blocker.' : 'No operational blockers are visible.',
             $urgent ? (($urgent['label'] ?? 'An operational alert').' needs attention before it affects customer experience.') : 'The alert queue does not show an active blocker for this view.',
+            $urgent ? 'Unresolved blockers directly impact event execution and customer satisfaction.' : 'Routine monitoring ensures operational stability.',
+            $urgent ? 'Usually caused by incomplete logistical requirements or pending staff assignments.' : 'Normal healthy operational throughput.',
             $urgent ? 'Open the related queue and resolve the blocker first.' : 'Keep this as a daily health check.',
             $urgent ? (($urgent['severity'] ?? '') === 'danger' ? 'critical' : 'warning') : 'good'
         );
     }
 
-    private function insight(string $headline, string $meaning, string $recommendedAction, string $severity = 'good'): array
-    {
+    private function insight(
+        string $headline,
+        string $what_is_happening,
+        string $why_it_matters,
+        string $root_cause,
+        string $what_to_do_next,
+        string $severity = 'watch'
+    ): array {
         return [
             'headline' => $headline,
-            'meaning' => $meaning,
-            'recommended_action' => $recommendedAction,
+            'what_is_happening' => $what_is_happening,
+            'why_it_matters' => $why_it_matters,
+            'root_cause' => $root_cause,
+            'what_to_do_next' => $what_to_do_next,
             'severity' => in_array($severity, ['good', 'watch', 'warning', 'critical'], true) ? $severity : 'good',
+            // Keep legacy fields for fallback
+            'meaning' => $what_is_happening,
+            'recommended_action' => $what_to_do_next,
         ];
     }
 

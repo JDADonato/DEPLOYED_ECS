@@ -5926,12 +5926,12 @@
   .admin-insight-line-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+    gap: 1.25rem;
     min-width: 0;
   }
 
   .admin-insight-line-grid.has-action {
-    grid-template-columns: minmax(0, var(--signal-weight, 1fr)) minmax(0, var(--action-weight, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .admin-insight-block {
@@ -5942,14 +5942,16 @@
     border: 0;
     border-radius: 0;
     background: transparent;
-    padding: .18rem 1rem .18rem 0;
+    padding: .18rem 0;
+  }
+
+  .admin-insight-block:not(:first-child) {
+    border-left: 1px solid var(--insight-tag-border);
+    padding-left: 1.25rem;
   }
 
   .admin-insight-block.is-action {
-    border-left: 1px solid var(--insight-tag-border);
     background: transparent;
-    padding-right: 0;
-    padding-left: 1rem;
   }
 
   .admin-insight-block p {
@@ -5980,9 +5982,23 @@
     overflow-wrap: anywhere;
   }
 
+  @container (max-width: 65rem) {
+    .admin-insight-line-grid.has-action {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .admin-insight-block:nth-child(2n+1) {
+      border-left: 0;
+      padding-left: 0;
+    }
+  }
+
   @container (max-width: 42rem) {
     .admin-insight-line-grid.has-action {
       grid-template-columns: 1fr;
+    }
+    .admin-insight-block:not(:first-child) {
+      border-left: 0;
+      padding-left: 0;
     }
   }
 
