@@ -2118,9 +2118,9 @@
   }
 
   .booking-dish-card.selected {
-    border-color: rgba(114,1,1,.5);
+    border-color: var(--ecs-gold);
     background: #fffaf3;
-    box-shadow: inset 0 0 0 2px rgba(114,1,1,.08), 0 10px 24px rgba(74,20,0,.07);
+    box-shadow: 0 0 0 3px rgba(240,170,11,.45), 0 14px 28px rgba(74,20,0,.12);
   }
 
   .booking-dish-card.selected::after {
