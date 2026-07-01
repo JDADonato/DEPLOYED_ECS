@@ -1035,36 +1035,40 @@ class AdminController extends Controller
 
         return response()->streamDownload(function () use ($sections, $filterSummary) {
             $out = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM for proper character rendering in Excel
+            fwrite($out, "\xEF\xBB\xBF");
 
-            // Header row
             fputcsv($out, ['Eloquente Catering — Analytics Export']);
-            fputcsv($out, ['Generated', now()->format('M j, Y g:i A')]);
-            fputcsv($out, ['Filters', $filterSummary]);
+            fputcsv($out, ['Generated: ' . now()->format('M j, Y g:i A')]);
+            fputcsv($out, ['Filters: ' . $filterSummary]);
+            fputcsv($out, []);
             fputcsv($out, []);
 
             foreach ($sections as $section) {
                 fputcsv($out, [strtoupper($section['title'])]);
                 if (! empty($section['method'])) {
-                    fputcsv($out, ['Method', $section['method']]);
+                    fputcsv($out, ['Method: ' . $section['method']]);
                 }
 
-                // Insight summary
+                // Insight summary - Combined into a single column to prevent Excel from stretching column B out
                 $insight = $section['insight'] ?? null;
                 if ($insight) {
-                    fputcsv($out, ['Insight', $insight['headline'] ?? '']);
+                    fputcsv($out, ['Insight: ' . ($insight['headline'] ?? '')]);
                     if (! empty($insight['what_is_happening'])) {
-                        fputcsv($out, ['What is happening', $insight['what_is_happening']]);
+                        fputcsv($out, ['What is happening: ' . $insight['what_is_happening']]);
                     }
                     if (! empty($insight['why_it_matters'])) {
-                        fputcsv($out, ['Why it matters', $insight['why_it_matters']]);
+                        fputcsv($out, ['Why it matters: ' . $insight['why_it_matters']]);
                     }
                     if (! empty($insight['root_cause'])) {
-                        fputcsv($out, ['Root cause', $insight['root_cause']]);
+                        fputcsv($out, ['Root cause: ' . $insight['root_cause']]);
                     }
                     if (! empty($insight['what_to_do_next'])) {
-                        fputcsv($out, ['What to do next', $insight['what_to_do_next']]);
+                        fputcsv($out, ['What to do next: ' . $insight['what_to_do_next']]);
                     }
                 }
+                fputcsv($out, []); // Space before headers
 
                 // Column headers and data
                 fputcsv($out, $section['columns']);
@@ -1073,11 +1077,12 @@ class AdminController extends Controller
                 }
 
                 fputcsv($out, []);
+                fputcsv($out, []); // Extra space before next section
             }
 
             fclose($out);
         }, $filename, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
