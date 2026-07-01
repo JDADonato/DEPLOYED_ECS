@@ -118,7 +118,7 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string|unique:users,username',
             'password' => ['required', 'string', new BalancedPassword($request->input('username'), $request->input('email'))],
-            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]{2,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', 'unique:users,email'],
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', 'unique:users,email'],
             'phone' => 'nullable|string',
         ], [
             'email.regex' => 'Please enter a valid email address (e.g., yourname@example.com).',
