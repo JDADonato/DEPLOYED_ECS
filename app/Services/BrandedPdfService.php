@@ -101,6 +101,18 @@ class BrandedPdfService
         ], 'landscape');
     }
 
+    public function analyticsReport(array $sections, array $takeaways, string $filterSummary = 'All data'): string
+    {
+        return $this->render('pdf.analytics', [
+            'title' => 'Analytics Report',
+            'documentNumber' => 'Analytics Export',
+            'generatedAt' => now(),
+            'sections' => $sections,
+            'takeaways' => $takeaways,
+            'filterSummary' => $filterSummary,
+        ], 'landscape');
+    }
+
     public function maxReportLines(): int
     {
         return self::MAX_REPORT_LINES;

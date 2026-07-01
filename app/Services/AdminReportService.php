@@ -294,6 +294,221 @@ class AdminReportService
         });
     }
 
+    /**
+     * Returns all analytics data as flat, exportable sections for PDF/CSV download.
+     * Each section contains: id, title, method, insight, columns, rows.
+     */
+    public function analyticsExportSections(array $filters = [], ?string $sectionFilter = null): array
+    {
+        $data = $this->analytics($filters);
+
+        $revenueForecast = $data['revenueForecast'] ?? $data['revenueRegression'] ?? [];
+        $paxDemand = $data['paxDemandProjection'] ?? $data['demandMovingAverage'] ?? [];
+        $salesFrequency = $data['salesFrequencyDistribution'] ?? [];
+        $peakSeason = $data['peakSeasonCrossTab'] ?? [];
+        $revenueTrend = $data['revenueTrends'] ?? $data['revenueHealth']['settledRevenueOverTime'] ?? [];
+        $paymentBreakdown = $data['revenueHealth']['paymentStatusBreakdown'] ?? [];
+        $bookingPipeline = $data['bookingPipeline'] ?? [];
+        $conversionFunnel = $data['conversionFunnel'] ?? [];
+        $packagePerformance = $data['packagePerformance'] ?? [];
+        $menuPerformance = $data['menuPerformance'] ?? [];
+        $insights = $data['insights']['items'] ?? [];
+
+        $sections = [];
+
+        // 1. Revenue Forecast (SLR)
+        $sections[] = [
+            'id' => 'revenue-forecast',
+            'title' => 'Revenue Forecast Using Simple Linear Regression',
+            'method' => $revenueForecast['method'] ?? 'Simple Linear Regression (OLS)',
+            'insight' => $revenueForecast['interpretation'] ?? ($insights['forecast'] ?? null),
+            'columns' => ['Period', 'Cumulative Revenue (PHP)', 'Trend Line (PHP)', 'Type'],
+            'rows' => collect($revenueForecast['rows'] ?? [])
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['period'] ?? '',
+                    number_format((float) ($row['cumulativeRevenue'] ?? 0), 2),
+                    number_format((float) ($row['trendLine'] ?? $row['projectedTrend'] ?? 0), 2),
+                    ! empty($row['isForecast']) ? 'Forecast' : 'Actual',
+                ])->all(),
+        ];
+
+        // 2. Pax Demand Projection (SMA)
+        $sections[] = [
+            'id' => 'pax-forecast',
+            'title' => 'Pax Demand Projection Using Simple Moving Average',
+            'method' => $paxDemand['method'] ?? 'Simple Moving Average (SMA)',
+            'insight' => $paxDemand['interpretation'] ?? null,
+            'columns' => ['Period', 'Actual Pax', 'Forecast Pax', 'Events', 'Type'],
+            'rows' => collect($paxDemand['rows'] ?? [])
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['period'] ?? '',
+                    $row['pax'] !== null ? number_format((int) $row['pax']) : '—',
+                    $row['forecast'] !== null ? number_format((int) $row['forecast']) : '—',
+                    $row['events'] !== null ? number_format((int) $row['events']) : '—',
+                    ! empty($row['isForecast']) ? 'Forecast' : 'Actual',
+                ])->all(),
+        ];
+
+        // 3. Sales Frequency Distribution
+        $sections[] = [
+            'id' => 'sales-frequency',
+            'title' => 'Sales Frequency Distribution',
+            'method' => $salesFrequency['method'] ?? 'Frequency Distribution',
+            'insight' => $salesFrequency['insight'] ?? ($insights['salesFrequency'] ?? null),
+            'columns' => ['Package Category', 'Frequency', 'Percentage (%)', 'Revenue (PHP)', 'Revenue Contribution (%)'],
+            'rows' => collect($salesFrequency['rows'] ?? [])
+                ->map(fn ($row) => [
+                    $row['label'] ?? '',
+                    (int) ($row['count'] ?? $row['frequency'] ?? 0),
+                    number_format((float) ($row['percentage'] ?? 0), 1),
+                    number_format((float) ($row['revenue'] ?? 0), 2),
+                    number_format((float) ($row['revenueContribution'] ?? 0), 1),
+                ])->all(),
+        ];
+
+        // 4. Peak Season Cross-Tabulation
+        $peakRows = $peakSeason['rows'] ?? [];
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $sections[] = [
+            'id' => 'peak-season',
+            'title' => 'Peak Season Cross-Tabulation Heatmap',
+            'method' => $peakSeason['method'] ?? 'Cross-tabulation frequency heatmap',
+            'insight' => $peakSeason['insight'] ?? ($insights['peakSeason'] ?? null),
+            'columns' => array_merge(['Event Type'], $months, ['Total Events', 'Total Pax']),
+            'rows' => collect($peakRows)
+                ->map(function ($row) {
+                    $monthCounts = collect($row['months'] ?? [])
+                        ->map(fn ($m) => (int) ($m['events'] ?? $m['count'] ?? 0))
+                        ->all();
+                    return array_merge(
+                        [$row['label'] ?? $row['eventType'] ?? ''],
+                        $monthCounts,
+                        [(int) ($row['totalEvents'] ?? 0), (int) ($row['totalPax'] ?? 0)]
+                    );
+                })->all(),
+        ];
+
+        // 5. Revenue Trend
+        $sections[] = [
+            'id' => 'revenue-trend',
+            'title' => 'Monthly Revenue Trend',
+            'method' => 'Settled revenue aggregated by calendar month',
+            'insight' => $insights['revenue'] ?? null,
+            'columns' => ['Month', 'Revenue (PHP)'],
+            'rows' => collect($revenueTrend)
+                ->map(fn ($row) => [
+                    $row['month'] ?? $row['label'] ?? '',
+                    number_format((float) ($row['revenue'] ?? 0), 2),
+                ])->all(),
+        ];
+
+        // 6. Payment Breakdown
+        $sections[] = [
+            'id' => 'payment-breakdown',
+            'title' => 'Payment Status Breakdown',
+            'method' => 'Payment records grouped by current status',
+            'insight' => $insights['payments'] ?? null,
+            'columns' => ['Status', 'Count', 'Total (PHP)', 'Percentage (%)'],
+            'rows' => collect($paymentBreakdown)
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['status'] ?? '',
+                    (int) ($row['count'] ?? 0),
+                    number_format((float) ($row['total'] ?? 0), 2),
+                    number_format((float) ($row['percentage'] ?? 0), 1),
+                ])->all(),
+        ];
+
+        // 7. Booking Pipeline
+        $sections[] = [
+            'id' => 'booking-pipeline',
+            'title' => 'Booking Status Overview',
+            'method' => 'Booking records grouped by operational status',
+            'insight' => $insights['pipeline'] ?? null,
+            'columns' => ['Status', 'Count'],
+            'rows' => collect($bookingPipeline)
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['status'] ?? '',
+                    (int) ($row['count'] ?? 0),
+                ])->all(),
+        ];
+
+        // 8. Conversion Funnel
+        $funnelRows = [];
+        $funnelStages = [
+            ['label' => 'Booking starts', 'key' => 'booking_starts'],
+            ['label' => 'Booking submissions', 'key' => 'booking_submissions'],
+            ['label' => 'Payment checkout starts', 'key' => 'payment_checkout_starts'],
+            ['label' => 'Payment confirmations', 'key' => 'payment_confirmations'],
+            ['label' => 'Feedback submissions', 'key' => 'feedback_submissions'],
+        ];
+        $firstStage = max((int) ($conversionFunnel['booking_starts'] ?? 0), 1);
+        foreach ($funnelStages as $stage) {
+            $value = (int) ($conversionFunnel[$stage['key']] ?? 0);
+            $funnelRows[] = [
+                $stage['label'],
+                $value,
+                number_format($firstStage > 0 ? ($value / $firstStage) * 100 : 0, 1),
+            ];
+        }
+        $sections[] = [
+            'id' => 'conversion-funnel',
+            'title' => 'Booking Completion Funnel',
+            'method' => 'Conversion event tracking across booking lifecycle',
+            'insight' => $insights['conversion'] ?? null,
+            'columns' => ['Stage', 'Count', 'Rate (%)'],
+            'rows' => $funnelRows,
+        ];
+
+        // 9. Package Performance
+        $sections[] = [
+            'id' => 'package-performance',
+            'title' => 'Package Performance',
+            'method' => 'Verified bookings ranked by package value',
+            'insight' => $insights['menu'] ?? null,
+            'columns' => ['Package', 'Bookings', 'Revenue (PHP)'],
+            'rows' => collect($packagePerformance)
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['name'] ?? '',
+                    (int) ($row['bookings'] ?? $row['count'] ?? 0),
+                    number_format((float) ($row['revenue'] ?? 0), 2),
+                ])->all(),
+        ];
+
+        // 10. Menu Performance
+        $sections[] = [
+            'id' => 'menu-performance',
+            'title' => 'Menu Item Performance',
+            'method' => 'Dish selections ranked by customer demand',
+            'insight' => null,
+            'columns' => ['Dish', 'Category', 'Selections', 'Pax Served'],
+            'rows' => collect($menuPerformance)
+                ->map(fn ($row) => [
+                    $row['label'] ?? $row['name'] ?? '',
+                    ucfirst($row['category'] ?? 'menu'),
+                    (int) ($row['selections'] ?? 0),
+                    (int) ($row['paxServed'] ?? 0),
+                ])->all(),
+        ];
+
+        // Filter to a single section if requested
+        if ($sectionFilter && $sectionFilter !== 'all') {
+            $sections = array_values(array_filter($sections, fn ($s) => $s['id'] === $sectionFilter));
+        }
+
+        // Build top takeaways from insights
+        $takeaways = collect($data['insights']['takeaways'] ?? [])
+            ->map(fn ($t) => [
+                'headline' => $t['headline'] ?? 'Review this section.',
+                'severity' => $t['severity'] ?? 'good',
+            ])
+            ->all();
+
+        return [
+            'sections' => $sections,
+            'takeaways' => $takeaways,
+        ];
+    }
+
     private function summary(array $filters, array $summary): array
     {
         $conversion = $this->memo('conversionFunnel', $filters, fn () => $this->conversionFunnel($filters));

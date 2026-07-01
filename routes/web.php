@@ -477,6 +477,7 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('/api/admin/analytics/operations', [AdminController::class, 'getAnalyticsOperations']);
     Route::get('/api/admin/analytics/forecasts', [AdminController::class, 'getAnalyticsForecasts']);
     Route::get('/api/admin/analytics/advanced', [AdminController::class, 'getAnalyticsAdvanced']);
+    Route::get('/api/admin/analytics/export', [AdminController::class, 'exportAnalytics']);
     Route::get('/api/admin/report-widgets', [ReportController::class, 'widgets']);
     Route::post('/api/admin/report-preview', [ReportController::class, 'preview'])->middleware('throttle:report-preview');
     Route::get('/api/admin/report-templates', [ReportController::class, 'templates']);

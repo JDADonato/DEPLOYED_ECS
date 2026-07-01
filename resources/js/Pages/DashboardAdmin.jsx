@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { router } from '@inertiajs/react';
 import logoImg from '../../images/ECS_LOGO.png';
 import { BarChart, Bar as RechartsBar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line as RechartsLine, LabelList, ReferenceLine } from '../Components/charts/LazyRecharts';
-import { CalendarDays, CalendarPlus, CheckCircle2, ChevronDown, ClipboardList, CreditCard, Filter, HelpCircle, Loader2, Maximize2, Package, RefreshCw, Search, Users, X } from 'lucide-react';
+import { CalendarDays, CalendarPlus, CheckCircle2, ChevronDown, ClipboardList, CreditCard, Download, FileDown, Filter, HelpCircle, Loader2, Maximize2, Package, RefreshCw, Search, Users, X } from 'lucide-react';
 import useCachedJson from '../hooks/useCachedJson';
 import useSmartRefresh from '../hooks/useSmartRefresh';
 import ConfirmModal from '../Components/common/ConfirmModal';
@@ -690,7 +690,56 @@ const ChartGuide = ({ x, y, items = [] }) => (
     </div>
 );
 
-const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insight, fallbackInsight = null, guide = null, afterGuide = null, actions, children, loading = false, className = '', chartHeight = 'h-64', revealDelay = '', onExpand, filterPanel, table = null, viewMode = 'chart', onViewModeChange }) => (
+const DownloadDropdown = ({ exportId, onDownload }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative inline-block text-left ml-1" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]/20"
+                title="Download Analytics"
+                aria-label="Download Analytics"
+            >
+                <Download className="h-4 w-4" />
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100] admin-export-dropdown">
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                        <button
+                            onClick={() => { setIsOpen(false); onDownload(exportId, 'pdf'); }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-semibold"
+                            role="menuitem"
+                        >
+                            Download as PDF
+                        </button>
+                        <button
+                            onClick={() => { setIsOpen(false); onDownload(exportId, 'csv'); }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-semibold"
+                            role="menuitem"
+                        >
+                            Download as CSV
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AnalyticsPanel = ({ id, exportId = id, filterKey = null, kicker, title, description, insight, fallbackInsight = null, guide = null, afterGuide = null, actions, children, loading = false, className = '', chartHeight = 'h-64', revealDelay = '', onExpand, onDownload, filterPanel, table = null, viewMode = 'chart', onViewModeChange }) => (
     <RevealOnScroll as="section" id={id} delay={revealDelay} className={`admin-panel admin-analytics-panel ${className}`}>
         <div className="admin-analytics-panel-head">
             <div>
@@ -718,6 +767,9 @@ const AnalyticsPanel = ({ id, filterKey = null, kicker, title, description, insi
                     >
                         <Maximize2 className="h-4 w-4" />
                     </button>
+                )}
+                {exportId && onDownload && (
+                    <DownloadDropdown exportId={exportId} onDownload={onDownload} />
                 )}
             </div>
         </div>
@@ -1431,6 +1483,23 @@ const DashboardAdmin = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    const handleAnalyticsDownload = useCallback((sectionId, format) => {
+        setToast({ type: 'info', message: 'Preparing download...', fade: true });
+        
+        const params = new URLSearchParams({ format, section: sectionId });
+        
+        // Append all current active filters
+        Object.entries(analyticsFilters).forEach(([key, value]) => {
+            if (value !== null && value !== '') {
+                params.append(key, value);
+            }
+        });
+        
+        // Use browser window location for download
+        window.location.href = `/api/admin/analytics/export?${params.toString()}`;
+    }, [analyticsFilters]);
+
     const { bustCache: bustAdminCache, fetchCachedJson } = useCachedJson(['/api/admin/audits?per_page=25']);
     const [packagePage, setPackagePage] = useState(1);
     const [eventTypePage, setEventTypePage] = useState(1);
@@ -5348,6 +5417,33 @@ const DashboardAdmin = () => {
 
         return (
             <div className="admin-insight-workbench admin-analytics-workspace animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                    <h2 className="text-2xl font-black text-gray-950">
+                        {activeAnalyticsView === 'overview' && 'Business Overview'}
+                        {activeAnalyticsView === 'thesis' && 'Predictive Intelligence'}
+                        {activeAnalyticsView === 'supporting' && 'Supporting Metrics'}
+                    </h2>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleAnalyticsDownload('all', 'pdf')}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]"
+                        >
+                            <FileDown className="h-4 w-4 text-gray-500" />
+                            Export All
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => fetchAnalytics({ force: true })}
+                            disabled={analyticsLoading}
+                            className="inline-flex items-center justify-center rounded-lg bg-white p-2.5 text-gray-500 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 ring-[#720101]"
+                            title="Refresh analytics"
+                            aria-label="Refresh analytics"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${analyticsLoading ? 'animate-spin text-[#720101]' : ''}`} />
+                        </button>
+                    </div>
+                </div>
                 {(activeAnalyticsView === 'thesis' || activeAnalyticsView === 'supporting') && (
                     <AnalyticsMinimap charts={
                         activeAnalyticsView === 'thesis' ? [
@@ -5440,7 +5536,7 @@ const DashboardAdmin = () => {
 
                 {activeAnalyticsView === 'thesis' && (
                 <div className="admin-analytics-grid">
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="revenue-forecast"
                         {...analyticsPanelViewProps('revenue-forecast')}
                         filterKey="revenueRegression"
@@ -5488,7 +5584,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">Insufficient historical revenue data.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="pax-forecast"
                         {...analyticsPanelViewProps('pax-forecast')}
                         filterKey="paxForecast"
@@ -5522,7 +5618,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">Insufficient historical pax demand data.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="sales-frequency"
                         {...analyticsPanelViewProps('sales-frequency')}
                         filterKey="salesFrequency"
@@ -5559,8 +5655,8 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No verified sales frequency data yet.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
-                        id="peak-season-cross-tab"
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
+                        id="peak-season-cross-tab" exportId="peak-season"
                         {...analyticsPanelViewProps('peak-season-cross-tab')}
                         kicker="Decision support heatmap"
                         title="Peak Season Cross-Tabulation Heatmap"
@@ -5668,7 +5764,7 @@ const DashboardAdmin = () => {
 
                 {activeAnalyticsView === 'supporting' && (
                 <div className="admin-analytics-grid">
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="revenue-trend"
                         {...analyticsPanelViewProps('revenue-trend')}
                         filterKey="revenueTrend"
@@ -5709,7 +5805,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No collected revenue for this window.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="payment-breakdown"
                         {...analyticsPanelViewProps('payment-breakdown')}
                         filterKey="dashboardPayment"
@@ -5738,7 +5834,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No payment rows for this filter.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="booking-pipeline"
                         {...analyticsPanelViewProps('booking-pipeline')}
                         filterKey="bookingPipeline"
@@ -5775,7 +5871,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No booking status data yet.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="conversion-funnel"
                         {...analyticsPanelViewProps('conversion-funnel')}
                         filterKey="conversionFunnel"
@@ -5810,7 +5906,7 @@ const DashboardAdmin = () => {
                         </ResponsiveContainer>
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="package-performance"
                         {...analyticsPanelViewProps('package-performance')}
                         filterKey="packagePerformance"
@@ -5839,7 +5935,7 @@ const DashboardAdmin = () => {
                         ) : <div className="admin-chart-empty">No package data for this filter.</div>}
                     </AnalyticsPanel>
 
-                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel}
+                    <AnalyticsPanel onExpand={setExpandedAnalyticsPanel} filterPanel={renderAnalyticsFilterPanel} onDownload={handleAnalyticsDownload}
                         id="menu-performance"
                         {...analyticsPanelViewProps('menu-performance')}
                         filterKey="menuPerformance"

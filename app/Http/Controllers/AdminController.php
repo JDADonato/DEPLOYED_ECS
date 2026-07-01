@@ -993,6 +993,94 @@ class AdminController extends Controller
         return response()->json($reports->analyticsAdvanced($this->analyticsFilters($request)));
     }
 
+    public function exportAnalytics(Request $request, AdminReportService $reports)
+    {
+        $format = strtolower($request->query('format', 'csv'));
+        $section = $request->query('section', 'all');
+        $filters = $this->analyticsFilters($request);
+
+        $exportData = $reports->analyticsExportSections($filters, $section);
+        $sections = $exportData['sections'];
+        $takeaways = $exportData['takeaways'];
+
+        // Build a human-readable filter summary for the export header
+        $filterParts = [];
+        if (! empty($filters['date_from'])) {
+            $filterParts[] = 'From: '.$filters['date_from'];
+        }
+        if (! empty($filters['date_to'])) {
+            $filterParts[] = 'To: '.$filters['date_to'];
+        }
+        if (! empty($filters['event_type'])) {
+            $filterParts[] = 'Event: '.$filters['event_type'];
+        }
+        if (! empty($filters['booking_status'])) {
+            $filterParts[] = 'Status: '.$filters['booking_status'];
+        }
+        $filterSummary = ! empty($filterParts) ? implode(' · ', $filterParts) : 'All data (no filters applied)';
+
+        if ($format === 'pdf') {
+            $pdf = app(\App\Services\BrandedPdfService::class);
+            $content = $pdf->analyticsReport($sections, $takeaways, $filterSummary);
+            $filename = 'ECS_Analytics_'.now()->format('Y-m-d_His').'.pdf';
+
+            return response($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        }
+
+        // CSV export
+        $filename = 'ECS_Analytics_'.now()->format('Y-m-d_His').'.csv';
+
+        return response()->streamDownload(function () use ($sections, $filterSummary) {
+            $out = fopen('php://output', 'w');
+
+            // Header row
+            fputcsv($out, ['Eloquente Catering — Analytics Export']);
+            fputcsv($out, ['Generated', now()->format('M j, Y g:i A')]);
+            fputcsv($out, ['Filters', $filterSummary]);
+            fputcsv($out, []);
+
+            foreach ($sections as $section) {
+                fputcsv($out, [strtoupper($section['title'])]);
+                if (! empty($section['method'])) {
+                    fputcsv($out, ['Method', $section['method']]);
+                }
+
+                // Insight summary
+                $insight = $section['insight'] ?? null;
+                if ($insight) {
+                    fputcsv($out, ['Insight', $insight['headline'] ?? '']);
+                    if (! empty($insight['what_is_happening'])) {
+                        fputcsv($out, ['What is happening', $insight['what_is_happening']]);
+                    }
+                    if (! empty($insight['why_it_matters'])) {
+                        fputcsv($out, ['Why it matters', $insight['why_it_matters']]);
+                    }
+                    if (! empty($insight['root_cause'])) {
+                        fputcsv($out, ['Root cause', $insight['root_cause']]);
+                    }
+                    if (! empty($insight['what_to_do_next'])) {
+                        fputcsv($out, ['What to do next', $insight['what_to_do_next']]);
+                    }
+                }
+
+                // Column headers and data
+                fputcsv($out, $section['columns']);
+                foreach ($section['rows'] as $row) {
+                    fputcsv($out, $row);
+                }
+
+                fputcsv($out, []);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
     private function analyticsFilters(Request $request): array
     {
         return array_filter($request->only([
