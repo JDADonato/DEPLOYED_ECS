@@ -5274,13 +5274,13 @@ const DashboardAdmin = () => {
     };
 
     const expandedPanelMeta = {
-        'revenue-trend': ['Revenue trend', analyticsInsightItems.revenue],
-        'payment-breakdown': ['Payment breakdown', analyticsInsightItems.payments],
-        'booking-pipeline': ['Booking status overview', analyticsInsightItems.pipeline],
+        'revenue-trend': ['Revenue trend', analyticsInsightItems.revenue || dynamicRevenueTrendInsight],
+        'payment-breakdown': ['Payment breakdown', analyticsInsightItems.payments || dynamicPaymentBreakdownInsight],
+        'booking-pipeline': ['Booking status overview', analyticsInsightItems.pipeline || dynamicBookingPipelineInsight],
         'sales-frequency': ['Sales Frequency Distribution', analyticsInsightItems.salesFrequency || salesFrequencyDistribution.insight],
-        'conversion-funnel': ['Conversion funnel', analyticsInsightItems.conversion],
-        'package-performance': ['Package performance', analyticsInsightItems.menu],
-        'menu-performance': ['Menu performance', analyticsInsightItems.menu],
+        'conversion-funnel': ['Conversion funnel', analyticsInsightItems.conversion || dynamicConversionFunnelInsight],
+        'package-performance': ['Package performance', analyticsInsightItems.menu || dynamicPackagePerformanceInsight],
+        'menu-performance': ['Menu performance', analyticsInsightItems.menu || dynamicMenuPerformanceInsight],
         'revenue-forecast': ['Revenue Forecast Using Simple Linear Regression', revenueForecast.interpretation || analyticsInsightItems.forecast || normalizeInsight(revenueForecast.insight, 'Forecast gives planning context.')],
         'pax-forecast': ['Pax Demand Projection Using Simple Moving Average', paxDemandProjection.interpretation || analyticsInsightItems.forecast || normalizeInsight(paxDemandProjection.insight, 'Demand forecast gives planning context.')],
         'peak-season-cross-tab': ['Peak Season Cross-Tabulation Heatmap', peakSeasonCrossTab.insight],
