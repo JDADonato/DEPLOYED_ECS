@@ -388,7 +388,7 @@ class DatabaseSeeder extends Seeder
             'minimum_lead_days' => 7,
             'maximum_capacity_per_day' => 7,
             'maximum_pax_per_event' => 1000,
-            'minimum_pax_per_event' => 30,
+            'minimum_pax_per_event' => 50,
             'is_active' => true,
         ]);
 

@@ -240,8 +240,8 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             return false;
         }
 
-        if (stepToValidate === 3 && (!dataToValidate.pax || dataToValidate.pax < 20)) {
-            showModal('error', 'Guest count needed', 'Please enter at least 20 guests so we can price the event properly.');
+        if (stepToValidate === 3 && (!dataToValidate.pax || dataToValidate.pax < 50)) {
+            showModal('error', 'Guest count needed', 'Please enter at least 50 guests so we can price the event properly.');
             return false;
         }
 

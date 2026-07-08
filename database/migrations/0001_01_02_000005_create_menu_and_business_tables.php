@@ -44,7 +44,7 @@ return new class extends Migration
                 $table->integer('minimum_lead_days')->default(7); // Must book 7 days ahead
                 $table->integer('maximum_capacity_per_day')->default(7); // Max 7 events per day
                 $table->integer('maximum_pax_per_event')->default(1000);
-                $table->integer('minimum_pax_per_event')->default(30);
+                $table->integer('minimum_pax_per_event')->default(50);
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });

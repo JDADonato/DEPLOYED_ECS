@@ -4,19 +4,18 @@ import Modal from '../common/Modal';
 const guestPresets = [50, 100, 150, 200, 300, 500];
 
 const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
-    const [pax, setPax] = useState(bookingData.pax || 20);
+    const [paxInput, setPaxInput] = useState(String(bookingData.pax || 50));
     const [dietaryNotes, setDietaryNotes] = useState(bookingData.dietaryNotes || '');
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
 
     const handlePaxChange = (value) => {
+        setPaxInput(value);
         if (value === '') {
-            setPax('');
             updateBooking({ pax: '' });
             return;
         }
         const nextPax = parseInt(value, 10);
         if (!isNaN(nextPax)) {
-            setPax(nextPax);
             updateBooking({ pax: nextPax });
         }
     };
@@ -27,13 +26,13 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
     };
 
     const handleNext = () => {
-        const currentPax = parseInt(pax, 10);
-        if (isNaN(currentPax) || currentPax < 20) {
+        const currentPax = parseInt(paxInput, 10);
+        if (isNaN(currentPax) || currentPax < 50) {
             setModal({
                 isOpen: true,
                 type: 'error',
                 title: 'Guest count needed',
-                message: 'Please enter at least 20 guests to continue.',
+                message: 'Please enter at least 50 guests to continue.',
             });
             return;
         }
@@ -71,16 +70,16 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <div className="booking-compact-number">
-                        <button type="button" onClick={() => handlePaxChange(Math.max(20, (parseInt(pax, 10) || 20) - 10))}>-</button>
+                        <button type="button" onClick={() => handlePaxChange(String(Math.max(50, (parseInt(paxInput, 10) || 50) - 10)))}>-</button>
                         <input
                             type="number"
-                            min="20"
+                            min="50"
                             max={bookingData.remainingPax || 3500}
-                            value={pax}
+                            value={paxInput}
                             onChange={(event) => handlePaxChange(event.target.value)}
                             aria-label="Number of guests"
                         />
-                        <button type="button" onClick={() => handlePaxChange((parseInt(pax, 10) || 0) + 10)}>+</button>
+                        <button type="button" onClick={() => handlePaxChange(String((parseInt(paxInput, 10) || 0) + 10))}>+</button>
                     </div>
 
                     <div className="booking-guest-presets">
@@ -88,8 +87,8 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                             <button
                                 key={count}
                                 type="button"
-                                onClick={() => handlePaxChange(count)}
-                                className={pax === count ? 'active' : ''}
+                                onClick={() => handlePaxChange(String(count))}
+                                className={parseInt(paxInput, 10) === count ? 'active' : ''}
                             >
                                 {count}
                             </button>
@@ -97,7 +96,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <p className="text-sm font-semibold text-slate-500">
-                        Minimum 20 guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
+                        Minimum 50 guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
                     </p>
                 </div>
 
@@ -111,7 +110,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                         className="booking-input resize-none"
                     />
 
-                    {bookingData.remainingPax && parseInt(pax, 10) > bookingData.remainingPax && (
+                    {bookingData.remainingPax && parseInt(paxInput, 10) > bookingData.remainingPax && (
                         <p className="booking-inline-error">Only {bookingData.remainingPax} slots are available for this date.</p>
                     )}
                 </div>
