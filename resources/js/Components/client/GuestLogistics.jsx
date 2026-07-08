@@ -4,20 +4,23 @@ import Modal from '../common/Modal';
 const guestPresets = [50, 100, 150, 200, 300, 500];
 
 const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
-    const [paxInput, setPaxInput] = useState(String(bookingData.pax || 50));
+    const [paxInput, setPaxInput] = useState(() => {
+        const initial = parseInt(bookingData.pax, 10);
+        return String(isNaN(initial) ? 50 : Math.max(50, initial));
+    });
     const [dietaryNotes, setDietaryNotes] = useState(bookingData.dietaryNotes || '');
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
 
     const handlePaxChange = (value) => {
-        setPaxInput(value);
-        if (value === '') {
+        let cleaned = value.replace(/[^0-9]/g, '');
+        if (cleaned === '') {
+            setPaxInput('');
             updateBooking({ pax: '' });
             return;
         }
-        const nextPax = parseInt(value, 10);
-        if (!isNaN(nextPax)) {
-            updateBooking({ pax: nextPax });
-        }
+        cleaned = cleaned.replace(/^0+/, '') || '0';
+        setPaxInput(cleaned);
+        updateBooking({ pax: parseInt(cleaned, 10) });
     };
 
     const handleDietaryChange = (value) => {
@@ -72,9 +75,9 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     <div className="booking-compact-number">
                         <button type="button" onClick={() => handlePaxChange(String(Math.max(50, (parseInt(paxInput, 10) || 50) - 10)))}>-</button>
                         <input
-                            type="number"
-                            min="50"
-                            max={bookingData.remainingPax || 3500}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={paxInput}
                             onChange={(event) => handlePaxChange(event.target.value)}
                             aria-label="Number of guests"
