@@ -12,15 +12,20 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
 
     const handlePaxChange = (value) => {
-        let cleaned = value.replace(/[^0-9]/g, '');
+        const cleaned = value.replace(/[^0-9]/g, '');
         if (cleaned === '') {
             setPaxInput('');
             updateBooking({ pax: '' });
             return;
         }
-        cleaned = cleaned.replace(/^0+/, '') || '0';
-        setPaxInput(cleaned);
-        updateBooking({ pax: parseInt(cleaned, 10) });
+        const withoutLeadingZeros = cleaned.replace(/^0+/, '');
+        if (withoutLeadingZeros === '') {
+            setPaxInput('0');
+            updateBooking({ pax: 0 });
+            return;
+        }
+        setPaxInput(withoutLeadingZeros);
+        updateBooking({ pax: parseInt(withoutLeadingZeros, 10) });
     };
 
     const handleDietaryChange = (value) => {
