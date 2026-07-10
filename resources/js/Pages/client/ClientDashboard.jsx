@@ -976,6 +976,9 @@ const ClientDashboard = () => {
     // Modal states
     const [editCoreModalOpen, setEditCoreModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [updateHeadcountModalOpen, setUpdateHeadcountModalOpen] = useState(false);
+    const [newHeadcount, setNewHeadcount] = useState('');
+    const [updatingHeadcount, setUpdatingHeadcount] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelReasonDetails, setCancelReasonDetails] = useState('');
     const [cancellingBooking, setCancellingBooking] = useState(false);
@@ -1543,6 +1546,13 @@ const ClientDashboard = () => {
             return;
         }
 
+        if (cancelReason === 'guest_count_changed') {
+            setCancelModalOpen(false);
+            setNewHeadcount(activeBooking.pax || '');
+            setUpdateHeadcountModalOpen(true);
+            return;
+        }
+
         if (cancelReason === 'other' && !cancelReasonDetails.trim()) {
             setToast({ message: 'Please specify the cancellation reason.', type: 'error' });
             return;
@@ -1581,6 +1591,41 @@ const ClientDashboard = () => {
             setToast({ message: 'Unable to cancel this booking right now. Please try again.', type: 'error' });
         } finally {
             setCancellingBooking(false);
+        }
+    };
+
+    const handleUpdateHeadcount = async (e) => {
+        e?.preventDefault();
+        if (!activeBooking || updatingHeadcount) return;
+
+        const parsedPax = parseInt(newHeadcount, 10);
+        if (isNaN(parsedPax) || parsedPax < 1) {
+            setToast({ message: 'Please enter a valid headcount.', type: 'error' });
+            return;
+        }
+
+        setUpdatingHeadcount(true);
+        try {
+            const res = await csrfFetch(`/api/bookings/${activeBooking.id}/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pax: parsedPax }),
+            });
+            const result = await res.json().catch(() => ({}));
+            
+            if (res.ok) {
+                setToast({ message: 'Headcount updated successfully! Your total cost has been recalculated.', type: 'success' });
+                setUpdateHeadcountModalOpen(false);
+                setCancelReason('');
+                await fetchData({ silent: true, force: true });
+            } else {
+                const firstValidationError = result.errors ? Object.values(result.errors).flat()[0] : null;
+                setToast({ message: firstValidationError || result.error || 'Unable to update headcount.', type: 'error' });
+            }
+        } catch (e) {
+            setToast({ message: 'Unable to update headcount right now. Please try again.', type: 'error' });
+        } finally {
+            setUpdatingHeadcount(false);
         }
     };
 
@@ -2901,6 +2946,38 @@ const ClientDashboard = () => {
                             <button type="button" onClick={() => { setEditCoreModalOpen(false); setCorePricePreview(null); }} className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
                             <button type="submit" disabled={savingCore} className="rounded-xl bg-[#720101] px-6 py-3 text-sm font-black text-white shadow-sm hover:bg-[#5a0101] disabled:opacity-60">
                                 {savingCore ? 'Checking...' : 'Save changes'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {updateHeadcountModalOpen && activeBooking && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUpdateHeadcountModalOpen(false)}></div>
+                    <form onSubmit={handleUpdateHeadcount} className="relative w-full max-w-md animate-fadeIn rounded-3xl bg-white shadow-2xl">
+                        <div className="border-b border-gray-100 px-6 py-5">
+                            <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Update Headcount</p>
+                            <h3 className="mt-1 font-serif text-2xl font-bold text-gray-900">Change Guest Count</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="mb-4 text-sm text-gray-600">
+                                Instead of cancelling, you can easily adjust your headcount. Your total cost and billing will be automatically recalculated to match the new guest count.
+                            </p>
+                            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">New Headcount (Pax)</label>
+                            <input
+                                type="number"
+                                min="1"
+                                className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-800 focus:border-[#720101] focus:bg-white focus:ring-1 focus:ring-[#720101]"
+                                value={newHeadcount}
+                                onChange={(e) => setNewHeadcount(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3 rounded-b-3xl bg-gray-50 px-6 py-4">
+                            <button type="button" onClick={() => setUpdateHeadcountModalOpen(false)} className="rounded-xl px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-200">Cancel</button>
+                            <button type="submit" disabled={updatingHeadcount} className="rounded-xl bg-[#720101] px-5 py-2.5 text-sm font-black text-white hover:bg-[#5a0101] disabled:opacity-60">
+                                {updatingHeadcount ? 'Updating...' : 'Save Headcount'}
                             </button>
                         </div>
                     </form>
