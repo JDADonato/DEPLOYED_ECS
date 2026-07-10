@@ -21,31 +21,31 @@ const MenuBuilder = lazy(() => import('../../Components/client/MenuBuilder'));
 const EventSurcharges = lazy(() => import('../../Components/client/EventSurcharges'));
 const FoodTastingStep = lazy(() => import('../../Components/client/FoodTastingStep'));
 const stepPreloaders = {
-    2: () => import('../../Components/client/CalendarView'),
-    3: () => import('../../Components/client/GuestLogistics'),
-    4: () => import('../../Components/client/MenuBuilder'),
+    2: () => import('../../Components/client/EventIdentity'),
+    3: () => import('../../Components/client/CalendarView'),
+    4: () => import('../../Components/client/GuestLogistics'),
     5: () => import('../../Components/client/MenuBuilder'),
-    6: () => import('../../Components/client/EventSurcharges'),
+    6: () => import('../../Components/client/MenuBuilder'),
     7: () => import('../../Components/client/FoodTastingStep'),
 };
 
 const stepLabels = [
-    { step: 1, label: 'Vision' },
-    { step: 2, label: 'Date' },
-    { step: 3, label: 'Guests' },
-    { step: 4, label: 'Packages' },
-    { step: 5, label: 'Menu' },
-    { step: 6, label: 'Details' },
+    { step: 1, label: 'Details' },
+    { step: 2, label: 'Vision' },
+    { step: 3, label: 'Date' },
+    { step: 4, label: 'Guests' },
+    { step: 5, label: 'Packages' },
+    { step: 6, label: 'Menu' },
     { step: 7, label: 'Food Tasting' },
 ];
 
 const stepMessages = {
-    1: { eyebrow: 'Start with the occasion', greeting: 'What are we helping you celebrate?', sub: 'Choose the event type first. The next steps adjust around your celebration.' },
-    2: { eyebrow: 'Choose the day', greeting: "Let's find your date", sub: 'Pick a date, start time, and duration. Availability checks happen here.' },
-    3: { eyebrow: 'Estimate the crowd', greeting: 'Who should we prepare for?', sub: 'A close guest estimate is enough. You can refine details later.' },
-    4: { eyebrow: 'Choose your package', greeting: 'Review packages for your event type', sub: 'The package options, amenities, pricing, and security terms adjust based on the event you selected.' },
-    5: { eyebrow: 'Personalize the spread', greeting: 'Build a menu your guests will remember', sub: 'Choose dishes and keep an eye on the estimate in the summary.' },
-    6: { eyebrow: 'Set the logistics', greeting: 'Where should the team prepare?', sub: 'Add contact and venue details so setup fees are clear before submitting.' },
+    1: { eyebrow: 'Set the logistics', greeting: 'Where should the team prepare?', sub: 'Add contact and venue details so setup fees are clear before submitting.' },
+    2: { eyebrow: 'Start with the occasion', greeting: 'What are we helping you celebrate?', sub: 'Choose the event type first. The next steps adjust around your celebration.' },
+    3: { eyebrow: 'Choose the day', greeting: "Let's find your date", sub: 'Pick a date, start time, and duration. Availability checks happen here.' },
+    4: { eyebrow: 'Estimate the crowd', greeting: 'Who should we prepare for?', sub: 'A close guest estimate is enough. You can refine details later.' },
+    5: { eyebrow: 'Choose your package', greeting: 'Review packages for your event type', sub: 'The package options, amenities, pricing, and security terms adjust based on the event you selected.' },
+    6: { eyebrow: 'Personalize the spread', greeting: 'Build a menu your guests will remember', sub: 'Choose dishes and keep an eye on the estimate in the summary.' },
     7: { eyebrow: 'Food tasting', greeting: 'Would you like to schedule a food tasting?', sub: 'Choose whether you want a food tasting, then submit your event plan.' },
 };
 
@@ -164,7 +164,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
 
     useEffect(() => {
         logConversionEvent('booking_started', {
-            step: 'Vision',
+            step: 'Details',
             metadata: { resume_available: Boolean(resumeStep) },
         });
     }, []);
@@ -202,8 +202,8 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
 
         const preloadNextStep = () => {
             stepPreloaders[currentStep + 1]?.();
-            if (currentStep === 1 && bookingData.eventType) {
-                stepPreloaders[3]?.();
+            if (currentStep === 2 && bookingData.eventType) {
+                stepPreloaders[4]?.();
             }
         };
 
@@ -225,27 +225,32 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
     };
 
     const validateStep = (stepToValidate, dataToValidate = bookingData) => {
-        if (stepToValidate === 1 && !dataToValidate.eventType) {
+        if (stepToValidate === 1 && (!dataToValidate.client_full_name || !dataToValidate.client_email || !dataToValidate.client_phone || !dataToValidate.venue_city || !dataToValidate.venue_address_line)) {
+            showModal('error', 'A few details are needed', 'Complete your contact and venue details so the team knows where and how to prepare.');
+            return false;
+        }
+
+        if (stepToValidate === 2 && !dataToValidate.eventType) {
             showModal('error', 'Tell us the occasion', 'Choose the kind of event you are planning so we can shape the next steps around it.');
             return false;
         }
 
-        if (stepToValidate === 1 && !String(dataToValidate.eventName || '').trim()) {
+        if (stepToValidate === 2 && !String(dataToValidate.eventName || '').trim()) {
             showModal('error', 'Name your event', 'Enter an event name so you can easily track it from your dashboard.');
             return false;
         }
 
-        if (stepToValidate === 2 && (!dataToValidate.date || !dataToValidate.time)) {
+        if (stepToValidate === 3 && (!dataToValidate.date || !dataToValidate.time)) {
             showModal('error', 'Choose your schedule', 'Select your preferred date and start time so we can check availability for your event.');
             return false;
         }
 
-        if (stepToValidate === 3 && (!dataToValidate.pax || dataToValidate.pax < 50)) {
+        if (stepToValidate === 4 && (!dataToValidate.pax || dataToValidate.pax < 50)) {
             showModal('error', 'Guest count needed', 'Please enter at least 50 guests so we can price the event properly.');
             return false;
         }
 
-        if (stepToValidate === 5) {
+        if (stepToValidate === 6) {
             const requiredCategories = ['starter', 'main', 'side', 'dessert', 'drink'];
             const categoryLabels = {
                 starter: 'starter',
@@ -263,11 +268,6 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
                 );
                 return false;
             }
-        }
-
-        if (stepToValidate === 6 && (!dataToValidate.client_full_name || !dataToValidate.client_email || !dataToValidate.client_phone || !dataToValidate.venue_city || !dataToValidate.venue_address_line)) {
-            showModal('error', 'A few details are needed', 'Complete your contact and venue details so the team knows where and how to prepare.');
-            return false;
         }
 
         return true;
@@ -415,22 +415,22 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
 
     const renderStep = () => {
         if (currentStep === 1) {
-            return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} initialEventTypes={initialEventTypes} />;
+            return <EventSurcharges businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} user={user} />;
         }
         if (currentStep === 2) {
-            return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} businessRules={businessRules} />;
+            return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} initialEventTypes={initialEventTypes} />;
         }
         if (currentStep === 3) {
-            return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
+            return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} businessRules={businessRules} />;
         }
         if (currentStep === 4) {
-            return <MenuBuilder mode="packages" businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
+            return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
         }
         if (currentStep === 5) {
-            return <MenuBuilder mode="menu" businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
+            return <MenuBuilder mode="packages" businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
         }
         if (currentStep === 6) {
-            return <EventSurcharges businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} user={user} />;
+            return <MenuBuilder mode="menu" businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
         }
         return <FoodTastingStep bookingData={bookingData} updateBooking={updateBooking} onReview={openReviewModal} onBack={prevStep} isSubmitting={isSubmittingBooking} />;
     };
@@ -702,7 +702,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
                     bookingData={bookingData}
                     businessRules={businessRules}
                     collapsed={summaryCollapsed}
-                    deferCatalog={currentStep < 4}
+                    deferCatalog={currentStep < 5}
                     onToggle={() => setSummaryCollapsed(prev => !prev)}
                 />
             </div>
