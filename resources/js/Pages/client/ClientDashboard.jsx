@@ -1601,6 +1601,7 @@ const ClientDashboard = () => {
 
     const handleForceCancelBooking = async () => {
         if (!activeBooking || cancellingBooking) return;
+        setUpdateHeadcountModalOpen(false);
         await submitCancellationRequest('guest_count_changed', '');
     };
 
