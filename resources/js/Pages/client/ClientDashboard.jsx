@@ -1537,6 +1537,44 @@ const ClientDashboard = () => {
     }
 
     // Action handlers
+    const submitCancellationRequest = async (reason, details) => {
+        setCancellingBooking(true);
+        try {
+            const res = await csrfFetch(`/api/bookings/${activeBooking.id}/cancel`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cancellation_reason: reason,
+                    cancellation_reason_details: details.trim(),
+                }),
+            });
+            const result = await res.json().catch(() => ({}));
+            if (res.ok) {
+                setCancelResult({
+                    bookingId: activeBooking.id,
+                    eventName: eventDisplayName(activeBooking),
+                    eventDate: activeBooking.event_date,
+                    message: result.message || 'Booking cancelled successfully.',
+                    refundPreview: result.refund_preview || activeBooking.cancellationImpact || {},
+                });
+                setToast({ message: 'Booking successfully cancelled.', type: 'success' });
+                setCancelModalOpen(false);
+                setUpdateHeadcountModalOpen(false);
+                setCancelReason('');
+                setCancelReasonDetails('');
+                forceFormResyncRef.current = true;
+                await fetchData({ silent: true, force: true });
+            } else {
+                const firstValidationError = result.errors ? Object.values(result.errors).flat()[0] : null;
+                setToast({ message: firstValidationError || result.error || 'Unable to cancel this booking.', type: 'error' });
+            }
+        } catch (e) {
+            setToast({ message: 'Unable to cancel this booking right now. Please try again.', type: 'error' });
+        } finally {
+            setCancellingBooking(false);
+        }
+    };
+
     const handleCancelBooking = async (event) => {
         event?.preventDefault();
         if (!activeBooking || cancellingBooking) return;
@@ -1558,40 +1596,12 @@ const ClientDashboard = () => {
             return;
         }
 
-        setCancellingBooking(true);
-        try {
-            const res = await csrfFetch(`/api/bookings/${activeBooking.id}/cancel`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    cancellation_reason: cancelReason,
-                    cancellation_reason_details: cancelReasonDetails.trim(),
-                }),
-            });
-            const result = await res.json().catch(() => ({}));
-            if (res.ok) {
-                setCancelResult({
-                    bookingId: activeBooking.id,
-                    eventName: eventDisplayName(activeBooking),
-                    eventDate: activeBooking.event_date,
-                    message: result.message || 'Booking cancelled successfully.',
-                    refundPreview: result.refund_preview || activeBooking.cancellationImpact || {},
-                });
-                setToast({ message: 'Booking successfully cancelled.', type: 'success' });
-                setCancelModalOpen(false);
-                setCancelReason('');
-                setCancelReasonDetails('');
-                forceFormResyncRef.current = true;
-                await fetchData({ silent: true, force: true });
-            } else {
-                const firstValidationError = result.errors ? Object.values(result.errors).flat()[0] : null;
-                setToast({ message: firstValidationError || result.error || 'Unable to cancel this booking.', type: 'error' });
-            }
-        } catch (e) {
-            setToast({ message: 'Unable to cancel this booking right now. Please try again.', type: 'error' });
-        } finally {
-            setCancellingBooking(false);
-        }
+        await submitCancellationRequest(cancelReason, cancelReasonDetails);
+    };
+
+    const handleForceCancelBooking = async () => {
+        if (!activeBooking || cancellingBooking) return;
+        await submitCancellationRequest('guest_count_changed', '');
     };
 
     const handleUpdateHeadcount = async (e) => {
@@ -2954,31 +2964,57 @@ const ClientDashboard = () => {
 
             {updateHeadcountModalOpen && activeBooking && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUpdateHeadcountModalOpen(false)}></div>
-                    <form onSubmit={handleUpdateHeadcount} className="relative w-full max-w-md animate-fadeIn rounded-3xl bg-white shadow-2xl">
-                        <div className="border-b border-gray-100 px-6 py-5">
-                            <p className="text-xs font-black uppercase tracking-widest text-[#720101]">Update Headcount</p>
-                            <h3 className="mt-1 font-serif text-2xl font-bold text-gray-900">Change Guest Count</h3>
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setUpdateHeadcountModalOpen(false)}></div>
+                    <form onSubmit={handleUpdateHeadcount} className="relative w-full max-w-md animate-fadeIn overflow-hidden rounded-3xl bg-white shadow-2xl">
+                        {/* Decorative background header */}
+                        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-br from-[#720101] to-[#4a0101] opacity-90"></div>
+                        
+                        <div className="relative flex justify-center pt-8 pb-2">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-white shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-[#720101]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
                         </div>
-                        <div className="p-6">
-                            <p className="mb-4 text-sm text-gray-600">
-                                Instead of cancelling, you can easily adjust your headcount. Your total cost and billing will be automatically recalculated to match the new guest count.
+
+                        <div className="relative px-8 pb-6 text-center">
+                            <h3 className="font-serif text-2xl font-bold text-gray-900">Change Guest Count</h3>
+                            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                                Instead of cancelling, easily adjust your headcount! We will automatically recalculate your packages and billing to match your new guest count.
                             </p>
-                            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">New Headcount (Pax)</label>
-                            <input
-                                type="number"
-                                min="1"
-                                className="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-800 focus:border-[#720101] focus:bg-white focus:ring-1 focus:ring-[#720101]"
-                                value={newHeadcount}
-                                onChange={(e) => setNewHeadcount(e.target.value)}
-                                required
-                            />
+                            
+                            <div className="mt-6 text-left">
+                                <label className="mb-2 block text-[11px] font-black uppercase tracking-widest text-gray-500">New Headcount (Pax)</label>
+                                <div className="relative">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-4 font-bold text-gray-900 shadow-inner transition-colors focus:border-[#720101] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#720101]/10"
+                                        value={newHeadcount}
+                                        onChange={(e) => setNewHeadcount(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-3 rounded-b-3xl bg-gray-50 px-6 py-4">
-                            <button type="button" onClick={() => setUpdateHeadcountModalOpen(false)} className="rounded-xl px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-200">Cancel</button>
-                            <button type="submit" disabled={updatingHeadcount} className="rounded-xl bg-[#720101] px-5 py-2.5 text-sm font-black text-white hover:bg-[#5a0101] disabled:opacity-60">
-                                {updatingHeadcount ? 'Updating...' : 'Save Headcount'}
+
+                        <div className="flex flex-col gap-2 rounded-b-3xl bg-gray-50 px-8 py-6">
+                            <button type="submit" disabled={updatingHeadcount} className="w-full rounded-xl bg-[#720101] px-5 py-3.5 text-sm font-black text-white shadow-md transition-all hover:bg-[#5a0101] hover:shadow-lg disabled:opacity-60">
+                                {updatingHeadcount ? 'Updating Headcount...' : 'Update Headcount Now'}
                             </button>
+                            <button type="button" onClick={() => setUpdateHeadcountModalOpen(false)} className="w-full rounded-xl px-5 py-3 text-sm font-bold text-gray-500 hover:bg-gray-200 hover:text-gray-700">
+                                Keep current headcount
+                            </button>
+                            <div className="mt-3 border-t border-gray-200 pt-4 text-center">
+                                <button type="button" onClick={handleForceCancelBooking} disabled={cancellingBooking} className="text-xs font-semibold text-gray-400 hover:text-red-600 hover:underline">
+                                    {cancellingBooking ? 'Cancelling...' : 'No, cancel booking anyway'}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
