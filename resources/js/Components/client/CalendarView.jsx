@@ -404,19 +404,9 @@ const CalendarView = ({ bookingData, updateBooking, onNext, onBack, businessRule
                                         : availability?.isFull
                                             ? 'This date is fully booked'
                                             : availability
-                                                ? 'Date is available.'
+                                                ? 'Date is available. We accommodate up to 7 event slots and 3,500 guests per day.'
                                                 : 'We will verify availability before you continue.')}
                             </p>
-                        </div>
-                        <div className={`booking-availability-metrics ${availability?.isFull ? 'full' : availability ? 'open' : ''}`}>
-                            <div>
-                                <span>Slots/day</span>
-                                <strong>7</strong>
-                            </div>
-                            <div>
-                                <span>Pax/day</span>
-                                <strong>3,500</strong>
-                            </div>
                         </div>
                     </div>
                 </section>
