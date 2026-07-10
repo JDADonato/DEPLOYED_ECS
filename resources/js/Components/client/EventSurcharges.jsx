@@ -1,9 +1,45 @@
 import { useEffect, useState } from 'react';
 
 const ACCREDITED_VENUES = [
-    { id: 'av1', name: 'Placeholder Venue Alpha', address_line: 'Building A, 1st Avenue', street: 'Sample Street Alpha', city: 'quezon-city', isHighRise: false },
-    { id: 'av2', name: 'Placeholder Venue Beta', address_line: 'Tower B, 2nd Level', street: 'Sample Street Beta', city: 'makati', isHighRise: true },
-    { id: 'av3', name: 'Placeholder Venue Gamma', address_line: 'Grand Hall, Ground Floor', street: 'Sample Street Gamma', city: 'taguig', isHighRise: false },
+    { 
+        id: 'av1', 
+        name: 'The Grand Pavilion', 
+        address_line: 'Building A, 1st Avenue', 
+        street: 'Sample Street Alpha', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800',
+        capacity: '50 - 200 pax',
+        type: 'Indoor / Garden',
+        amenities: ['Parking', 'Air conditioning', 'Bridal Suite', 'Catering area'],
+        description: 'A luxurious indoor pavilion with an adjacent lush garden, perfect for elegant weddings and corporate galas. Natural light fills the hall during the day, transforming into a romantic softly-lit venue at night.'
+    },
+    { 
+        id: 'av2', 
+        name: 'Skyline Penthouse', 
+        address_line: 'Tower B, 2nd Level', 
+        street: 'Sample Street Beta', 
+        city: 'makati', 
+        isHighRise: true,
+        image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=80&w=800',
+        capacity: '30 - 100 pax',
+        type: 'High-rise Indoor',
+        amenities: ['Valet Parking', 'Air conditioning', 'City View', 'Lounge'],
+        description: 'Experience the breathtaking city skyline in this premium penthouse venue. Ideal for intimate gatherings, exclusive parties, and modern celebrations. Features floor-to-ceiling windows and a stylish lounge.'
+    },
+    { 
+        id: 'av3', 
+        name: 'Heritage Grand Hall', 
+        address_line: 'Grand Hall, Ground Floor', 
+        street: 'Sample Street Gamma', 
+        city: 'taguig', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1505368586598-876ce526f633?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 500 pax',
+        type: 'Indoor Banquet',
+        amenities: ['Ample Parking', 'Air conditioning', 'High Ceiling', 'Stage'],
+        description: 'A classic and spacious banquet hall designed for grand celebrations. With its high ceilings, stunning chandeliers, and built-in stage, it is the ultimate venue for large-scale events and lavish weddings.'
+    },
 ];
 
 const CITY_OPTIONS = [
@@ -59,6 +95,9 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     });
     const [isHighRise, setIsHighRise] = useState(bookingData.isHighRise || false);
     
+    // Modal state
+    const [selectedVenueDetails, setSelectedVenueDetails] = useState(null);
+    
     // City Dropdown state
     const [citySearch, setCitySearch] = useState('');
     const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
@@ -93,7 +132,8 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             
             setAutocompleteLoading(true);
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(autocompleteQuery)}&format=json&countrycodes=ph&limit=5`);
+                // Fixed: Added email parameter to comply with OpenStreetMap Nominatim usage policy for browsers
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(autocompleteQuery)}&format=json&countrycodes=ph&limit=5&email=eloquente.test@example.com`);
                 const data = await res.json();
                 setAutocompleteResults(data);
             } catch (err) {
@@ -307,22 +347,46 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                         {venueMode === 'accredited' ? (
                             <div className="md:col-span-2">
                                 <span className="booking-field-label">Accredited Venue</span>
-                                <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {ACCREDITED_VENUES.map(venue => (
-                                        <button
+                                        <div 
                                             key={venue.id}
-                                            type="button"
-                                            onClick={() => handleSelectAccredited(venue)}
-                                            className={`flex flex-col items-start rounded-xl border p-4 text-left transition-all ${
+                                            className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border transition-all ${
                                                 formData.accredited_venue_id === venue.id
-                                                    ? 'border-[#720101] bg-[#fff8ea] ring-1 ring-[#720101]'
-                                                    : 'border-gray-200 bg-white hover:border-[#720101]/30 hover:bg-gray-50'
+                                                    ? 'border-[#720101] ring-2 ring-[#720101]'
+                                                    : 'border-gray-200 bg-white hover:border-[#720101]/30 hover:shadow-md'
                                             }`}
+                                            onClick={() => handleSelectAccredited(venue)}
                                         >
-                                            <span className="font-bold text-gray-900">{venue.name}</span>
-                                            <span className="mt-1 text-xs text-gray-500">{venue.address_line}, {venue.street}</span>
-                                            <span className="text-xs text-gray-400">{CITY_OPTIONS.find(c => c.value === venue.city)?.label}</span>
-                                        </button>
+                                            <div className="aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                                                <img src={venue.image} alt={venue.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                                            </div>
+                                            <div className="flex flex-1 flex-col p-4">
+                                                <h3 className="mb-1 font-bold leading-tight text-gray-900">{venue.name}</h3>
+                                                <p className="mb-4 text-xs text-gray-500">{CITY_OPTIONS.find(c => c.value === venue.city)?.label}</p>
+                                                
+                                                <div className="mt-auto flex items-center justify-between gap-2">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedVenueDetails(venue);
+                                                        }} 
+                                                        className="text-xs font-semibold text-[#720101] hover:underline"
+                                                    >
+                                                        View details
+                                                    </button>
+                                                    <div className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                                                            formData.accredited_venue_id === venue.id
+                                                                ? 'bg-[#720101] text-white'
+                                                                : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                    >
+                                                        {formData.accredited_venue_id === venue.id ? 'Selected' : 'Select'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                                 {errors.accredited_venue_id && <p className="mt-2 text-xs font-semibold text-red-600">{errors.accredited_venue_id}</p>}
@@ -411,6 +475,72 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                 <button onClick={onBack} className="booking-secondary-btn">Back</button>
                 <button onClick={handleConfirm} className="booking-primary-btn">Continue</button>
             </div>
+
+            {/* Venue Details Modal */}
+            {selectedVenueDetails && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fadeIn">
+                    <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+                        <button 
+                            type="button"
+                            onClick={() => setSelectedVenueDetails(null)}
+                            className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+                        >
+                            ✕
+                        </button>
+                        <div className="aspect-[21/9] w-full bg-gray-100">
+                            <img src={selectedVenueDetails.image} alt={selectedVenueDetails.name} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="p-6 md:p-8">
+                            <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                                <div>
+                                    <h2 className="text-2xl font-black text-gray-900">{selectedVenueDetails.name}</h2>
+                                    <p className="text-sm text-gray-500">{selectedVenueDetails.address_line}, {selectedVenueDetails.street}, {CITY_OPTIONS.find(c => c.value === selectedVenueDetails.city)?.label}</p>
+                                </div>
+                                <div className="shrink-0 rounded-xl bg-[#720101]/5 px-4 py-2 text-center text-[#720101]">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider">Capacity</div>
+                                    <div className="font-semibold">{selectedVenueDetails.capacity}</div>
+                                </div>
+                            </div>
+                            
+                            <div className="mb-6 grid gap-6 md:grid-cols-2">
+                                <div>
+                                    <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">About the venue</h4>
+                                    <p className="text-sm leading-relaxed text-gray-700">{selectedVenueDetails.description}</p>
+                                </div>
+                                <div>
+                                    <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Amenities & Details</h4>
+                                    <ul className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#f0aa0b]">✓</span> {selectedVenueDetails.type}
+                                        </li>
+                                        {selectedVenueDetails.amenities.map((amenity, idx) => (
+                                            <li key={idx} className="flex items-center gap-2">
+                                                <span className="text-[#f0aa0b]">✓</span> {amenity}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
+                                <button type="button" onClick={() => setSelectedVenueDetails(null)} className="rounded-xl px-6 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-100">
+                                    Close
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => {
+                                        handleSelectAccredited(selectedVenueDetails);
+                                        setSelectedVenueDetails(null);
+                                    }} 
+                                    className="rounded-xl bg-[#720101] px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#720101]/30 transition hover:bg-[#5a0000]"
+                                >
+                                    {formData.accredited_venue_id === selectedVenueDetails.id ? 'Selected' : 'Select this venue'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -436,4 +566,3 @@ const CityGroup = ({ title, feeLabel, cities, selectedValue, onSelect }) => (
 );
 
 export default EventSurcharges;
-
