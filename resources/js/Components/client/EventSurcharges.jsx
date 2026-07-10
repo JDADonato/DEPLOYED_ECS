@@ -132,10 +132,20 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             
             setAutocompleteLoading(true);
             try {
-                // Fixed: Added email parameter to comply with OpenStreetMap Nominatim usage policy for browsers
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(autocompleteQuery)}&format=json&countrycodes=ph&limit=5&email=eloquente.test@example.com`);
+                // Fixed: Switched from Nominatim to Photon (Komoot) API to avoid aggressive rate limiting
+                const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(autocompleteQuery)}&limit=5`);
                 const data = await res.json();
-                setAutocompleteResults(data);
+                
+                const mappedResults = (data.features || []).map(feature => {
+                    const p = feature.properties;
+                    const display_name = [p.name, p.street, p.city, p.state, p.country].filter(Boolean).join(', ');
+                    return {
+                        place_id: p.osm_id || Math.random().toString(),
+                        display_name: display_name
+                    };
+                });
+                
+                setAutocompleteResults(mappedResults);
             } catch (err) {
                 console.error("Geocoding error", err);
             } finally {
