@@ -204,7 +204,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
         const updated = {
             ...formData,
             accredited_venue_id: venue.id,
-            venue_address_line: venue.address_line,
+            venue_address_line: `${venue.name}, ${venue.address_line}`,
             venue_street: venue.street,
             venue_city: venue.city,
         };
