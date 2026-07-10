@@ -410,12 +410,12 @@ const CalendarView = ({ bookingData, updateBooking, onNext, onBack, businessRule
                         </div>
                         <div className={`booking-availability-metrics ${availability?.isFull ? 'full' : availability ? 'open' : ''}`}>
                             <div>
-                                <span>Slots</span>
-                                <strong>{availabilityLoading ? '...' : availability ? availability.remainingEvents : '-'}</strong>
+                                <span>Slots/day</span>
+                                <strong>7</strong>
                             </div>
                             <div>
-                                <span>Pax left</span>
-                                <strong>{availabilityLoading ? '...' : availability ? availability.remainingPax.toLocaleString() : '-'}</strong>
+                                <span>Pax/day</span>
+                                <strong>3,500</strong>
                             </div>
                         </div>
                     </div>
