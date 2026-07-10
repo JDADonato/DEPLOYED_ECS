@@ -120,19 +120,24 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
         }
     }, [user]);
 
-    // Nominatim Autocomplete Fetching
+    // Autocomplete Fetching (Photon API)
+    const justSelectedRef = useState({ current: false })[0];
+    
     useEffect(() => {
         if (!autocompleteQuery || autocompleteQuery.trim().length < 3 || venueMode === 'accredited') {
             setAutocompleteResults([]);
             return undefined;
         }
         
+        // Skip fetch if user just selected a result from the dropdown
+        if (justSelectedRef.current) {
+            justSelectedRef.current = false;
+            return undefined;
+        }
+        
         const timeoutId = setTimeout(async () => {
-            if (autocompleteQuery === formData.venue_address_line) return;
-            
             setAutocompleteLoading(true);
             try {
-                // Fixed: Switched from Nominatim to Photon (Komoot) API to avoid aggressive rate limiting
                 const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(autocompleteQuery)}&limit=5`);
                 const data = await res.json();
                 
@@ -151,10 +156,10 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             } finally {
                 setAutocompleteLoading(false);
             }
-        }, 800);
+        }, 500);
         
         return () => clearTimeout(timeoutId);
-    }, [autocompleteQuery, formData.venue_address_line, venueMode]);
+    }, [autocompleteQuery, venueMode]);
 
     const selectedCity = CITY_OPTIONS.find(city => city.value === formData.venue_city);
     const venueDistance = selectedCity?.zone || 'metro-manila';
@@ -218,8 +223,10 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     };
 
     const handleAutocompleteSelect = (result) => {
+        justSelectedRef.current = true;
         setAutocompleteQuery(result.display_name);
         setIsAutocompleteOpen(false);
+        setAutocompleteResults([]);
         handleChange({ target: { name: 'venue_address_line', value: result.display_name } });
     };
 
