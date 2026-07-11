@@ -152,7 +152,25 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     };
                 });
                 
-                setAutocompleteResults(mappedResults);
+                const filteredMappedResults = mappedResults.filter(result => {
+                    const parts = result.display_name.split(',').map(s => s.trim().toLowerCase());
+                    let matchedCity = null;
+                    for (const part of parts) {
+                        matchedCity = CITY_OPTIONS.find(c => c.label.toLowerCase() === part || part === c.label.toLowerCase() + ' city' || part.includes(c.label.toLowerCase()));
+                        if (matchedCity) break;
+                    }
+                    if (!matchedCity && result.rawCity) {
+                        const raw = result.rawCity.toLowerCase();
+                        matchedCity = CITY_OPTIONS.find(c => c.label.toLowerCase() === raw || raw === c.label.toLowerCase() + ' city');
+                    }
+                    return !!matchedCity;
+                });
+                
+                if (mappedResults.length > 0 && filteredMappedResults.length === 0) {
+                    setAutocompleteResults([{ outOfScope: true }]);
+                } else {
+                    setAutocompleteResults(filteredMappedResults);
+                }
             } catch (err) {
                 console.error("Geocoding error", err);
             } finally {
@@ -192,6 +210,11 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     };
 
     const handleSelectCity = (city) => {
+        if (formData.venue_address_line && formData.venue_address_line.trim().length > 0) {
+            if (!window.confirm("Warning: Your venue address is already set. If you change the city, please ensure it still matches your venue address to avoid logistics issues. Proceed?")) {
+                return;
+            }
+        }
         handleChange({ target: { name: 'venue_city', value: city.value } });
         setIsCityDropdownOpen(false);
         setCitySearch('');
@@ -482,9 +505,13 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                             {autocompleteLoading ? (
                                                 <div className="p-4 text-center text-sm font-medium text-gray-500">Searching landmarks...</div>
                                             ) : autocompleteResults.length > 0 ? (
-                                                <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                                    {autocompleteResults.map(renderAutocompleteResult)}
-                                                </div>
+                                                autocompleteResults[0].outOfScope ? (
+                                                    <div className="p-4 text-center text-sm font-semibold text-red-500">The inputted venue is not within our scope of serviced cities.</div>
+                                                ) : (
+                                                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                                        {autocompleteResults.map(renderAutocompleteResult)}
+                                                    </div>
+                                                )
                                             ) : (
                                                 <div className="p-4 text-center text-sm text-gray-500">No landmarks found. Try another search.</div>
                                             )}
