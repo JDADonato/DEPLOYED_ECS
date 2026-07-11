@@ -41,7 +41,7 @@ class EvaluateForecastModels extends Command
         $demand  = $payload['demandMovingAverage'] ?? [];
 
         // ── Revenue SLR ──────────────────────────────────────────────────────────
-        $this->printSectionHeader('1. Revenue Forecast — Simple Linear Regression (Rolling-Origin CV)');
+        $this->printSectionHeader('1. Revenue Forecast — Simple Linear Regression (80/20 Train-Test Split)');
         $this->printRevenueEvaluation($revenue);
 
         // ── Pax SMA ──────────────────────────────────────────────────────────────
@@ -83,13 +83,13 @@ class EvaluateForecastModels extends Command
 
         // Evaluation CV Info
         $this->line('');
-        $this->line('  <fg=cyan>Rolling-Origin Cross Validation</>');
-        $this->printKV('CV Folds',           (string) ($eval['folds'] ?? 0));
-        $this->printKV('Horizon',            ($eval['horizon'] ?? 0).' months');
+        $this->line('  <fg=cyan>80/20 Chronological Train-Test Split</>');
+        $this->printKV('Train size',         (string) ($eval['trainSize'] ?? 0).' periods');
+        $this->printKV('Test size',          (string) ($eval['testSize'] ?? 0).' periods');
 
         // ─── Metrics table ───────────────────────────────────────────────────
         $this->line('');
-        $this->line('  <fg=cyan>Average CV Metrics</>');
+        $this->line('  <fg=cyan>Test Set Metrics</>');
 
         $rmse = $eval['rmse'] ?? null;
         $mae  = $eval['mae']  ?? null;
@@ -99,13 +99,13 @@ class EvaluateForecastModels extends Command
             ['Metric', 'Value', 'Meaning'],
             ['RMSE',
                 $rmse !== null ? 'PHP '.number_format((float) $rmse, 2) : 'N/A',
-                'Avg error across all forecast origins'],
+                'Avg error on test set (cumulative revenue)'],
             ['MAE',
                 $mae !== null  ? 'PHP '.number_format((float) $mae,  2) : 'N/A',
-                'Avg absolute error across all origins'],
+                'Avg absolute error on test set'],
             ['R²  (R-squared)',
                 $r2  !== null  ? number_format((float) $r2,  4) : 'N/A',
-                'Goodness-of-fit across CV folds'],
+                'Goodness-of-fit on test set'],
         ];
 
         $this->table($rows[0], array_slice($rows, 1));
@@ -145,7 +145,7 @@ class EvaluateForecastModels extends Command
 
         // ─── Metrics table ───────────────────────────────────────────────────
         $this->line('');
-        $this->line('  <fg=cyan>Backtest Metrics</>');
+        $this->line('  <fg=cyan>Test Set Metrics</>');
 
         $rmse = $eval['rmse'] ?? null;
         $mae  = $eval['mae']  ?? null;
@@ -154,10 +154,10 @@ class EvaluateForecastModels extends Command
             ['Metric', 'Value', 'Meaning'],
             ['RMSE',
                 $rmse !== null ? number_format((float) $rmse, 2).' guests' : 'N/A',
-                'Root mean square error in guests'],
+                'Root mean square error on test set'],
             ['MAE',
                 $mae !== null  ? number_format((float) $mae,  2).' guests' : 'N/A',
-                'Mean absolute error in guests'],
+                'Mean absolute error on test set'],
         ];
 
         $this->table($rows[0], array_slice($rows, 1));
@@ -178,7 +178,7 @@ class EvaluateForecastModels extends Command
         $this->line('  <fg=white;bg=blue;options=bold> DSS FORECASTING MODEL EVALUATION </> ');
         $this->line('  ════════════════════════════════════════════════════════════════════');
         $this->line('  Evaluates the trained SLR (revenue) and SMA (pax demand) models    ');
-        $this->line('  using Rolling-Origin CV and historical back-testing.                ');
+        $this->line('  using 80/20 Chronological Train-Test Split.                         ');
         $this->line('  ════════════════════════════════════════════════════════════════════');
     }
 

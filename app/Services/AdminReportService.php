@@ -2084,47 +2084,61 @@ class AdminReportService
 
         $n = count($points);
 
-        // Rolling-origin cross-validation requires at least 4 periods
-        // (min 3 training + 1 test origin)
+        // 80/20 chronological train-test split requires at least 4 periods
+        // (min 3 training + 1 test)
         if ($n < 4) {
             return $this->insufficientRevenueEvaluation();
         }
 
-        // Minimum training set = 30% of data or 3 periods, whichever is larger
-        $minTrain = max(3, (int) ceil($n * 0.3));
+        // 80/20 chronological split
+        $trainSize = max(3, (int) floor($n * 0.8));
+        $testSize  = $n - $trainSize;
 
-        // Rolling-origin CV: train on 0..k-1, predict cumulative at position k
+        if ($testSize < 1) {
+            return $this->insufficientRevenueEvaluation();
+        }
+
+        $trainPoints = array_slice($points, 0, $trainSize);
+        $testPoints  = array_slice($points, $trainSize);
+
+        // Train OLS on training set only
+        $olsInput = array_map(fn ($p) => ['x' => $p['x'], 'y' => $p['cumY']], $trainPoints);
+        $reg      = $this->ordinaryLeastSquares($olsInput);
+
+        // Predict on test set
         $actualCum        = [];
         $predictedCum     = [];
         $actualMonthly    = [];
         $predictedMonthly = [];
+        $trainLabels      = [];
         $testLabels       = [];
 
-        for ($k = $minTrain; $k < $n; $k++) {
-            $trainSubset = array_slice($points, 0, $k);
-            $olsInput    = array_map(fn ($p) => ['x' => $p['x'], 'y' => $p['cumY']], $trainSubset);
-            $reg         = $this->ordinaryLeastSquares($olsInput);
+        // Collect training labels
+        foreach ($trainPoints as $p) {
+            $trainLabels[] = $p['label'];
+        }
 
-            $predCum = max($reg['alpha'] + ($reg['beta'] * $points[$k]['x']), 0);
+        // Predict each test point
+        foreach ($testPoints as $i => $p) {
+            $predCum = max($reg['alpha'] + ($reg['beta'] * $p['x']), 0);
 
             // Convert cumulative prediction to monthly delta for practical interpretation
-            $prevCum     = $points[$k - 1]['cumY'];
+            $prevIndex = $trainSize + $i - 1;
+            $prevCum   = $prevIndex >= 0 ? $points[$prevIndex]['cumY'] : 0;
             $predMonthly = max($predCum - $prevCum, 0);
 
-            $actualCum[]    = $points[$k]['cumY'];
+            $actualCum[]    = $p['cumY'];
             $predictedCum[] = $predCum;
-            $testLabels[]   = $points[$k]['label'];
+            $testLabels[]   = $p['label'];
 
             // Only record monthly delta when the period has actual revenue
-            if ($points[$k]['monthly'] > 0) {
-                $actualMonthly[]    = $points[$k]['monthly'];
+            if ($p['monthly'] > 0) {
+                $actualMonthly[]    = $p['monthly'];
                 $predictedMonthly[] = $predMonthly;
             }
         }
 
-        $folds = count($actualCum);
-
-        if ($folds < 2) {
+        if ($testSize < 1) {
             return $this->insufficientRevenueEvaluation();
         }
 
@@ -2153,19 +2167,24 @@ class AdminReportService
         }
 
         return [
-            'method'            => 'Rolling-Origin Cross-Validation',
-            'folds'             => $folds,
-            'minTrainSize'      => $minTrain,
-            'trainSize'         => $minTrain,
-            'testSize'          => $folds,
+            'method'            => '80/20 Chronological Train-Test Split',
+            'folds'             => 0,
+            'minTrainSize'      => $trainSize,
+            'trainSize'         => $trainSize,
+            'testSize'          => $testSize,
             'rmse'              => $this->roundMetric($rmse),
             'mae'               => $this->roundMetric($mae),
             'maeMonthly'        => $maeMonthly,
             'mape'              => $mape,
             'r2'                => $this->roundMetric($r2, 4),
-            'trainPeriodLabels' => ['Rolling origin: '.$minTrain.'–'.($n - 1).' training periods per fold'],
+            'trainPeriodLabels' => $trainLabels,
             'testPeriodLabels'  => $testLabels,
-            'interpretation'    => 'Rolling-origin cross-validation across '.$folds.' folds. '
+            'trainData'         => array_map(fn ($p) => ['x' => $p['x'], 'cumY' => $p['cumY'], 'monthly' => $p['monthly'], 'label' => $p['label']], $trainPoints),
+            'testData'          => array_map(function ($p, $i) use ($predictedCum) {
+                return ['x' => $p['x'], 'cumY' => $p['cumY'], 'predicted' => $predictedCum[$i], 'monthly' => $p['monthly'], 'label' => $p['label']];
+            }, $testPoints, array_keys($testPoints)),
+            'interpretation'    => '80/20 chronological train-test split. '
+                .'Trained on '.$trainSize.' periods, tested on '.$testSize.' periods. '
                 .'Cumulative revenue Mean Absolute Error: '.$this->peso((float) ($mae ?? 0)).'. '
                 .($maeMonthly !== null
                     ? 'Monthly revenue Mean Absolute Error: '.$this->peso((float) $maeMonthly).'.'
@@ -2175,21 +2194,33 @@ class AdminReportService
 
     private function evaluateSmaBacktest(array $values, int $window): array
     {
+        $n = count($values);
+
+        // Need at least window + 1 points to form a single prediction
+        if ($n < $window + 1) {
+            return $this->insufficientSmaEvaluation($window);
+        }
+
+        // 80/20 chronological split
+        $trainSize = max($window, (int) floor($n * 0.8));
+        $testSize  = $n - $trainSize;
+
+        if ($testSize < 1) {
+            return $this->insufficientSmaEvaluation($window);
+        }
+
         $actual    = [];
         $predicted = [];
 
-        foreach (array_values($values) as $index => $value) {
-            if ($index < $window) {
-                continue;
-            }
-
-            $previous = array_slice($values, $index - $window, $window);
+        // For each test point, predict using the preceding `window` values
+        for ($i = $trainSize; $i < $n; $i++) {
+            $previous = array_slice($values, $i - $window, $window);
             if (count($previous) < $window) {
                 continue;
             }
 
             $predicted[] = array_sum($previous) / $window;
-            $actual[]    = (float) $value;
+            $actual[]    = (float) $values[$i];
         }
 
         if (count($actual) < 1) {
@@ -2211,14 +2242,18 @@ class AdminReportService
             : null;
 
         return [
-            'method'         => 'Historical Backtesting',
+            'method'         => '80/20 Chronological Train-Test Split',
             'window'         => $window,
+            'trainSize'      => $trainSize,
+            'testSize'       => count($actual),
             'backtestSize'   => count($actual),
             'rmse'           => $this->roundMetric($rmse),
             'mae'            => $this->roundMetric($mae),
             'mape'           => $mape,
             'unit'           => 'avg guests per booking',
-            'interpretation' => 'The SMA forecast (window='.$window.') has a Mean Absolute Error of '
+            'interpretation' => '80/20 chronological train-test split. '
+                .'Trained on '.$trainSize.' periods, tested on '.count($actual).' periods. '
+                .'The SMA forecast (window='.$window.') has a Mean Absolute Error of '
                 .number_format((float) $mae, 1)
                 .' avg guests/booking, meaning the model predicts individual event size within this margin on average.',
         ];
@@ -2328,7 +2363,7 @@ class AdminReportService
     private function insufficientRevenueEvaluation(): array
     {
         return [
-            'method'            => 'Rolling-Origin Cross-Validation',
+            'method'            => '80/20 Chronological Train-Test Split',
             'folds'             => 0,
             'minTrainSize'      => 0,
             'trainSize'         => 0,
@@ -2340,19 +2375,24 @@ class AdminReportService
             'r2'                => null,
             'trainPeriodLabels' => [],
             'testPeriodLabels'  => [],
-            'interpretation'    => 'Model evaluation needs at least 4 periods of verified revenue history before rolling-origin cross-validation metrics can be calculated safely.',
+            'trainData'         => [],
+            'testData'          => [],
+            'interpretation'    => 'Model evaluation needs at least 4 periods of verified revenue history before 80/20 train-test split metrics can be calculated safely.',
         ];
     }
 
     private function insufficientSmaEvaluation(int $window): array
     {
         return [
-            'method' => 'Historical Backtesting',
-            'window' => $window,
+            'method'       => '80/20 Chronological Train-Test Split',
+            'window'       => $window,
+            'trainSize'    => 0,
+            'testSize'     => 0,
             'backtestSize' => 0,
-            'rmse' => null,
-            'mae' => null,
-            'interpretation' => 'Model evaluation needs more pax history before SMA backtesting metrics can be calculated safely.',
+            'rmse'         => null,
+            'mae'          => null,
+            'mape'         => null,
+            'interpretation' => 'Model evaluation needs more pax history before 80/20 train-test split metrics can be calculated safely.',
         ];
     }
 
