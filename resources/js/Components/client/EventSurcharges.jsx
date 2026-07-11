@@ -147,7 +147,8 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     const display_name = [p.name, p.street, p.city, p.state, p.country].filter(Boolean).join(', ');
                     return {
                         place_id: p.osm_id || Math.random().toString(),
-                        display_name: display_name
+                        display_name: display_name,
+                        rawCity: p.city || p.county || p.town || p.district
                     };
                 });
                 
@@ -228,7 +229,28 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
         setAutocompleteQuery(result.display_name);
         setIsAutocompleteOpen(false);
         setAutocompleteResults([]);
-        handleChange({ target: { name: 'venue_address_line', value: result.display_name } });
+        
+        const updates = { venue_address_line: result.display_name };
+        
+        const parts = result.display_name.split(',').map(s => s.trim().toLowerCase());
+        let matchedCity = null;
+        for (const part of parts) {
+            matchedCity = CITY_OPTIONS.find(c => c.label.toLowerCase() === part || part === c.label.toLowerCase() + ' city');
+            if (matchedCity) break;
+        }
+        
+        if (!matchedCity && result.rawCity) {
+            const raw = result.rawCity.toLowerCase();
+            matchedCity = CITY_OPTIONS.find(c => c.label.toLowerCase() === raw || raw === c.label.toLowerCase() + ' city');
+        }
+        
+        if (matchedCity) {
+            updates.venue_city = matchedCity.value;
+        }
+        
+        Object.entries(updates).forEach(([name, value]) => {
+            handleChange({ target: { name, value } });
+        });
     };
 
     const renderAutocompleteResult = (result) => {
