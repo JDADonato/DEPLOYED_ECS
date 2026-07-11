@@ -339,14 +339,17 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                             {errors.client_phone && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_phone}</p>}
                         </label>
                         
-                        <div className="mb-2 mt-4 flex overflow-hidden rounded-xl border border-[#720101]/10 bg-gray-50 p-1 md:col-span-2">
+                        <div className="relative mb-2 mt-4 grid grid-cols-2 rounded-xl border border-[#720101]/10 bg-gray-50 p-1 md:col-span-2">
+                            <div className="absolute inset-1 pointer-events-none">
+                                <div className={`h-full w-1/2 rounded-lg bg-[#720101] shadow-sm transition-transform duration-300 ease-in-out ${venueMode === 'accredited' ? 'translate-x-full' : 'translate-x-0'}`} />
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => {
                                     setVenueMode('own');
                                     updateBooking({ venueMode: 'own' });
                                 }}
-                                className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${venueMode === 'own' ? 'bg-[#720101] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`relative z-10 rounded-lg py-2.5 text-sm font-bold transition-colors duration-300 ${venueMode === 'own' ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 Enter my own venue
                             </button>
@@ -356,7 +359,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                     setVenueMode('accredited');
                                     updateBooking({ venueMode: 'accredited' });
                                 }}
-                                className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${venueMode === 'accredited' ? 'bg-[#720101] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`relative z-10 rounded-lg py-2.5 text-sm font-bold transition-colors duration-300 ${venueMode === 'accredited' ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 Select accredited venue
                             </button>
