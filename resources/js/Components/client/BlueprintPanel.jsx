@@ -71,8 +71,8 @@ const paymentScheduleForDate = (dateString, total, businessRules = {}) => {
 
 const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, onToggle, deferCatalog = false }) => {
     const {
+        client_full_name,
         eventType,
-        eventName,
         date,
         pax,
         time,
@@ -347,10 +347,10 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
                         <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                             <span className="text-slate-500">Type</span>
                             <strong className="text-right text-slate-900">{eventType || '-'}</strong>
-                            {eventName && (
+                            {client_full_name && eventType && (
                                 <>
                                     <span className="text-slate-500">Name</span>
-                                    <strong className="text-right text-slate-900">{eventName}</strong>
+                                    <strong className="text-right text-slate-900">{client_full_name.trim()} {eventType}</strong>
                                 </>
                             )}
                             <span className="text-slate-500">Date</span>

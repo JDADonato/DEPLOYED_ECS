@@ -65,7 +65,7 @@ class BookingController extends Controller
             'budget' => 'nullable|numeric',
             'package_id' => 'nullable|string',
             'event_type' => 'nullable|string',
-            'event_name' => 'required|string|max:255',
+            'event_name' => 'nullable|string|max:255',
             'menu_items' => 'nullable|array',
             'total_cost' => 'nullable|numeric',
         ]);
@@ -119,6 +119,15 @@ class BookingController extends Controller
         $outsourcedServices = $this->normalizeJsonPayload($request->outsourced_services);
         $selectedMenu = $this->normalizeJsonPayload($request->selected_menu);
 
+        // Generate Event Name dynamically
+        $baseEventName = trim(($request->client_full_name ?? 'Client') . ' ' . ($request->event_type ?? 'Event'));
+        
+        $existingCount = Booking::where('user_id', Auth::id())
+            ->where('event_type', $request->event_type)
+            ->count();
+            
+        $eventName = $existingCount > 0 ? $baseEventName . ' #' . ($existingCount + 1) : $baseEventName;
+
         // 4. Insert Booking
         $booking = Booking::create([
             'user_id' => Auth::id(),
@@ -128,7 +137,7 @@ class BookingController extends Controller
             'budget' => $request->budget,
             'package_id' => $request->package_id,
             'event_type' => $request->event_type,
-            'event_name' => $request->event_name,
+            'event_name' => $eventName,
             'client_full_name' => $request->client_full_name,
             'venue_address_line' => $request->venue_address_line,
             'venue_street' => $request->venue_street,

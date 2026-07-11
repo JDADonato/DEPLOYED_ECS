@@ -39,11 +39,9 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
     const cachedEventTypes = hydratedEventTypes.length ? [] : readCachedEventTypes();
     const initialTypes = hydratedEventTypes.length ? hydratedEventTypes : cachedEventTypes;
     const [selected, setSelected] = useState(bookingData.eventType || '');
-    const [eventName, setEventName] = useState(bookingData.eventName || '');
     const [eventTypes, setEventTypes] = useState(initialTypes);
     const [loading, setLoading] = useState(initialTypes.length === 0);
     const [attemptedNext, setAttemptedNext] = useState(false);
-    const eventNameRef = useRef(null);
 
     useEffect(() => {
         if (hydratedEventTypes.length) {
@@ -88,20 +86,14 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
     const handleNext = () => {
         setAttemptedNext(true);
 
-        if (!eventName.trim()) {
-            eventNameRef.current?.focus();
-            return;
-        }
-
         if (!selected) return;
 
-        updateBooking({ eventType: selected, eventName: eventName.trim() });
+        updateBooking({ eventType: selected });
         onNext(true);
     };
 
     const selectedEventType = eventTypes.find((eventType) => eventType.label === selected);
     const selectedSetups = selectedEventType?.applicable_setups || bookingData.event_applicable_setups || [];
-    const showNameError = attemptedNext && !eventName.trim();
     const showTypeError = attemptedNext && !selected;
 
     return (
@@ -111,30 +103,8 @@ const EventIdentity = ({ bookingData, updateBooking, onNext, onBack, initialEven
                     <div className="booking-step-copy">
                         <p className="booking-step-kicker">Occasion</p>
                         <h2>Start with the celebration.</h2>
-                        <p>Pick the closest event type and give the event a clear name so it is easy to track from your dashboard.</p>
+                        <p>Pick the closest event type to continue.</p>
                     </div>
-
-                    <label htmlFor="eventName" className="booking-field-label">Event name</label>
-                    <input
-                        ref={eventNameRef}
-                        id="eventName"
-                        type="text"
-                        required
-                        value={eventName}
-                        onChange={(event) => {
-                            setEventName(event.target.value);
-                            updateBooking({ eventName: event.target.value });
-                        }}
-                        placeholder="e.g. Ana and Miguel's wedding"
-                        className={`booking-input ${showNameError ? 'border-red-300 ring-4 ring-red-100' : ''}`}
-                        aria-invalid={showNameError}
-                        aria-describedby={showNameError ? 'eventNameHelp' : undefined}
-                    />
-                    {showNameError && (
-                        <p id="eventNameHelp" className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
-                            Please enter an event name before continuing. This is how the booking will appear in your dashboard.
-                        </p>
-                    )}
                 </section>
 
                 <section className="booking-choice-area booking-event-choice-panel">
