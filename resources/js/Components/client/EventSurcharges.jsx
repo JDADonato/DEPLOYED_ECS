@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import ConfirmModal from '../common/ConfirmModal';
 
 const ACCREDITED_VENUES = [
     { 
@@ -109,6 +110,9 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
     const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
     const [autocompleteLoading, setAutocompleteLoading] = useState(false);
     
+    // Modal confirmation for city change
+    const [cityChangeConfirmModal, setCityChangeConfirmModal] = useState({ isOpen: false, pendingCity: null });
+    
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -211,10 +215,13 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
 
     const handleSelectCity = (city) => {
         if (formData.venue_address_line && formData.venue_address_line.trim().length > 0) {
-            if (!window.confirm("Warning: Your venue address is already set. If you change the city, please ensure it still matches your venue address to avoid logistics issues. Proceed?")) {
-                return;
-            }
+            setCityChangeConfirmModal({ isOpen: true, pendingCity: city });
+            return;
         }
+        executeCityChange(city);
+    };
+
+    const executeCityChange = (city) => {
         handleChange({ target: { name: 'venue_city', value: city.value } });
         setIsCityDropdownOpen(false);
         setCitySearch('');
@@ -611,6 +618,20 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     </div>
                 </div>
             )}
+            
+            <ConfirmModal
+                isOpen={cityChangeConfirmModal.isOpen}
+                title="Change City?"
+                message="Warning: Your venue address is already set. If you change the city manually, please ensure it still matches your venue address to avoid logistics issues. Proceed?"
+                confirmText="Proceed"
+                onConfirm={() => {
+                    if (cityChangeConfirmModal.pendingCity) {
+                        executeCityChange(cityChangeConfirmModal.pendingCity);
+                    }
+                    setCityChangeConfirmModal({ isOpen: false, pendingCity: null });
+                }}
+                onCancel={() => setCityChangeConfirmModal({ isOpen: false, pendingCity: null })}
+            />
         </div>
     );
 };
