@@ -350,7 +350,7 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
                             {client_full_name && eventType && (
                                 <>
                                     <span className="text-slate-500">Name</span>
-                                    <strong className="text-right text-slate-900">{client_full_name.trim()} {eventType}</strong>
+                                    <strong className="text-right text-slate-900">{client_full_name.trim()}'s {eventType}</strong>
                                 </>
                             )}
                             <span className="text-slate-500">Date</span>

@@ -120,7 +120,8 @@ class BookingController extends Controller
         $selectedMenu = $this->normalizeJsonPayload($request->selected_menu);
 
         // Generate Event Name dynamically
-        $baseEventName = trim(($request->client_full_name ?? 'Client') . ' ' . ($request->event_type ?? 'Event'));
+        $clientName = trim($request->client_full_name ?? 'Client');
+        $baseEventName = $clientName . "'s " . trim($request->event_type ?? 'Event');
         
         $existingCount = Booking::where('user_id', Auth::id())
             ->where('event_type', $request->event_type)
