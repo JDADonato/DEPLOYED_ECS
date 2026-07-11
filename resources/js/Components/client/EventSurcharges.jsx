@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 const ACCREDITED_VENUES = [
     { 
@@ -345,7 +346,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                     setVenueMode('own');
                                     updateBooking({ venueMode: 'own' });
                                 }}
-                                className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${venueMode === 'own' ? 'bg-white text-[#720101] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${venueMode === 'own' ? 'bg-[#720101] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 Enter my own venue
                             </button>
@@ -417,7 +418,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                             <span className={selectedCity ? 'text-gray-900' : 'text-gray-400'}>
                                                 {selectedCity ? selectedCity.label : 'Search or select a city'}
                                             </span>
-                                            <span className="text-gray-400">v</span>
+                                            <ChevronDown className="h-5 w-5 text-gray-400" />
                                         </button>
                                         {errors.venue_city && <p className="mt-1 text-xs font-semibold text-red-600">{errors.venue_city}</p>}
 
