@@ -15,7 +15,8 @@ const ACCREDITED_VENUES = [
         capacity: '150 - 500 pax',
         type: 'Garden / Mansion',
         amenities: ['Parking', 'Air conditioning', 'Bridal Suite', 'Lush Gardens', 'Catering area'],
-        description: 'A beautiful secret garden and mansion in the heart of Quezon City, offering a romantic and serene atmosphere surrounded by century-old trees and lush landscapes.'
+        description: 'A beautiful secret garden and mansion in the heart of Quezon City, offering a romantic and serene atmosphere surrounded by century-old trees and lush landscapes.',
+        lat: 14.6067, lng: 121.0116
     },
     { 
         id: 'v2', 
@@ -28,7 +29,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 200 pax',
         type: 'Indoor / Cultural Hall',
         amenities: ['Parking', 'Air conditioning', 'Cultural Ambiance', 'Accessible'],
-        description: 'Located inside the quiet UP Diliman campus, Balay Kalinaw provides a classic, peaceful, and intimate setting perfect for weddings and academic events.'
+        description: 'Located inside the quiet UP Diliman campus, Balay Kalinaw provides a classic, peaceful, and intimate setting perfect for weddings and academic events.',
+        lat: 14.6599, lng: 121.0729
     },
     { 
         id: 'v3', 
@@ -41,7 +43,8 @@ const ACCREDITED_VENUES = [
         capacity: '300 - 1000 pax',
         type: 'Large Indoor Hall',
         amenities: ['Ample Parking', 'High Ceiling', 'Stage', 'Spacious'],
-        description: 'A massive, iconic events hall in UP Diliman capable of hosting very large guest counts, ideal for grand weddings, conventions, and major celebrations.'
+        description: 'A massive, iconic events hall in UP Diliman capable of hosting very large guest counts, ideal for grand weddings, conventions, and major celebrations.',
+        lat: 14.6565, lng: 121.0645
     },
     { 
         id: 'v4', 
@@ -54,7 +57,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 200 pax',
         type: 'Indoor Function Hall',
         amenities: ['Air conditioning', 'Secure Parking', 'Elegant Interiors'],
-        description: 'Situated within the quiet compounds of the Diocese of Cubao, this venue offers elegant, classic interiors suitable for intimate and medium-sized formal events.'
+        description: 'Situated within the quiet compounds of the Diocese of Cubao, this venue offers elegant, classic interiors suitable for intimate and medium-sized formal events.',
+        lat: 14.6218, lng: 121.0569
     },
     { 
         id: 'v5', 
@@ -67,7 +71,8 @@ const ACCREDITED_VENUES = [
         capacity: '300 - 500 pax',
         type: 'Modern Tent / Hall',
         amenities: ['Air conditioning', 'Ample Parking', 'High Ceiling', 'Modern Architecture'],
-        description: 'A fully air-conditioned modern event tent located perfectly along EDSA. It features stunning geometric ceiling designs and is highly accessible.'
+        description: 'A fully air-conditioned modern event tent located perfectly along EDSA. It features stunning geometric ceiling designs and is highly accessible.',
+        lat: 14.6411, lng: 121.0411
     },
     { 
         id: 'v6', 
@@ -80,7 +85,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 400 pax',
         type: 'Glass / Garden',
         amenities: ['Air conditioning', 'Pond & Water Features', 'Lush Landscaping', 'Parking'],
-        description: 'A sprawling special events venue featuring glass walls, indoor gardens, and water features, bringing the beauty of the outdoors into a comfortable air-conditioned space.'
+        description: 'A sprawling special events venue featuring glass walls, indoor gardens, and water features, bringing the beauty of the outdoors into a comfortable air-conditioned space.',
+        lat: 14.6700, lng: 121.0442
     },
     { 
         id: 'v7', 
@@ -93,7 +99,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 200 pax',
         type: 'Modern Indoor',
         amenities: ['Air conditioning', 'Modern Lighting', 'Stage', 'Parking'],
-        description: 'A stylish, contemporary venue in the heart of Diliman, offering customizable LED lighting and modern aesthetics for chic celebrations.'
+        description: 'A stylish, contemporary venue in the heart of Diliman, offering customizable LED lighting and modern aesthetics for chic celebrations.',
+        lat: 14.6400, lng: 121.0500
     },
     { 
         id: 'v8', 
@@ -106,7 +113,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 300 pax',
         type: 'Classic Mansion / Indoor',
         amenities: ['Air conditioning', 'Grand Staircase', 'Vintage Architecture', 'Parking'],
-        description: 'An elegant, vintage-inspired mansion venue boasting a majestic grand staircase and intricate ceiling designs, perfect for fairytale weddings.'
+        description: 'An elegant, vintage-inspired mansion venue boasting a majestic grand staircase and intricate ceiling designs, perfect for fairytale weddings.',
+        lat: 14.6447, lng: 121.0175
     },
     { 
         id: 'v9', 
@@ -119,7 +127,8 @@ const ACCREDITED_VENUES = [
         capacity: '50 - 150 pax',
         type: 'Clubhouse / Hall',
         amenities: ['Air conditioning', 'Exclusive Village Security', 'Parking', 'Poolside View'],
-        description: 'A cozy and private clubhouse venue nestled inside the highly secure Philam Homes village, ideal for intimate family milestones and small weddings.'
+        description: 'A cozy and private clubhouse venue nestled inside the highly secure Philam Homes village, ideal for intimate family milestones and small weddings.',
+        lat: 14.6320, lng: 121.0480
     },
 
     // RIZAL AREA
@@ -134,7 +143,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 300 pax',
         type: 'Resort / Event Hall',
         amenities: ['Air conditioning', 'Resort Access', 'Spacious Parking', 'Scenic Views'],
-        description: 'A versatile event hall situated within a waterpark resort in San Mateo, offering a refreshing out-of-town ambiance just outside Metro Manila.'
+        description: 'A versatile event hall situated within a waterpark resort in San Mateo, offering a refreshing out-of-town ambiance just outside Metro Manila.',
+        lat: 14.6836, lng: 121.1125
     },
 
     // TAGUIG
@@ -149,7 +159,8 @@ const ACCREDITED_VENUES = [
         capacity: '300 - 500 pax',
         type: 'Large Tent / Indoor',
         amenities: ['Air conditioning', 'Massive Space', 'High Ceiling', 'Ample Parking'],
-        description: 'A massive, fully air-conditioned premier event tent located in the heart of Taguig, capable of housing grand receptions and large corporate events.'
+        description: 'A massive, fully air-conditioned premier event tent located in the heart of Taguig, capable of housing grand receptions and large corporate events.',
+        lat: 14.5214, lng: 121.0650
     },
     { 
         id: 'v12', 
@@ -162,7 +173,8 @@ const ACCREDITED_VENUES = [
         capacity: '100 - 300 pax',
         type: 'Modern Events Place',
         amenities: ['Air conditioning', 'Modern Architecture', 'Elegant Lighting', 'Parking'],
-        description: 'A highly elegant and modern events venue tucked in Taguig. Featuring stylish architecture and premium interiors perfect for sophisticated celebrations.'
+        description: 'A highly elegant and modern events venue tucked in Taguig. Featuring stylish architecture and premium interiors perfect for sophisticated celebrations.',
+        lat: 14.5306, lng: 121.0764
     },
     { 
         id: 'v13', 
@@ -175,7 +187,8 @@ const ACCREDITED_VENUES = [
         capacity: '70 - 130 pax',
         type: 'Colonial Mansion / Halls',
         amenities: ['Air conditioning', 'Tuason Heritage Design', 'Balconies', 'Exclusive Parking'],
-        description: 'A stunning three-storey colonial-inspired venue designed as an homage to the original Tuason residence on Sampaloc Avenue. Perfect for intimate and heritage-themed weddings.'
+        description: 'A stunning three-storey colonial-inspired venue designed as an homage to the original Tuason residence on Sampaloc Avenue. Perfect for intimate and heritage-themed weddings.',
+        lat: 14.5214, lng: 121.0650
     },
 
     // MANILA
@@ -190,7 +203,8 @@ const ACCREDITED_VENUES = [
         capacity: '150 - 300 pax',
         type: 'Spanish Heritage / Indoor',
         amenities: ['Air conditioning', 'Courtyard', 'Crystal Chandeliers', 'Bridal Suite'],
-        description: 'Set within the historic walled city of Intramuros, La Castellana exudes classic Spanish elegance with its breathtaking courtyard and opulent crystal chandeliers.'
+        description: 'Set within the historic walled city of Intramuros, La Castellana exudes classic Spanish elegance with its breathtaking courtyard and opulent crystal chandeliers.',
+        lat: 14.5914, lng: 120.9745
     },
     { 
         id: 'v15', 
@@ -203,7 +217,8 @@ const ACCREDITED_VENUES = [
         capacity: '150 - 250 pax',
         type: 'Octagonal Hall / Terrace',
         amenities: ['Air conditioning', 'Al Fresco Terrace', 'Panoramic Windows', 'Parking'],
-        description: 'An iconic octagonal-shaped venue featuring panoramic windows and a beautiful terrace. Though technically in Pasay, it borders Manila and provides excellent accessibility.'
+        description: 'An iconic octagonal-shaped venue featuring panoramic windows and a beautiful terrace. Though technically in Pasay, it borders Manila and provides excellent accessibility.',
+        lat: 14.5550, lng: 120.9830
     },
     { 
         id: 'v16', 
@@ -216,7 +231,8 @@ const ACCREDITED_VENUES = [
         capacity: '500 - 1000+ pax',
         type: 'Massive Tent / Exhibition Hall',
         amenities: ['Air conditioning', 'Vast Floor Area', 'High Ceiling', 'Huge Parking'],
-        description: 'A premium, massively spacious tent venue in the Metropolitan Park area. Highly sought after for monumental weddings, trade shows, and corporate galas.'
+        description: 'A premium, massively spacious tent venue in the Metropolitan Park area. Highly sought after for monumental weddings, trade shows, and corporate galas.',
+        lat: 14.5411, lng: 120.9908
     },
     { 
         id: 'v17', 
@@ -229,7 +245,8 @@ const ACCREDITED_VENUES = [
         capacity: '200 - 300 pax',
         type: 'Modern Indoor Hall',
         amenities: ['Air conditioning', 'Modern Interiors', 'Glass Walls', 'Ample Parking'],
-        description: 'Adjacent to Le Pavillon, Le Parc offers a more modern, sleek, and intimate indoor setting characterized by elegant wood and glass elements.'
+        description: 'Adjacent to Le Pavillon, Le Parc offers a more modern, sleek, and intimate indoor setting characterized by elegant wood and glass elements.',
+        lat: 14.5415, lng: 120.9912
     }
 ];
 
@@ -745,7 +762,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             {/* Venue Details Modal */}
             {selectedVenueDetails && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fadeIn">
-                    <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+                    <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-hidden rounded-3xl bg-white shadow-2xl custom-scrollbar">
                         <button 
                             type="button"
                             onClick={() => setSelectedVenueDetails(null)}
@@ -787,6 +804,33 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                     </ul>
                                 </div>
                             </div>
+
+                            {selectedVenueDetails.lat && selectedVenueDetails.lng && (
+                                <div className="mb-6">
+                                    <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Location</h4>
+                                    <div className="overflow-hidden rounded-xl border border-gray-200">
+                                        <iframe
+                                            title={`Map of ${selectedVenueDetails.name}`}
+                                            width="100%"
+                                            height="200"
+                                            style={{ border: 0 }}
+                                            loading="lazy"
+                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedVenueDetails.lng - 0.008}%2C${selectedVenueDetails.lat - 0.005}%2C${selectedVenueDetails.lng + 0.008}%2C${selectedVenueDetails.lat + 0.005}&layer=mapnik&marker=${selectedVenueDetails.lat}%2C${selectedVenueDetails.lng}`}
+                                        />
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <p className="text-xs text-gray-400">{selectedVenueDetails.address_line}, {selectedVenueDetails.street}</p>
+                                        <a
+                                            href={`https://www.google.com/maps/dir/?api=1&destination=${selectedVenueDetails.lat},${selectedVenueDetails.lng}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow transition hover:bg-blue-700"
+                                        >
+                                            Get Directions
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
                             
                             <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
                                 <button type="button" onClick={() => setSelectedVenueDetails(null)} className="rounded-xl px-6 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-100">
