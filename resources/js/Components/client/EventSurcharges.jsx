@@ -806,33 +806,36 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                             </div>
 
                             {selectedVenueDetails.lat && selectedVenueDetails.lng && (
-                                <div className="mb-6">
+                                <div className="mb-5">
                                     <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Location</h4>
-                                    <div className="overflow-hidden rounded-xl border border-gray-200">
-                                        <iframe
-                                            title={`Map of ${selectedVenueDetails.name}`}
-                                            width="100%"
-                                            height="200"
-                                            style={{ border: 0 }}
-                                            loading="lazy"
-                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedVenueDetails.lng - 0.008}%2C${selectedVenueDetails.lat - 0.005}%2C${selectedVenueDetails.lng + 0.008}%2C${selectedVenueDetails.lat + 0.005}&layer=mapnik&marker=${selectedVenueDetails.lat}%2C${selectedVenueDetails.lng}`}
-                                        />
-                                    </div>
-                                    <div className="mt-2 flex items-center justify-between">
-                                        <p className="text-xs text-gray-400">{selectedVenueDetails.address_line}, {selectedVenueDetails.street}</p>
-                                        <a
-                                            href={`https://www.google.com/maps/dir/?api=1&destination=${selectedVenueDetails.lat},${selectedVenueDetails.lng}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow transition hover:bg-blue-700"
-                                        >
-                                            Get Directions
-                                        </a>
+                                    <div className="flex gap-3 items-stretch">
+                                        <div className="flex-1 overflow-hidden rounded-xl border border-gray-200">
+                                            <iframe
+                                                title={`Map of ${selectedVenueDetails.name}`}
+                                                width="100%"
+                                                height="140"
+                                                style={{ border: 0, display: 'block' }}
+                                                loading="lazy"
+                                                src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedVenueDetails.lng - 0.006}%2C${selectedVenueDetails.lat - 0.004}%2C${selectedVenueDetails.lng + 0.006}%2C${selectedVenueDetails.lat + 0.004}&layer=mapnik&marker=${selectedVenueDetails.lat}%2C${selectedVenueDetails.lng}`}
+                                            />
+                                        </div>
+                                        <div className="flex shrink-0 flex-col items-end justify-between py-1">
+                                            <p className="max-w-[140px] text-right text-[11px] leading-snug text-gray-500">{selectedVenueDetails.address_line}, {selectedVenueDetails.street}</p>
+                                            <a
+                                                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedVenueDetails.lat},${selectedVenueDetails.lng}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-[#720101] bg-[#720101]/5 px-4 py-1.5 text-xs font-bold text-[#720101] transition hover:bg-[#720101] hover:text-white"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
+                                                Get Directions
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             )}
                             
-                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
+                            <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
                                 <button type="button" onClick={() => setSelectedVenueDetails(null)} className="rounded-xl px-6 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-100">
                                     Close
                                 </button>
