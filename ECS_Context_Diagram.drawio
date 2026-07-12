@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile version="22.1.2" type="device">
+  <diagram id="42083930" name="Context Diagram (Level 0 DFD)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="76302965" value="&lt;div style=&quot;border-bottom: 1px solid #d6b656; padding-bottom: 5px; margin-bottom: 15px;&quot;&gt;&lt;b&gt;0&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Eloquente Catering&lt;br&gt;Booking System&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;padding=10;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="480" y="350" width="240" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="bc391daf" value="Customer" style="shape=rectangle;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="520" y="50" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d4d9e061" value="Admin" style="shape=rectangle;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="520" y="650" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="58e4d2f3" value="Marketing Executive" style="shape=rectangle;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="390" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="26bc507a" value="Accounting Staff" style="shape=rectangle;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="940" y="390" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="e8a88e3a" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Credentials &amp;amp; Auth Data&lt;br&gt;+ Booking Logistics &amp;amp; Dietary Notes&lt;br&gt;+ Guest Headcount Updates&lt;br&gt;+ Proof of Payment (Bank Transfers)&lt;br&gt;+ Service Feedback &amp;amp; Cancellations&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;entryX=0.25;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="bc391daf" target="76302965">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dbdef7a5" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Auth Status &amp;amp; Form Validations&lt;br&gt;+ Date Availability &amp;amp; Surcharges&lt;br&gt;+ Booking Summaries &amp;amp; Contracts&lt;br&gt;+ Rejection Notices &amp;amp; Receipts&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;entryX=0.75;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="76302965" target="bc391daf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2a5f3ffa" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Admin Credentials&lt;br&gt;+ Pricing Rules &amp;amp; Config Overrides&lt;br&gt;+ User Role Policies (RBAC)&lt;br&gt;+ Marketing Verifications (Override)&lt;br&gt;+ Accounting Verifications (Override)&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;entryX=0.25;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d4d9e061" target="76302965">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="5fd917fa" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Executive Dashboard Analytics&lt;br&gt;+ Linear Regression &amp;amp; SMA Forecasts&lt;br&gt;+ Master Enterprise Reports&lt;br&gt;+ Global Audit Logs&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;entryX=0.75;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="76302965" target="d4d9e061">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b2453396" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Staff Credentials&lt;br&gt;+ Logistics Verifications&lt;br&gt;+ Operational Approvals&lt;br&gt;+ Contract Generation Prompts&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;entryX=0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="58e4d2f3" target="76302965">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9dd192b5" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Pending Bookings Pipeline&lt;br&gt;+ System-Computed Logistics&lt;br&gt;+ Auto-Generated Prep Lists&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;entryX=1;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="76302965" target="58e4d2f3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b345bf02" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Staff Credentials&lt;br&gt;+ Payment Verifications&lt;br&gt;+ Approve/Reject Ledger Actions&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;entryX=1;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="26bc507a" target="76302965">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b4a0a86b" value="&lt;div style=&quot;text-align: left;&quot;&gt;+ Pending Payment Queue&lt;br&gt;+ 10/70/20 Financial Ledger Data&lt;br&gt;+ Verification Reminders&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;entryX=0;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="76302965" target="26bc507a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
