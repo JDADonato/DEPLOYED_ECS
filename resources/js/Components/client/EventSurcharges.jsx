@@ -3,45 +3,234 @@ import { ChevronDown } from 'lucide-react';
 import ConfirmModal from '../common/ConfirmModal';
 
 const ACCREDITED_VENUES = [
+    // QUEZON CITY
     { 
-        id: 'av1', 
-        name: 'The Grand Pavilion', 
-        address_line: 'Building A, 1st Avenue', 
-        street: 'Sample Street Alpha', 
+        id: 'v1', 
+        name: 'Light of Love Events Place', 
+        address_line: 'Santol St', 
+        street: 'Santol St, Quezon City', 
         city: 'quezon-city', 
         isHighRise: false,
         image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800',
-        capacity: '50 - 200 pax',
-        type: 'Indoor / Garden',
-        amenities: ['Parking', 'Air conditioning', 'Bridal Suite', 'Catering area'],
-        description: 'A luxurious indoor pavilion with an adjacent lush garden, perfect for elegant weddings and corporate galas. Natural light fills the hall during the day, transforming into a romantic softly-lit venue at night.'
+        capacity: '150 - 500 pax',
+        type: 'Garden / Mansion',
+        amenities: ['Parking', 'Air conditioning', 'Bridal Suite', 'Lush Gardens', 'Catering area'],
+        description: 'A beautiful secret garden and mansion in the heart of Quezon City, offering a romantic and serene atmosphere surrounded by century-old trees and lush landscapes.'
     },
     { 
-        id: 'av2', 
-        name: 'Skyline Penthouse', 
-        address_line: 'Tower B, 2nd Level', 
-        street: 'Sample Street Beta', 
-        city: 'makati', 
-        isHighRise: true,
-        image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=80&w=800',
-        capacity: '30 - 100 pax',
-        type: 'High-rise Indoor',
-        amenities: ['Valet Parking', 'Air conditioning', 'City View', 'Lounge'],
-        description: 'Experience the breathtaking city skyline in this premium penthouse venue. Ideal for intimate gatherings, exclusive parties, and modern celebrations. Features floor-to-ceiling windows and a stylish lounge.'
-    },
-    { 
-        id: 'av3', 
-        name: 'Heritage Grand Hall', 
-        address_line: 'Grand Hall, Ground Floor', 
-        street: 'Sample Street Gamma', 
-        city: 'taguig', 
+        id: 'v2', 
+        name: 'UP Balay Kalinaw', 
+        address_line: 'UP Diliman Campus', 
+        street: 'Guerrero St, UP Diliman', 
+        city: 'quezon-city', 
         isHighRise: false,
         image: 'https://images.unsplash.com/photo-1505368586598-876ce526f633?auto=format&fit=crop&q=80&w=800',
-        capacity: '100 - 500 pax',
-        type: 'Indoor Banquet',
-        amenities: ['Ample Parking', 'Air conditioning', 'High Ceiling', 'Stage'],
-        description: 'A classic and spacious banquet hall designed for grand celebrations. With its high ceilings, stunning chandeliers, and built-in stage, it is the ultimate venue for large-scale events and lavish weddings.'
+        capacity: '100 - 200 pax',
+        type: 'Indoor / Cultural Hall',
+        amenities: ['Parking', 'Air conditioning', 'Cultural Ambiance', 'Accessible'],
+        description: 'Located inside the quiet UP Diliman campus, Balay Kalinaw provides a classic, peaceful, and intimate setting perfect for weddings and academic events.'
     },
+    { 
+        id: 'v3', 
+        name: 'UP Bahay ng Alumni', 
+        address_line: 'UP Diliman Campus', 
+        street: 'Magsaysay Ave, UP Diliman', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=80&w=800',
+        capacity: '300 - 1000 pax',
+        type: 'Large Indoor Hall',
+        amenities: ['Ample Parking', 'High Ceiling', 'Stage', 'Spacious'],
+        description: 'A massive, iconic events hall in UP Diliman capable of hosting very large guest counts, ideal for grand weddings, conventions, and major celebrations.'
+    },
+    { 
+        id: 'v4', 
+        name: 'Obispado de Cubao', 
+        address_line: 'Lantana St', 
+        street: 'Lantana St, Cubao', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 200 pax',
+        type: 'Indoor Function Hall',
+        amenities: ['Air conditioning', 'Secure Parking', 'Elegant Interiors'],
+        description: 'Situated within the quiet compounds of the Diocese of Cubao, this venue offers elegant, classic interiors suitable for intimate and medium-sized formal events.'
+    },
+    { 
+        id: 'v5', 
+        name: 'Elements at Centris', 
+        address_line: 'Eton Centris', 
+        street: 'EDSA cor Quezon Ave', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=800',
+        capacity: '300 - 500 pax',
+        type: 'Modern Tent / Hall',
+        amenities: ['Air conditioning', 'Ample Parking', 'High Ceiling', 'Modern Architecture'],
+        description: 'A fully air-conditioned modern event tent located perfectly along EDSA. It features stunning geometric ceiling designs and is highly accessible.'
+    },
+    { 
+        id: 'v6', 
+        name: 'Gazebo Royale', 
+        address_line: 'Visayas Ave', 
+        street: 'Visayas Avenue, Project 6', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1530023367847-a683933f4172?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 400 pax',
+        type: 'Glass / Garden',
+        amenities: ['Air conditioning', 'Pond & Water Features', 'Lush Landscaping', 'Parking'],
+        description: 'A sprawling special events venue featuring glass walls, indoor gardens, and water features, bringing the beauty of the outdoors into a comfortable air-conditioned space.'
+    },
+    { 
+        id: 'v7', 
+        name: 'Matrix Creation Events Venue', 
+        address_line: 'Malakas St', 
+        street: '11 Malakas St, Diliman', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 200 pax',
+        type: 'Modern Indoor',
+        amenities: ['Air conditioning', 'Modern Lighting', 'Stage', 'Parking'],
+        description: 'A stylish, contemporary venue in the heart of Diliman, offering customizable LED lighting and modern aesthetics for chic celebrations.'
+    },
+    { 
+        id: 'v8', 
+        name: 'Felicidad Mansions', 
+        address_line: 'Roosevelt Ave', 
+        street: '2 Baler St cor Roosevelt Ave', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 300 pax',
+        type: 'Classic Mansion / Indoor',
+        amenities: ['Air conditioning', 'Grand Staircase', 'Vintage Architecture', 'Parking'],
+        description: 'An elegant, vintage-inspired mansion venue boasting a majestic grand staircase and intricate ceiling designs, perfect for fairytale weddings.'
+    },
+    { 
+        id: 'v9', 
+        name: 'Philam Clubhouse', 
+        address_line: 'Philam Life Village', 
+        street: 'Philam Homes', 
+        city: 'quezon-city', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&q=80&w=800',
+        capacity: '50 - 150 pax',
+        type: 'Clubhouse / Hall',
+        amenities: ['Air conditioning', 'Exclusive Village Security', 'Parking', 'Poolside View'],
+        description: 'A cozy and private clubhouse venue nestled inside the highly secure Philam Homes village, ideal for intimate family milestones and small weddings.'
+    },
+
+    // RIZAL AREA
+    { 
+        id: 'v10', 
+        name: '9 Waves Waterpark & Events Place', 
+        address_line: 'Guitnang Bayan 1', 
+        street: 'San Mateo, Rizal', 
+        city: 'san-mateo', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1542314831-c6a4d14c9281?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 300 pax',
+        type: 'Resort / Event Hall',
+        amenities: ['Air conditioning', 'Resort Access', 'Spacious Parking', 'Scenic Views'],
+        description: 'A versatile event hall situated within a waterpark resort in San Mateo, offering a refreshing out-of-town ambiance just outside Metro Manila.'
+    },
+
+    // TAGUIG
+    { 
+        id: 'v11', 
+        name: 'Tent at Acacia Estates', 
+        address_line: 'Acacia Estates', 
+        street: 'Town Center, Acacia Estates', 
+        city: 'taguig', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&q=80&w=800',
+        capacity: '300 - 500 pax',
+        type: 'Large Tent / Indoor',
+        amenities: ['Air conditioning', 'Massive Space', 'High Ceiling', 'Ample Parking'],
+        description: 'A massive, fully air-conditioned premier event tent located in the heart of Taguig, capable of housing grand receptions and large corporate events.'
+    },
+    { 
+        id: 'v12', 
+        name: 'The Q Enclave', 
+        address_line: 'Calzada-Tipas', 
+        street: 'F. Manalo Street', 
+        city: 'taguig', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1470229722913-7c092bce99f5?auto=format&fit=crop&q=80&w=800',
+        capacity: '100 - 300 pax',
+        type: 'Modern Events Place',
+        amenities: ['Air conditioning', 'Modern Architecture', 'Elegant Lighting', 'Parking'],
+        description: 'A highly elegant and modern events venue tucked in Taguig. Featuring stylish architecture and premium interiors perfect for sophisticated celebrations.'
+    },
+    { 
+        id: 'v13', 
+        name: 'DMCI Clubhouse (Casa Real)', 
+        address_line: 'Acacia Estates', 
+        street: 'Town Center, Acacia Estates', 
+        city: 'taguig', 
+        isHighRise: true,
+        image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=800',
+        capacity: '70 - 130 pax',
+        type: 'Colonial Mansion / Halls',
+        amenities: ['Air conditioning', 'Tuason Heritage Design', 'Balconies', 'Exclusive Parking'],
+        description: 'A stunning three-storey colonial-inspired venue designed as an homage to the original Tuason residence on Sampaloc Avenue. Perfect for intimate and heritage-themed weddings.'
+    },
+
+    // MANILA
+    { 
+        id: 'v14', 
+        name: 'La Castellana', 
+        address_line: 'Intramuros', 
+        street: 'Cabildo Street, Intramuros', 
+        city: 'manila', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=800',
+        capacity: '150 - 300 pax',
+        type: 'Spanish Heritage / Indoor',
+        amenities: ['Air conditioning', 'Courtyard', 'Crystal Chandeliers', 'Bridal Suite'],
+        description: 'Set within the historic walled city of Intramuros, La Castellana exudes classic Spanish elegance with its breathtaking courtyard and opulent crystal chandeliers.'
+    },
+    { 
+        id: 'v15', 
+        name: 'The Pergola', 
+        address_line: 'CCP Complex', 
+        street: 'Boom na Boom Compound, Pasay', 
+        city: 'pasay', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800',
+        capacity: '150 - 250 pax',
+        type: 'Octagonal Hall / Terrace',
+        amenities: ['Air conditioning', 'Al Fresco Terrace', 'Panoramic Windows', 'Parking'],
+        description: 'An iconic octagonal-shaped venue featuring panoramic windows and a beautiful terrace. Though technically in Pasay, it borders Manila and provides excellent accessibility.'
+    },
+    { 
+        id: 'v16', 
+        name: 'Le Pavillon', 
+        address_line: 'Metropolitan Park', 
+        street: 'Metrobank Ave, Pasay', 
+        city: 'pasay', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=800',
+        capacity: '500 - 1000+ pax',
+        type: 'Massive Tent / Exhibition Hall',
+        amenities: ['Air conditioning', 'Vast Floor Area', 'High Ceiling', 'Huge Parking'],
+        description: 'A premium, massively spacious tent venue in the Metropolitan Park area. Highly sought after for monumental weddings, trade shows, and corporate galas.'
+    },
+    { 
+        id: 'v17', 
+        name: 'Le Parc', 
+        address_line: 'Metropolitan Park', 
+        street: 'Metrobank Ave, Pasay', 
+        city: 'pasay', 
+        isHighRise: false,
+        image: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?auto=format&fit=crop&q=80&w=800',
+        capacity: '200 - 300 pax',
+        type: 'Modern Indoor Hall',
+        amenities: ['Air conditioning', 'Modern Interiors', 'Glass Walls', 'Ample Parking'],
+        description: 'Adjacent to Le Pavillon, Le Parc offers a more modern, sleek, and intimate indoor setting characterized by elegant wood and glass elements.'
+    }
 ];
 
 const CITY_OPTIONS = [
