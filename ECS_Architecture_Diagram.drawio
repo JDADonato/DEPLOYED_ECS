@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile version="22.1.2" type="device">
+  <diagram id="5401ece6" name="Architecture Diagram">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="25d72f37" value="PRESENTATION TIER&lt;br&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;(Thin Client Layer)&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="50" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="83ba8011" value="NETWORK LAYER&lt;br&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;(WAN)&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="50" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="f8b7f11c" value="APPLICATION TIER&lt;br&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;(Middleware / Logic)&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="800" y="50" width="250" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="161dc3f0" value="DATA TIER&lt;br&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;(Persistence)&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1250" y="50" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="3e7f389c" value="&lt;b&gt;Customer Device&lt;/b&gt;&lt;br&gt;Browser / Mobile UI" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b0b950dd" value="&lt;b&gt;Staff &amp; Admin Devices&lt;/b&gt;&lt;br&gt;Dashboards &amp; Workspaces" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="450" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="41ee2f7b" value="Internet (WAN)" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="310" width="220" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ff4e6ea6" value="Web &amp; Application Server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;verticalAlign=top;spacingTop=20;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="780" y="180" width="280" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="e7ef6dce" value="Booking Conflict Checker" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="260" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e3f62b64" value="Dynamic Pricing Engine" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="320" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c3befb88" value="RBAC Security Manager" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="380" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ed3035d3" value="Payment &amp; Webhook Processor" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="440" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="1e1a1e63" value="Sales Analytics &amp; DSS Processor" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="500" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8ea59202" value="Relational Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1270" y="280" width="160" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="6511be2d" value="(MySQL)&lt;br&gt;Master Data&lt;br&gt;Transactions&lt;br&gt;Audit Logs" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="460" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d9802781" value="HTTPS / SSL" style="endArrow=block;html=1;rounded=0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0.16;entryY=0.55;" edge="1" parent="1" source="3e7f389c" target="41ee2f7b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1e1d4a85" value="HTTPS / SSL" style="endArrow=block;html=1;rounded=0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0.16;entryY=0.55;" edge="1" parent="1" source="b0b950dd" target="41ee2f7b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a747603d" value="JSON Payloads&lt;br&gt;(Inertia.js &amp; REST API)" style="endArrow=block;html=1;rounded=0;strokeWidth=2;exitX=0.875;exitY=0.5;entryX=0;entryY=0.465;" edge="1" parent="1" source="41ee2f7b" target="ff4e6ea6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="11a1374e" value="SQL Queries&lt;br&gt;(LAN / VPC)" style="endArrow=block;html=1;rounded=0;strokeWidth=2;exitX=1;exitY=0.465;entryX=0;entryY=0.5;" edge="1" parent="1" source="ff4e6ea6" target="8ea59202">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="bff73463" value="&lt;b&gt;Figure 57. Physical Three-Tier Client/Server Architecture Diagram&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="400" y="700" width="800" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
