@@ -12,6 +12,7 @@ import { describeCustomerIdentity } from '../../utils/customerIdentity';
 import { chatMessageStore } from '../../utils/chatMessageStore';
 import { LiveSyncIndicator, SoftRefreshBoundary, UpdatedRowPulse } from './LiveFeedback';
 import {
+    ArrowLeft,
     CalendarDays,
     ClipboardList,
     Clock3,
@@ -1550,8 +1551,8 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
         ].filter(action => !action.hidden);
 
         const containerClass = isAdminFullSurface
-            ? 'admin-full-chat overflow-hidden bg-white'
-            : 'overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm';
+            ? `admin-full-chat overflow-hidden bg-white ${selectedConv ? 'has-active-conversation' : ''}`
+            : `overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ${selectedConv ? 'has-active-conversation' : ''}`;
         const containerStyle = isAdminFullSurface ? undefined : { height: '640px' };
         const listRailClass = isAdminFullSurface
             ? 'admin-chat-list-rail flex min-h-0 w-[18rem] flex-shrink-0 flex-col border-r border-gray-200 bg-white'
@@ -1751,6 +1752,14 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
                                     <section className="admin-chat-thread-main flex min-h-0 min-w-0 flex-1 flex-col">
                                         <div className="admin-chat-selected-head flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white px-7 py-4">
                                             <div className="flex min-w-0 items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    className="admin-thread-mobile-back lg:hidden text-slate-500 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 ring-primary-500 rounded-full p-1 -ml-1 transition-colors"
+                                                    onClick={() => selectConversation(null)}
+                                                    aria-label="Back to conversations"
+                                                >
+                                                    <ArrowLeft className="h-5 w-5" />
+                                                </button>
                                                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-black text-primary-700">{selectedIdentity?.customerAccountName?.charAt(0).toUpperCase()}</div>
                                                 <div className="admin-chat-selected-identity min-w-0">
                                                     <p className="truncate text-base font-black text-gray-950">{selectedIdentity?.customerAccountName}</p>
