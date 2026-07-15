@@ -475,7 +475,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                     <form onSubmit={(event) => submit(event, 'draft')} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] shadow-2xl">
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#720101]/10 bg-[#fffaf3] px-4 py-3 sm:px-5">
                             <div>
-                                <p className="marketing-kicker">{editingId ? 'Editing' : 'Composer'}</p>
+                                <p className="marketing-kicker">Announcement Editor</p>
                                 <h3 className="mt-1 font-display text-xl font-black text-[#111827] sm:text-2xl">{editingId ? 'Update announcement' : 'New announcement'}</h3>
                             </div>
                             <div className="flex flex-wrap justify-end gap-2">
