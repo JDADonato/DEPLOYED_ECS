@@ -19279,17 +19279,6 @@ select.admin-select:not([multiple])::-ms-expand {
     grid-template-columns: 1fr;
   }
 
-  .admin-page .admin-full-chat > .flex {
-    flex-direction: column;
-  }
-
-  .admin-page .admin-chat-list-rail {
-    width: 100%;
-    max-height: 22rem;
-    border-right: 0;
-    border-bottom: 1px solid rgba(114, 1, 1, .075);
-  }
-
   .admin-page .admin-settings-tab-surface .staff-settings-form-grid,
   .admin-page .admin-settings-tab-surface .staff-settings-toggle-grid {
     grid-template-columns: 1fr;
