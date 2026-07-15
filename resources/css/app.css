@@ -20015,12 +20015,13 @@ select.admin-select:not([multiple])::-ms-expand {
 
 /* Fix clustered charts on mobile by enabling horizontal scroll */
 @media (max-width: 1024px) {
-  .admin-analytics-panel-wide .admin-analytics-panel-body > div[class*="h-"] {
+  .admin-analytics-panel-wide .admin-analytics-chart-container {
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.5rem; /* space for scrollbar */
   }
-  .admin-analytics-panel-wide .recharts-responsive-container {
-    min-width: 700px !important;
+  .admin-analytics-panel-wide .admin-analytics-chart-inner {
+    min-width: 700px;
+    min-height: 100%;
   }
 }

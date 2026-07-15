@@ -793,7 +793,11 @@ const AnalyticsPanel = ({ id, exportId = id, filterKey = null, kicker, title, de
             {table && viewMode === 'table' ? (
                 <AnalyticsDataTable {...table} />
             ) : (
-                <div className={chartHeight}>{children}</div>
+                <div className={`admin-analytics-chart-container ${chartHeight}`}>
+                    <div className="admin-analytics-chart-inner h-full w-full">
+                        {children}
+                    </div>
+                </div>
             )}
             {viewMode !== 'table' && (guide || afterGuide) && (
                 <div className="admin-analytics-panel-footer">
