@@ -10429,7 +10429,7 @@ const DashboardAdmin = () => {
                                                                                 type="button"
                                                                                 onClick={() => handleProcessRefund(item)}
                                                                                 disabled={processingRefundId === item.booking_id}
-                                                                                className="rounded-lg bg-[#720101] px-4 py-2 text-xs font-black text-white transition-colors hover:bg-[#5f0101] disabled:opacity-60"
+                                                                                className="rounded-lg bg-[#720101] px-4 py-2 text-xs font-black !text-white transition-colors hover:bg-[#5f0101] disabled:opacity-60"
                                                                             >
                                                                                 {processingRefundId === item.booking_id ? 'Processing...' : firstRefundCase?.next_actions?.includes('retry_provider_refund') ? 'Retry Provider' : 'Process Refund'}
                                                                             </button>

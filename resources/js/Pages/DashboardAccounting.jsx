@@ -2738,7 +2738,7 @@ const DashboardAccounting = () => {
                                                         <div className="flex flex-wrap justify-end gap-2">
                                                             <button
                                                                 onClick={() => canRetryProvider ? openRefundRetryConfirm(item, refundAmount) : openRefundConfirm(item.booking_id, refundAmount)}
-                                                                className="marketing-primary-btn text-white px-4 py-2 text-sm whitespace-nowrap"
+                                                                className="marketing-primary-btn !text-white px-4 py-2 text-sm whitespace-nowrap"
                                                             >
                                                                 {canRetryProvider ? 'Retry Provider' : 'Process Refund'}
                                                             </button>
