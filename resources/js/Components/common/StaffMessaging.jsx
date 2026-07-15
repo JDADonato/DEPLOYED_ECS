@@ -693,6 +693,14 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
     // ─── Actions ───
 
     const selectConversation = useCallback((conv, options = {}) => {
+        if (!conv) {
+            selectedConvRef.current = null;
+            setSelectedConv(null);
+            rememberSelectedConversation(null, sidebarTab);
+            setMessages([]);
+            return;
+        }
+
         const isSameConversation = String(selectedConvRef.current?.id || '') === String(conv.id);
         const cached = messageCacheRef.current.get(String(conv.id));
         const cacheIsFresh = cacheIsUsable(cached, getConversationCacheMarker(conv));
