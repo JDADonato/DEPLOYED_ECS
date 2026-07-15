@@ -10817,7 +10817,7 @@ const DashboardAdmin = () => {
                             </button>
                         )}
                         <a
-                            href={`/api/marketing/bookings/${eventDetailsModal.data?.id}/pdf`}
+                            href={`/documents/bookings/${eventDetailsModal.data?.id}/preparation.pdf`}
                             target="_blank"
                             rel="noreferrer"
                             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
