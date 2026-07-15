@@ -19995,3 +19995,13 @@ select.admin-select:not([multiple])::-ms-expand {
 .admin-page .admin-menu-item-edit-button {
   color: #fff;
 }
+
+/* Responsive overrides for tables */
+@media (max-width: 1024px) {
+  table, .staff-table, .admin-analytics-data-table, .admin-cross-tab {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

@@ -50,7 +50,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
                 {/* Print Section */}
                 <div id="receipt-print-area" className="p-8 md:p-10 bg-white overflow-y-auto custom-scrollbar">
                     {/* Header */}
-                    <div className="flex justify-between items-start mb-8 border-b-2 border-gray-100 pb-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 mb-8 border-b-2 border-gray-100 pb-6">
                         <div>
                             <h2 className="text-3xl font-black text-primary-900 tracking-tight">ELOQUENTE</h2>
                             <p className="text-xs font-bold tracking-widest text-primary-600 uppercase mt-1">Catering Services</p>
@@ -76,7 +76,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
                     </div>
 
                     {/* Booking contact */}
-                    <div className="grid grid-cols-2 gap-8 mb-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Booking Contact</p>
                             <p className="font-bold text-gray-900 text-lg">{bookingContactName(booking)}</p>
@@ -128,7 +128,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, booking }) => {
                     <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 border-b pb-2">Payment Transaction</p>
                         <div className="bg-primary-50/50 p-5 rounded-xl border border-primary-100">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
                                 <div>
                                     <p className="text-xs font-medium text-gray-500">Payment Type</p>
                                     <p className="font-bold text-gray-900">{payment.payment_type}</p>
