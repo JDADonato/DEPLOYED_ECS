@@ -7406,14 +7406,18 @@ const DashboardAdmin = () => {
 
                     <div className="mt-4">
                         {adminCalendarView === 'month' ? (
-                            <div className="marketing-calendar-container rounded-2xl border border-amber-100 bg-white overflow-hidden">
-                                <div className="grid grid-cols-7 border-b border-amber-100 bg-[#fffaf3]">
-                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                        <div key={day} className="py-2 text-center text-xs font-black uppercase text-slate-500 border-r border-amber-100/50 last:border-r-0">{day}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-7 auto-rows-[minmax(120px,auto)] bg-amber-100 gap-[1px] border-b border-amber-100">
-                                    {days}
+                            <div className="marketing-calendar-container rounded-2xl border border-amber-100 bg-white overflow-hidden shadow-sm">
+                                <div className="overflow-x-auto w-full">
+                                    <div className="min-w-[700px]">
+                                        <div className="grid grid-cols-7 border-b border-amber-100 bg-[#fffaf3]">
+                                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                                <div key={day} className="py-2 text-center text-xs font-black uppercase text-slate-500 border-r border-amber-100/50 last:border-r-0">{day}</div>
+                                            ))}
+                                        </div>
+                                        <div className="grid grid-cols-7 auto-rows-[minmax(120px,auto)] bg-amber-100 gap-[1px] border-b border-amber-100">
+                                            {days}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ) : renderCalendarList()}

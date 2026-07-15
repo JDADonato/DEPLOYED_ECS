@@ -164,7 +164,7 @@ export default function GuestInquiriesManager() {
                                     </td>
                                     <td className="px-5 py-4"><StaffStatusBadge tone={lead.status === 'Resolved' || lead.status === 'Closed' ? 'good' : lead.status === 'New' ? 'warn' : lead.status === 'Contacted' ? 'good' : 'muted'}>{lead.status}</StaffStatusBadge></td>
                                     <td className="px-5 py-4 text-right">
-                                        <button type="button" className="rounded-lg bg-[#720101] hover:bg-[#a30000] transition-colors px-4 py-2 text-xs font-black text-white shadow-sm">Review</button>
+                                        <button type="button" className="rounded-lg bg-[#720101] hover:bg-[#a30000] transition-colors px-4 py-2 text-xs font-black !text-white shadow-sm">Review</button>
                                     </td>
                                 </tr>
                             ))}
