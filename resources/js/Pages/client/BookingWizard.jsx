@@ -235,11 +235,6 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             return false;
         }
 
-        if (stepToValidate === 2 && !String(dataToValidate.eventName || '').trim()) {
-            showModal('error', 'Name your event', 'Enter an event name so you can easily track it from your dashboard.');
-            return false;
-        }
-
         if (stepToValidate === 3 && (!dataToValidate.date || !dataToValidate.time)) {
             showModal('error', 'Choose your schedule', 'Select your preferred date and start time so we can check availability for your event.');
             return false;
@@ -341,7 +336,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             event_date: merged.date,
             event_time: merged.time,
             event_type: merged.eventType,
-            event_name: merged.eventName,
+            event_name: `${merged.client_full_name || user?.name || 'Client'} - ${merged.eventType || 'Event'}`,
             pax: merged.pax,
             budget: merged.budget,
             dietary_notes: merged.dietaryNotes,
