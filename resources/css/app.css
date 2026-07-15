@@ -20012,3 +20012,15 @@ select.admin-select:not([multiple])::-ms-expand {
     padding-top: 13rem;
   }
 }
+
+/* Fix clustered charts on mobile by enabling horizontal scroll */
+@media (max-width: 1024px) {
+  .admin-analytics-panel-wide .admin-analytics-panel-body > div[class*="h-"] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem; /* space for scrollbar */
+  }
+  .admin-analytics-panel-wide .recharts-responsive-container {
+    min-width: 700px !important;
+  }
+}
