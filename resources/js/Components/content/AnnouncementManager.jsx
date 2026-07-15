@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { router } from '@inertiajs/react';
 import { formatDistanceToNow, format } from 'date-fns';
 import DangerConfirmModal from '../common/DangerConfirmModal';
@@ -469,7 +470,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
 
     return (
         <div className={isAdminVariant ? 'admin-content-surface admin-announcement-surface' : 'space-y-5'}>
-            {composerOpen && (
+            {composerOpen && createPortal(
                 <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
                     <form onSubmit={(event) => submit(event, 'draft')} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] shadow-2xl">
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#720101]/10 bg-[#fffaf3] px-4 py-3 sm:px-5">
@@ -599,53 +600,55 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                                     <input value={form.cta_url} onChange={(event) => updateField('cta_url', event.target.value)} placeholder="/book" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-600 outline-none shadow-sm focus:border-[#720101]" />
                                 </label>
 
-                                <div className="rounded-xl border border-[#720101]/10 bg-[#fffaf3] p-3 md:col-span-2">
-                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Announcement image</p>
-                                    <div className="mt-2 grid gap-3 md:grid-cols-[auto_1fr] md:items-start">
-                                        <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm md:w-28">
-                                            {imagePreview ? (
-                                                <img src={imagePreview} alt="Announcement preview" className="h-full w-full object-cover" />
-                                            ) : (
-                                                <ImageIcon size={24} />
-                                            )}
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-50">
-                                                <Upload size={14} />
-                                                Choose image
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(event) => {
-                                                        const file = event.target.files?.[0] || null;
-                                                        setForm((prev) => ({
-                                                            ...prev,
-                                                            image_file: file,
-                                                            image_fit: file ? 'fit_text' : prev.image_fit,
-                                                            image_overlay_enabled: file ? true : prev.image_overlay_enabled,
-                                                        }));
-                                                    }}
-                                                    className="hidden"
-                                                />
+                                <div className="md:col-span-2">
+                                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Image</label>
+                                    <div className="mt-1.5 grid gap-3 sm:grid-cols-[12rem_1fr] md:grid-cols-[14rem_1fr]">
+                                        <div className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 transition hover:bg-slate-100 sm:h-full">
+                                            <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 p-4 text-center">
+                                                <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+                                                    const file = event.target.files?.[0];
+                                                    if (file) {
+                                                        if (file.size > 5 * 1024 * 1024) {
+                                                            alert('Image must be smaller than 5MB');
+                                                            return;
+                                                        }
+                                                        updateField('image_file', file);
+                                                        updateField('image_path', '');
+                                                        updateField('image_fit', 'fit_text');
+                                                    }
+                                                }} />
+                                                <ImageIcon size={24} className="text-slate-400" />
+                                                <span className="text-xs font-bold text-slate-600">Click to upload</span>
+                                                <span className="text-[10px] font-semibold text-slate-400">JPG, PNG, or WebP</span>
                                             </label>
-                                            <input
-                                                type="text"
-                                                placeholder="Optional image link or storage path"
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 outline-none shadow-sm focus:border-[#720101]"
-                                                value={form.image_path || ''}
-                                                onChange={(event) => updateField('image_path', event.target.value)}
-                                            />
-                                            {(form.image_path || form.image_file) && (
-                                                <select
-                                                    aria-label="Image fit option"
-                                                    value={form.image_fit || 'fit_text'}
-                                                    onChange={(event) => updateField('image_fit', event.target.value)}
-                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 outline-none shadow-sm focus:border-[#720101]"
-                                                >
-                                                    <option value="fit_text">Cover Background</option>
-                                                    <option value="fit_image">Show Full Image</option>
-                                                </select>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3">
+                                            {imagePreview ? (
+                                                <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100 pt-[56.25%]">
+                                                    <img src={imagePreview} alt="Preview" className={`absolute inset-0 h-full w-full ${form.image_fit === 'fit_image' ? 'object-contain' : 'object-cover'}`} />
+                                                    <button type="button" aria-label="Remove image" onClick={() => { updateField('image_file', null); updateField('image_path', ''); }} className="absolute right-2 top-2 rounded-full bg-white/80 p-1.5 text-red-600 backdrop-blur hover:bg-red-50">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="relative flex items-center justify-center rounded-xl border border-slate-100 bg-slate-50 pt-[56.25%]">
+                                                    <div className="absolute flex flex-col items-center gap-2 text-slate-400">
+                                                        <ImageIcon size={24} className="opacity-50" />
+                                                        <span className="text-xs font-semibold">No image selected</span>
+                                                    </div>
+                                                </div>
                                             )}
+
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {['fit_text', 'fit_image'].map((fit) => (
+                                                    <label key={fit} className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-[11px] font-black uppercase tracking-widest transition ${form.image_fit === fit ? 'border-[#720101] bg-[#720101]/5 text-[#720101]' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                                                        <input type="radio" className="sr-only" checked={form.image_fit === fit} onChange={() => updateField('image_fit', fit)} />
+                                                        {fit === 'fit_text' ? 'Cover full' : 'Show full image'}
+                                                    </label>
+                                                ))}
+                                            </div>
+
                                             {(form.image_path || form.image_file) && (form.image_fit || 'fit_text') === 'fit_text' && (
                                                 <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-sm">
                                                     <span>Dark text overlay</span>
@@ -690,7 +693,7 @@ const AnnouncementManager = ({ variant = 'marketing', user }) => {
                         </div>
                     </form>
                 </div>
-            )}
+            , document.body)}
 
             <DangerConfirmModal
                 isOpen={!!deleteTarget}
