@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-react';
 
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -168,7 +169,7 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
             <div className="relative w-full max-w-lg max-h-[95vh] overflow-y-auto rounded-[1.5rem] border border-[#720101]/10 bg-[#fffaf3] p-4 shadow-2xl md:p-5 animate-scaleIn">
                 
@@ -249,24 +250,22 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                             name="summary"
                             value={form.summary}
                             onChange={handleTextChange}
-                            rows={3}
-                            maxLength={500}
+                            rows="2"
                             className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
-                            placeholder="A brief preview shown on cards..."
+                            placeholder="One or two lines customers can scan quickly."
                         />
-                        {errors.summary && <span className="text-[10px] font-semibold text-red-500">{errors.summary}</span>}
                     </div>
 
                     {/* Body */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Content / Body</label>
+                        <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Message</label>
                         <textarea
                             name="body"
                             value={form.body}
                             onChange={handleTextChange}
-                            rows={4}
+                            rows="4"
                             className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1a1a1a] shadow-sm focus:border-[#720101] focus:ring-1 focus:ring-[#720101] resize-none"
-                            placeholder="Full details of the announcement..."
+                            placeholder="Add the full update, advisory, promo, or reminder."
                         />
                     </div>
 
@@ -330,15 +329,21 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                     </div>
 
                     {imagePreview && form.image_fit === 'fit_text' && (
-                        <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-sm">
-                            <span>Dark text overlay</span>
-                            <input
-                                type="checkbox"
-                                checked={form.image_overlay_enabled !== false}
-                                onChange={(event) => setForm((prev) => ({ ...prev, image_overlay_enabled: event.target.checked }))}
-                                className="h-5 w-5"
-                            />
-                        </label>
+                        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-slate-200">
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-600">Apply Dark Overlay</p>
+                                <p className="text-xs text-slate-500">Makes text readable over the background image.</p>
+                            </div>
+                            <label className="relative inline-flex cursor-pointer items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={form.image_overlay_enabled}
+                                    onChange={(e) => setForm(prev => ({ ...prev, image_overlay_enabled: e.target.checked }))}
+                                    className="peer sr-only"
+                                />
+                                <div className="peer h-5 w-9 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#720101] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
+                            </label>
+                        </div>
                     )}
 
                     <div className="grid gap-3 md:grid-cols-2">
@@ -372,17 +377,17 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                     {/* Footer Actions */}
                     <div className="flex justify-end gap-2 border-t border-[#720101]/8 pt-3">
                         <button
-                             type="button"
-                             onClick={onClose}
-                             disabled={loading}
-                             className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 transition"
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 transition"
                         >
                             Cancel
                         </button>
                         <button
-                             type="submit"
-                             disabled={loading}
-                             className="inline-flex items-center gap-2 rounded-xl bg-[#720101] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#5a0101] transition shadow-md disabled:opacity-60"
+                            type="submit"
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#720101] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#5a0101] transition shadow-md disabled:opacity-60"
                         >
                             {loading ? (
                                 <>
@@ -395,9 +400,9 @@ const AnnouncementEditModal = ({ isOpen, onClose, announcement, onSave }) => {
                         </button>
                     </div>
                 </form>
-
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
