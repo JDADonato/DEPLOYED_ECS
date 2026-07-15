@@ -20005,3 +20005,10 @@ select.admin-select:not([multiple])::-ms-expand {
     white-space: nowrap;
   }
 }
+
+/* Fix mobile sidebar padding to account for taller navbar */
+@media (max-width: 1180px) {
+  .staff-workspace.has-workspace-topnav .staff-sidebar {
+    padding-top: 13rem;
+  }
+}
