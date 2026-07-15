@@ -696,7 +696,7 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
         if (!conv) {
             selectedConvRef.current = null;
             setSelectedConv(null);
-            rememberSelectedConversation(null, sidebarTab);
+            clearRememberedConversation();
             setMessages([]);
             return;
         }
@@ -721,7 +721,7 @@ const StaffMessaging = ({ variant = 'staff', refreshToken = 0, onMetricsChange =
         }
 
         fetchMessages(conv);
-    }, [cacheIsUsable, fetchMessages, getConversationCacheMarker, rememberSelectedConversation, sidebarTab]);
+    }, [cacheIsUsable, clearRememberedConversation, fetchMessages, getConversationCacheMarker, rememberSelectedConversation, sidebarTab]);
 
     useEffect(() => {
         const targetId = String(targetConversationId || '').trim();
