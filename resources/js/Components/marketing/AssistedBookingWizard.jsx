@@ -181,6 +181,10 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
 
     useEffect(() => {
         if (!isOpen) return;
+        
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        
         setCurrentStep(0);
         setCustomerState(initialCustomerState());
         setBookingData(initialBookingState());
@@ -193,6 +197,10 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             step: 'Customer',
             metadata: { entry_point: 'marketing_workspace' },
         });
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
     }, [isOpen]);
 
     useEffect(() => {
@@ -913,7 +921,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
     };
 
     return (
-        <div className="booking-page fixed inset-0 z-[9998] overflow-hidden bg-[#fffaf3] font-sans text-slate-900">
+        <div className="booking-page !pb-0 fixed inset-0 z-[9998] overflow-hidden bg-[#fffaf3] font-sans text-slate-900" style={{ paddingBottom: 0 }}>
             <Modal
                 isOpen={modal.isOpen}
                 onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
@@ -921,8 +929,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                 message={modal.message}
                 type={modal.type}
             />
-            <div className="flex h-full min-h-0">
-                <main className="min-w-0 flex-1 overflow-y-auto pb-32 lg:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex absolute inset-0 min-h-0">
+                <main className="min-w-0 flex-1 overflow-y-auto overscroll-none pb-32 lg:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <div className="border-b border-[#720101]/10 bg-white">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -948,7 +956,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                 </div>
                             </div>
 
-                            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 custom-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
                                 {steps.map(item => {
                                     const isActive = currentStep === item.step;
                                     const isComplete = currentStep > item.step;
