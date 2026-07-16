@@ -1602,7 +1602,7 @@ const DashboardAccounting = () => {
                             </div>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="staff-table table-fixed w-full">
+                            <table className="staff-table w-full min-w-[1000px]">
                                 <thead>
                                     <tr>
                                         <th>Tier</th>
@@ -1810,7 +1810,7 @@ const DashboardAccounting = () => {
                 );
             })() : (
                 <StaffWorkTable>
-                    <table className="staff-table table-fixed w-full">
+                    <table className="staff-table w-full min-w-[1000px]">
                         <thead>
                             <tr>
                                 <th className="w-[22%]">Booking & Event</th>

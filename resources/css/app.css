@@ -9972,8 +9972,9 @@
 
   .staff-header-metrics div {
     position: relative;
-    display: grid;
-    grid-template-columns: auto auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: baseline;
     gap: .35rem;
     min-height: 2.15rem;

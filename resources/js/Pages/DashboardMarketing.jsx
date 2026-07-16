@@ -2650,7 +2650,7 @@ const DashboardMarketing = () => {
                     </div>
                     <div className="marketing-booking-board-list">
                         <ul className="divide-y divide-amber-100/70">
-                            {pendingBookings.length === 0 ? <li className="p-8 text-gray-500 text-center">{emptyBookingMessage}</li> : null}
+                            {pendingBookings.length === 0 ? <li className="p-8 text-gray-500 text-center whitespace-normal break-words">{emptyBookingMessage}</li> : null}
                             {pagedPendingBookings.map(booking => {
                                 const isClaiming = Boolean(claimingBookingIds[booking.id]);
                                 const canEdit = canEditBooking(booking);

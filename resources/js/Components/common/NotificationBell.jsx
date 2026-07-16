@@ -492,7 +492,7 @@ const NotificationBell = ({ variant = 'light', placement = 'inline' }) => {
     const isLight = variant === 'light';
     const dropdownClass = placement === 'fixed-right'
         ? 'fixed right-3 top-16 w-[min(21rem,calc(100vw-1.25rem))]'
-        : 'absolute right-0 mt-2 w-[min(21rem,calc(100vw-1.25rem))]';
+        : 'fixed right-2 left-2 top-16 mx-auto w-auto max-w-[21rem] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[21rem]';
     const readCount = readNotifications.length;
     const localUnreadCount = newNotifications.length;
     const displayedUnreadCount = Math.max(unreadCount, localUnreadCount);
