@@ -740,7 +740,7 @@ class AccountingController extends Controller
                 if ($isOverdue) {
                     $exceptions[] = 'pending_past_due';
                 }
-                if (str_contains(strtolower((string) $payment->payment_method), 'paymongo') && $isPaidLocally && ! $hasProviderPayment) {
+                if (str_contains(strtolower((string) $payment->payment_method), 'paymongo') && $isPaidLocally && ! $hasProviderPayment && $payment->verified_by === 'PayMongo Webhook') {
                     $exceptions[] = 'missing_paymongo_payment_id_for_refund';
                 }
                 if ($hasMismatch) {
