@@ -2472,7 +2472,7 @@ const DashboardAccounting = () => {
                                                     </div>
                                                 </div>
                                                 <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm">
+                                                    <table className="w-full text-sm min-w-[800px]">
                                                         <thead className="bg-white border-b border-amber-100">
                                                             <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                                                                 <th className="text-left py-4 px-6">Payment Type</th>

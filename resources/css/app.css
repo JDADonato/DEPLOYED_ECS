@@ -12714,7 +12714,7 @@
   overflow-y: visible;
 }
 
-.admin-responsive-table :where(.staff-table, table) {
+.admin-responsive-table .staff-table, .admin-responsive-table table {
   min-width: max(100%, 1020px);
   table-layout: auto;
 }
@@ -16825,7 +16825,7 @@
   vertical-align: middle;
 }
 
-.admin-responsive-table :where(.staff-table, table) {
+.admin-responsive-table .staff-table, .admin-responsive-table table {
   min-width: max(100%, 980px);
   table-layout: auto;
 }
@@ -18253,7 +18253,7 @@
   overflow-y: visible;
 }
 
-.admin-responsive-table :where(.staff-table, table) {
+.admin-responsive-table .staff-table, .admin-responsive-table table {
   min-width: max(100%, 1020px);
   table-layout: auto;
 }
@@ -20008,4 +20008,17 @@ select.admin-select:not([multiple])::-ms-expand {
 
 @media (max-width: 1180px) {
   .staff-workspace-navbar-brand span { display: none; }
+}
+.marketing-booking-view-tabs {
+  display: flex;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .staff-workspace-navbar-utility-actions {
+    gap: 0.5rem;
+  }
+  .staff-navbar-assisted-booking-action {
+    margin-right: 0;
+  }
 }
