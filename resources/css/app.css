@@ -2317,14 +2317,7 @@
       grid-template-columns: 1fr;
     }
 
-    .booking-dish-card .flex.items-start {
-      flex-direction: column;
-    }
 
-    .booking-dish-card .w-24 {
-      width: 100%;
-      height: 10rem;
-    }
   }
 
   .booking-menu-required-note {
@@ -3431,15 +3424,7 @@
       border-radius: 1rem;
     }
 
-    .booking-dish-card .flex.items-start {
-      flex-direction: column;
-      gap: .75rem;
-    }
 
-    .booking-dish-card .w-24 {
-      width: 100%;
-      height: clamp(8.5rem, 45vw, 12rem);
-    }
 
     .booking-dish-copy {
       width: 100%;
