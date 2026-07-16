@@ -2602,7 +2602,7 @@ const DashboardAccounting = () => {
                                                 </div>
                                             </div>
                                             <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
+                                                <table className="w-full text-sm min-w-[1000px]">
                                                     <thead className="bg-white border-b border-amber-100">
                                                         <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                                                             <th className="text-left py-4 px-6">Payment</th>
@@ -2624,7 +2624,7 @@ const DashboardAccounting = () => {
                             ) : (
                                 <>
                                 <StaffWorkTable className="custom-scrollbar">
-                                    <table className="staff-table">
+                                    <table className="staff-table w-full min-w-[1000px]">
                                         <thead>
                                             <tr>
                                                 <th>Payment</th>
@@ -2684,7 +2684,7 @@ const DashboardAccounting = () => {
                         ) : (
                             <>
                             <StaffWorkTable className="custom-scrollbar">
-                                <table className="staff-table">
+                                <table className="staff-table w-full min-w-[1000px]">
                                     <thead>
                                         <tr>
                                             <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs w-20">Booking No.</th>
