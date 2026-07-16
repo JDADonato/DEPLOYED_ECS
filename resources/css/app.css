@@ -1985,8 +1985,8 @@
   }
 
   .booking-category-tabs {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(8.5rem, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
     gap: .55rem;
     margin: .5rem 0 1.35rem;
     overflow-x: auto;

@@ -55,7 +55,13 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
         if (isSubmitting) return;
         const nextErrors = {};
         if (!tastingData.guest_name?.trim()) nextErrors.guest_name = 'Add the name for the food tasting request.';
-        if (!tastingData.guest_email?.trim()) nextErrors.guest_email = 'Add an email so the team can confirm the food tasting.';
+        
+        const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!tastingData.guest_email?.trim()) {
+            nextErrors.guest_email = 'Add an email so the team can confirm the food tasting.';
+        } else if (!emailRegex.test(tastingData.guest_email)) {
+            nextErrors.guest_email = 'Please enter a valid email address.';
+        }
         if (!tastingData.preferred_date) {
             nextErrors.preferred_date = 'Choose a preferred food tasting date.';
         }

@@ -515,7 +515,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
 
     const handleConfirm = () => {
         const newErrors = {};
-        const nameRegex = /^[a-zA-Z\s\-.]{2,}$/;
+        const nameRegex = /^[\p{L}\s\-.]{2,}$/u;
         const name = formData.client_full_name.trim();
         if (!name || name.length < 2 || !nameRegex.test(name)) {
             newErrors.client_full_name = 'Please enter a valid full name (at least 2 characters, letters only).';
@@ -534,9 +534,6 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
         if (venueMode === 'own') {
             if (!formData.venue_city) {
                 newErrors.venue_city = 'Please select a city or municipality from the dropdown list.';
-            }
-            if (!formData.venue_street.trim() || formData.venue_street.trim().length < 3) {
-                newErrors.venue_street = 'Please enter a valid street name (minimum 3 characters).';
             }
             if (!formData.venue_address_line.trim() || formData.venue_address_line.trim().length < 3) {
                 newErrors.venue_address_line = 'Please enter a detailed venue address (minimum 3 characters).';
@@ -583,7 +580,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <label className="md:col-span-2">
                             <span className="booking-field-label">Full name</span>
-                            <input type="text" name="client_full_name" placeholder="Enter your full name" minLength="2" pattern="^[a-zA-Z\s\-.]{2,}$" value={formData.client_full_name} onChange={handleChange} className={`booking-input ${errors.client_full_name ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            <input type="text" name="client_full_name" placeholder="Enter your full name" minLength="2" value={formData.client_full_name} onChange={handleChange} className={`booking-input ${errors.client_full_name ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
                             {errors.client_full_name && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_full_name}</p>}
                         </label>
                         <label>
@@ -706,7 +703,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                                 </div>
                                 <label>
                                     <span className="booking-field-label">Street</span>
-                                    <input type="text" name="venue_street" placeholder="Street name" minLength="3" value={formData.venue_street} onChange={handleChange} className={`booking-input ${errors.venue_street ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                                    <input type="text" name="venue_street" placeholder="Street name (Optional)" value={formData.venue_street} onChange={handleChange} className={`booking-input ${errors.venue_street ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
                                     {errors.venue_street && <p className="mt-1 text-xs font-semibold text-red-600">{errors.venue_street}</p>}
                                 </label>
                                 <div className="relative md:col-span-2">
