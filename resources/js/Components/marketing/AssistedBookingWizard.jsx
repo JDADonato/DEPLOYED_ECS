@@ -921,8 +921,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                 message={modal.message}
                 type={modal.type}
             />
-            <div className="flex h-[100dvh] min-h-0">
-                <main className="min-w-0 flex-1 overflow-y-auto pb-24 lg:pb-0">
+            <div className="flex h-full min-h-0">
+                <main className="min-w-0 flex-1 overflow-y-auto pb-32 lg:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <div className="border-b border-[#720101]/10 bg-white">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
