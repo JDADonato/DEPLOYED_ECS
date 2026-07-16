@@ -308,7 +308,9 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
     }
 
     return (
-        <aside className="booking-summary-drawer border-t border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:h-[calc(100vh-68px)] lg:w-[22rem] lg:flex-shrink-0 lg:border-l lg:border-t-0">
+        <>
+            <div className="fixed inset-0 z-[70] bg-[#230a00]/30 backdrop-blur-sm lg:hidden animate-in fade-in" onClick={onToggle} />
+            <aside className="booking-summary-drawer border-t border-[#720101]/10 bg-[#fffaf3] lg:sticky lg:top-[68px] lg:h-[calc(100vh-68px)] lg:w-[22rem] lg:flex-shrink-0 lg:border-l lg:border-t-0">
             <div className="flex h-full flex-col">
                 <div className="border-b border-[#720101]/10 px-5 py-4">
                     <div className="flex items-start justify-between gap-4">
@@ -454,6 +456,7 @@ const BlueprintPanel = ({ bookingData, businessRules = {}, collapsed = false, on
                 </div>
             </div>
         </aside>
+        </>
     );
 };
 

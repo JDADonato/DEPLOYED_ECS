@@ -521,9 +521,9 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             newErrors.client_full_name = 'Please enter a valid full name (at least 2 characters, letters only).';
         }
 
-        const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (requireEmail && (!formData.client_email.trim() || !emailRegex.test(formData.client_email.trim()))) {
-            newErrors.client_email = 'Please enter a valid email address with at least 3 characters before the @ symbol.';
+            newErrors.client_email = 'Please enter a valid email address.';
         }
 
         const phoneRegex = /^(09|\+639)\d{9}$/;
@@ -535,7 +535,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
             if (!formData.venue_city) {
                 newErrors.venue_city = 'Please select a city or municipality from the dropdown list.';
             }
-            if (!formData.venue_address_line.trim() || formData.venue_address_line.trim().length < 3) {
+            if (formData.venue_address_line.trim() && formData.venue_address_line.trim().length < 3) {
                 newErrors.venue_address_line = 'Please enter a detailed venue address (minimum 3 characters).';
             }
         } else {
@@ -585,7 +585,7 @@ const EventSurcharges = ({ bookingData, businessRules = {}, updateBooking, onNex
                         </label>
                         <label>
                             <span className="booking-field-label">Email address</span>
-                            <input type="email" name="client_email" placeholder="your@email.com" minLength="7" pattern="^[a-zA-Z0-9._%+\-]{3,}@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" value={formData.client_email} onChange={handleChange} className={`booking-input ${errors.client_email ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
+                            <input type="email" name="client_email" placeholder="your@email.com" minLength="7" value={formData.client_email} onChange={handleChange} className={`booking-input ${errors.client_email ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`} />
                             {errors.client_email && <p className="mt-1 text-xs font-semibold text-red-600">{errors.client_email}</p>}
                         </label>
                         <label>

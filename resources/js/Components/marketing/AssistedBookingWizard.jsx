@@ -12,12 +12,12 @@ import { defaultBookingData } from '../../hooks/useBookingDraft';
 
 const steps = [
     { step: 0, label: 'Customer', eyebrow: 'Staff assisted', greeting: 'Who is this booking for?', sub: 'Link an existing client or create a walk-in account first.' },
-    { step: 1, label: 'Vision', eyebrow: 'Start with the occasion', greeting: 'What are we helping them celebrate?', sub: 'Choose the event type and give the booking a clear name.' },
-    { step: 2, label: 'Date', eyebrow: 'Choose the day', greeting: "Let's find their date", sub: 'Pick a date, start time, and service window.' },
-    { step: 3, label: 'Guests', eyebrow: 'Estimate the crowd', greeting: 'Who should we prepare for?', sub: 'Enter the guest count and any dietary notes.' },
-    { step: 4, label: 'Packages', eyebrow: 'Choose package', greeting: 'Review the best package fit', sub: 'Use the same package flow customers see.' },
-    { step: 5, label: 'Menu', eyebrow: 'Personalize the spread', greeting: 'Build the menu together', sub: 'Choose dishes and watch the estimate update.' },
-    { step: 6, label: 'Details', eyebrow: 'Set logistics', greeting: 'Where should the team prepare?', sub: 'Complete contact, venue, and service details.' },
+    { step: 1, label: 'Details', eyebrow: 'Set logistics', greeting: 'Where should the team prepare?', sub: 'Complete contact, venue, and service details.' },
+    { step: 2, label: 'Vision', eyebrow: 'Start with the occasion', greeting: 'What are we helping them celebrate?', sub: 'Choose the event type and give the booking a clear name.' },
+    { step: 3, label: 'Date', eyebrow: 'Choose the day', greeting: "Let's find their date", sub: 'Pick a date, start time, and service window.' },
+    { step: 4, label: 'Guests', eyebrow: 'Estimate the crowd', greeting: 'Who should we prepare for?', sub: 'Enter the guest count and any dietary notes.' },
+    { step: 5, label: 'Packages', eyebrow: 'Choose package', greeting: 'Review the best package fit', sub: 'Use the same package flow customers see.' },
+    { step: 6, label: 'Menu', eyebrow: 'Personalize the spread', greeting: 'Build the menu together', sub: 'Choose dishes and watch the estimate update.' },
     { step: 7, label: 'Tasting', eyebrow: 'Food tasting', greeting: 'Do they want to schedule a tasting?', sub: 'Record the preference before review.' },
     { step: 8, label: 'Review', eyebrow: 'Final review', greeting: 'Check the event plan before sending', sub: 'Confirm the customer, totals, and invite details.' },
 ];
@@ -902,12 +902,12 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
 
     const renderStep = () => {
         if (currentStep === 0) return renderCustomerStep();
-        if (currentStep === 1) return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 2) return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 3) return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 4) return <MenuBuilder mode="packages" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 5) return <MenuBuilder mode="menu" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 6) return <EventSurcharges bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} user={customerPseudoUser} requireEmail={false} />;
+        if (currentStep === 1) return <EventSurcharges bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} user={customerPseudoUser} requireEmail={false} />;
+        if (currentStep === 2) return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
+        if (currentStep === 3) return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
+        if (currentStep === 4) return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
+        if (currentStep === 5) return <MenuBuilder mode="packages" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
+        if (currentStep === 6) return <MenuBuilder mode="menu" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
         if (currentStep === 7) return <FoodTastingStep bookingData={bookingData} updateBooking={updateBooking} onReview={openReview} onBack={goBack} isSubmitting={isSubmitting} />;
         return renderReviewStep();
     };
@@ -921,8 +921,8 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                 message={modal.message}
                 type={modal.type}
             />
-            <div className="flex h-screen min-h-0">
-                <main className="min-w-0 flex-1 overflow-y-auto">
+            <div className="flex h-[100dvh] min-h-0">
+                <main className="min-w-0 flex-1 overflow-y-auto pb-24 lg:pb-0">
                     <div className="border-b border-[#720101]/10 bg-white">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -957,7 +957,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                             key={item.step}
                                             type="button"
                                             onClick={() => handleStepperClick(item.step)}
-                                            className={`min-w-[6rem] rounded-full border px-4 py-2 text-xs font-black transition ${isActive
+                                            className={`min-w-[6rem] flex-shrink-0 rounded-full border px-4 py-2 text-xs font-black transition ${isActive
                                                 ? 'border-[#720101] bg-[#720101] text-white'
                                                 : isComplete
                                                     ? 'border-[#720101]/15 bg-[#fff7e8] text-[#720101]'

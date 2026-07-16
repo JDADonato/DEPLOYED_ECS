@@ -56,7 +56,7 @@ const FoodTastingStep = ({ bookingData, updateBooking, onReview, onBack, isSubmi
         const nextErrors = {};
         if (!tastingData.guest_name?.trim()) nextErrors.guest_name = 'Add the name for the food tasting request.';
         
-        const emailRegex = /^[a-zA-Z0-9._%+-]{3,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!tastingData.guest_email?.trim()) {
             nextErrors.guest_email = 'Add an email so the team can confirm the food tasting.';
         } else if (!emailRegex.test(tastingData.guest_email)) {
