@@ -35,7 +35,7 @@ const ROLE_DEFAULTS = {
 
 const TAB_OPTIONS = {
     admin: [
-        ['today', 'Command Center'],
+        ['today', 'Dashboard'],
         ['bookings-intake', 'Bookings & Intake'],
         ['calendar', 'Calendar'],
         ['tastings', 'Food Tastings'],

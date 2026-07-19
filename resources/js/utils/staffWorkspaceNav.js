@@ -9,7 +9,7 @@ export const ADMIN_WORKSPACE_NAV_GROUPS = [
     {
         label: 'Admin',
         items: [
-            { id: 'today', label: 'Command Center', description: 'Review operational priorities and owner-level shortcuts.', aliases: ['dashboard', 'overview', 'home', 'command'] },
+            { id: 'today', label: 'Dashboard', description: 'Review operational priorities and owner-level shortcuts.', aliases: ['dashboard', 'overview', 'home', 'command'] },
             { id: 'accounts', label: 'Accounts', description: 'Manage staff and customer account access.', aliases: ['users', 'people', 'staff', 'customers'] },
             { id: 'analytics-overview', label: 'Analytics Overview', description: 'Review decision summary, current read, and analytics shortcuts.', aliases: ['analytics overview', 'decision summary', 'business state', 'current read'] },
             { id: 'analytics', label: 'Analytics', description: 'Review core forecast methods and performance insights.', aliases: ['insights', 'core analytics', 'forecast', 'forecast methods', 'simple linear regression', 'moving average'] },
