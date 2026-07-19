@@ -73,11 +73,13 @@ const SurchargeInput = ({ field, label, icon: Icon, type = 'percent', rules, upd
                     onChange={handleChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-8 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10"
+                    className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold shadow-sm outline-none transition-shadow focus:border-[#720101] focus:ring-4 focus:ring-[#720101]/10 ${type === 'number' ? '' : 'pl-8'}`}
                 />
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                    {type === 'percent' ? '%' : '₱'}
-                </span>
+                {type !== 'number' && (
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                        {type === 'percent' ? '%' : '₱'}
+                    </span>
+                )}
             </div>
         </label>
     );
@@ -211,8 +213,8 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
                 </div>
 
                 <form onSubmit={saveBookingRules} className="grid gap-5 lg:grid-cols-3">
-                    <SurchargeInput rules={rules} updateField={updateField} field="minimum_pax_per_event" label="Minimum Guests" icon={Users} type="flat" />
-                    <SurchargeInput rules={rules} updateField={updateField} field="maximum_pax_per_event" label="Maximum Guests" icon={Users} type="flat" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="minimum_pax_per_event" label="Minimum Guests" icon={Users} type="number" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="maximum_pax_per_event" label="Maximum Guests" icon={Users} type="number" />
 
                     <div className="flex items-end lg:col-span-3 mt-2 border-t border-slate-100 pt-5">
                         <button type="submit" disabled={savingBookingRules} className="admin-button-primary px-6 py-3 text-sm font-black flex items-center gap-2 shadow-sm">

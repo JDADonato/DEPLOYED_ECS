@@ -7,11 +7,16 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRu
         return isNaN(val) || val < 1 ? 50 : val;
     }, [businessRules?.minimum_pax_per_event]);
 
+    const maxPax = useMemo(() => {
+        const val = parseInt(businessRules?.maximum_pax_per_event, 10);
+        return isNaN(val) || val < minPax ? 1000 : val;
+    }, [businessRules?.maximum_pax_per_event, minPax]);
+
     const guestPresets = useMemo(() => {
         const presets = [minPax];
-        const candidates = [50, 100, 150, 200, 300, 500];
+        const candidates = [50, 100, 150, 200, 300, 500, 1000];
         for (const c of candidates) {
-            if (c > minPax && !presets.includes(c)) presets.push(c);
+            if (c > minPax && c <= maxPax && !presets.includes(c)) presets.push(c);
         }
         if (presets.length < 3 && minPax < 50) {
             for (const c of [minPax + 10, minPax + 20, minPax + 50]) {
@@ -23,7 +28,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRu
 
     const [paxInput, setPaxInput] = useState(() => {
         const initial = parseInt(bookingData.pax, 10);
-        return String(isNaN(initial) ? minPax : Math.max(minPax, initial));
+        return String(isNaN(initial) ? minPax : Math.min(maxPax, Math.max(minPax, initial)));
     });
     const [dietaryNotes, setDietaryNotes] = useState(bookingData.dietaryNotes || '');
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
@@ -58,6 +63,16 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRu
                 type: 'error',
                 title: 'Guest count needed',
                 message: `Please enter at least ${minPax} guests to continue.`,
+            });
+            return;
+        }
+
+        if (currentPax > maxPax) {
+            setModal({
+                isOpen: true,
+                type: 'error',
+                title: 'Maximum capacity exceeded',
+                message: `We can only accommodate up to ${maxPax} guests for a single event.`,
             });
             return;
         }
@@ -104,7 +119,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRu
                             onChange={(event) => handlePaxChange(event.target.value)}
                             aria-label="Number of guests"
                         />
-                        <button type="button" onClick={() => handlePaxChange(String((parseInt(paxInput, 10) || 0) + 10))}>+</button>
+                        <button type="button" onClick={() => handlePaxChange(String(Math.min(maxPax, (parseInt(paxInput, 10) || 0) + 10)))}>+</button>
                     </div>
 
                     <div className="booking-guest-presets">
@@ -121,7 +136,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRu
                     </div>
 
                     <p className="text-sm font-semibold text-slate-500">
-                        Minimum {minPax} guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
+                        Minimum {minPax} to maximum {maxPax} guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
                     </p>
                 </div>
 
