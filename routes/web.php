@@ -465,6 +465,7 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('/api/admin/payment-rules', [SettingsController::class, 'paymentRules']);
     Route::put('/api/admin/payment-rules', [SettingsController::class, 'updatePaymentRules']);
     Route::put('/api/admin/surcharge-rules', [SettingsController::class, 'updateSurchargeRules']);
+    Route::put('/api/admin/booking-rules', [SettingsController::class, 'updateBookingRules']);
     Route::get('/api/admin/bookings', [AdminController::class, 'getBookings']);
     Route::put('/api/admin/bookings/{id}/status', [AdminController::class, 'updateBookingStatus']);
     Route::post('/api/admin/bookings/{id}/discount', [AdminController::class, 'applyDiscount']);

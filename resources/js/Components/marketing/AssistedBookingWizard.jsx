@@ -913,7 +913,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         if (currentStep === 1) return <EventSurcharges bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} user={customerPseudoUser} requireEmail={false} />;
         if (currentStep === 2) return <EventIdentity bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
         if (currentStep === 3) return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
-        if (currentStep === 4) return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
+        if (currentStep === 4) return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} businessRules={businessRules} />;
         if (currentStep === 5) return <MenuBuilder mode="packages" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
         if (currentStep === 6) return <MenuBuilder mode="menu" bookingData={bookingData} updateBooking={updateBooking} onNext={goNext} onBack={goBack} />;
         if (currentStep === 7) return <FoodTastingStep bookingData={bookingData} updateBooking={updateBooking} onReview={openReview} onBack={goBack} isSubmitting={isSubmitting} />;

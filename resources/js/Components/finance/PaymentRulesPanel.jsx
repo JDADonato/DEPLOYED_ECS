@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import csrfFetch from '../../utils/csrf';
 import StaffSkeleton from '../staff/StaffSkeleton';
-import { Percent, Clock, Briefcase, Truck, Building, Receipt, FileText, Settings, ShieldAlert, Zap } from 'lucide-react';
+import { Percent, Clock, Briefcase, Truck, Building, Receipt, FileText, Settings, ShieldAlert, Zap, Users } from 'lucide-react';
 
 const defaultRules = {
     reservation_fee_percentage: 10,
@@ -19,6 +19,8 @@ const defaultRules = {
     contingency_surcharge_rate: 0.10,
     vat_rate: 0.12,
     extra_service_hours_fee: 5000,
+    minimum_pax_per_event: 50,
+    maximum_pax_per_event: 1000,
 };
 
 const numberField = (value) => value === null || value === undefined ? '' : String(value);
@@ -86,6 +88,7 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savingSurcharges, setSavingSurcharges] = useState(false);
+    const [savingBookingRules, setSavingBookingRules] = useState(false);
 
     const notify = (message, type = 'success') => {
         if (onToast) onToast(message, type);
@@ -165,6 +168,30 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
         }
     };
 
+    const saveBookingRules = async (event) => {
+        event.preventDefault();
+        setSavingBookingRules(true);
+        try {
+            const payload = {
+                minimum_pax_per_event: Number(rules.minimum_pax_per_event),
+                maximum_pax_per_event: Number(rules.maximum_pax_per_event),
+            };
+            const response = await csrfFetch('/api/admin/booking-rules', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || data.message || 'Could not save booking rules.');
+            setRules(current => ({ ...current, ...(data.rules || payload) }));
+            notify('Booking rules updated.');
+        } catch (error) {
+            notify(error.message || 'Could not save booking rules.', 'error');
+        } finally {
+            setSavingBookingRules(false);
+        }
+    };
+
     if (loading) {
         return <StaffSkeleton rows={4} label="Loading payment rules" />;
     }
@@ -173,6 +200,27 @@ const PaymentRulesPanel = ({ onToast, embedded = false }) => {
 
     return (
         <div className="flex flex-col gap-8">
+            <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-6'}>
+                <div className="mb-6 border-b border-slate-100 pb-5">
+                    <div className="flex items-center gap-2 text-[#720101]">
+                        <Users size={20} />
+                        <p className="admin-kicker !mb-0">Booking Rules</p>
+                    </div>
+                    <h3 className="mt-2 text-xl font-black text-slate-950">Guest Requirements</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">Set the minimum and maximum number of guests allowed per booking. This is enforced during the customer booking process.</p>
+                </div>
+
+                <form onSubmit={saveBookingRules} className="grid gap-5 lg:grid-cols-3">
+                    <SurchargeInput rules={rules} updateField={updateField} field="minimum_pax_per_event" label="Minimum Guests" icon={Users} type="flat" />
+                    <SurchargeInput rules={rules} updateField={updateField} field="maximum_pax_per_event" label="Maximum Guests" icon={Users} type="flat" />
+
+                    <div className="flex items-end lg:col-span-3 mt-2 border-t border-slate-100 pt-5">
+                        <button type="submit" disabled={savingBookingRules} className="admin-button-primary px-6 py-3 text-sm font-black flex items-center gap-2 shadow-sm">
+                            {savingBookingRules ? 'Saving...' : 'Save Booking Rules'}
+                        </button>
+                    </div>
+                </form>
+            </section>
             <section className={embedded ? 'staff-settings-form-block' : 'admin-panel p-6'}>
                 <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-5">
                     <div>

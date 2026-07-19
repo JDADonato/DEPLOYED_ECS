@@ -419,7 +419,7 @@ const BookingWizard = ({ initialEventTypes = [], businessRules = {} }) => {
             return <CalendarView bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} businessRules={businessRules} />;
         }
         if (currentStep === 4) {
-            return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;
+            return <GuestLogistics bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} businessRules={businessRules} />;
         }
         if (currentStep === 5) {
             return <MenuBuilder mode="packages" businessRules={businessRules} bookingData={bookingData} updateBooking={updateBooking} onNext={nextStep} onBack={prevStep} />;

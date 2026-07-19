@@ -134,6 +134,27 @@ class SettingsController extends Controller
         return response()->json(['message' => 'Surcharge rules updated successfully.', 'rules' => $rule->fresh()]);
     }
 
+    public function updateBookingRules(Request $request)
+    {
+        $data = $request->validate([
+            'minimum_pax_per_event' => 'required|integer|min:1|max:1000',
+            'maximum_pax_per_event' => 'required|integer|min:1|max:10000',
+        ]);
+
+        if ((int) $data['minimum_pax_per_event'] > (int) $data['maximum_pax_per_event']) {
+            return response()->json(['error' => 'Minimum guests cannot exceed maximum guests.'], 422);
+        }
+
+        $rule = $this->activeBusinessRule();
+        $rule->update($data);
+        Cache::forget('business_rules.active');
+
+        app(OperationalBroadcastService::class)
+            ->adminChanged('finance', 'booking_rules', $rule->id, 'updated', 'Booking rules updated.');
+
+        return response()->json(['message' => 'Booking rules updated successfully.', 'rules' => $rule->fresh()]);
+    }
+
     private function activeBusinessRule(): BusinessRule
     {
         return BusinessRule::getActive() ?? BusinessRule::create([

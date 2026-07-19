@@ -1,12 +1,29 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Modal from '../common/Modal';
 
-const guestPresets = [50, 100, 150, 200, 300, 500];
+const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack, businessRules = {} }) => {
+    const minPax = useMemo(() => {
+        const val = parseInt(businessRules?.minimum_pax_per_event, 10);
+        return isNaN(val) || val < 1 ? 50 : val;
+    }, [businessRules?.minimum_pax_per_event]);
 
-const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
+    const guestPresets = useMemo(() => {
+        const presets = [minPax];
+        const candidates = [50, 100, 150, 200, 300, 500];
+        for (const c of candidates) {
+            if (c > minPax && !presets.includes(c)) presets.push(c);
+        }
+        if (presets.length < 3 && minPax < 50) {
+            for (const c of [minPax + 10, minPax + 20, minPax + 50]) {
+                if (!presets.includes(c)) presets.push(c);
+            }
+        }
+        return presets.sort((a, b) => a - b).slice(0, 6);
+    }, [minPax]);
+
     const [paxInput, setPaxInput] = useState(() => {
         const initial = parseInt(bookingData.pax, 10);
-        return String(isNaN(initial) ? 50 : Math.max(50, initial));
+        return String(isNaN(initial) ? minPax : Math.max(minPax, initial));
     });
     const [dietaryNotes, setDietaryNotes] = useState(bookingData.dietaryNotes || '');
     const [modal, setModal] = useState({ isOpen: false, type: 'info', title: '', message: '' });
@@ -35,12 +52,12 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
 
     const handleNext = () => {
         const currentPax = parseInt(paxInput, 10);
-        if (isNaN(currentPax) || currentPax < 50) {
+        if (isNaN(currentPax) || currentPax < minPax) {
             setModal({
                 isOpen: true,
                 type: 'error',
                 title: 'Guest count needed',
-                message: 'Please enter at least 50 guests to continue.',
+                message: `Please enter at least ${minPax} guests to continue.`,
             });
             return;
         }
@@ -78,7 +95,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <div className="booking-compact-number">
-                        <button type="button" onClick={() => handlePaxChange(String(Math.max(50, (parseInt(paxInput, 10) || 50) - 10)))}>-</button>
+                        <button type="button" onClick={() => handlePaxChange(String(Math.max(minPax, (parseInt(paxInput, 10) || minPax) - 10)))}>-</button>
                         <input
                             type="text"
                             inputMode="numeric"
@@ -104,7 +121,7 @@ const GuestLogistics = ({ bookingData, updateBooking, onNext, onBack }) => {
                     </div>
 
                     <p className="text-sm font-semibold text-slate-500">
-                        Minimum 50 guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
+                        Minimum {minPax} guests{bookingData.remainingPax ? `. Available for this date: ${bookingData.remainingPax}.` : '.'}
                     </p>
                 </div>
 
