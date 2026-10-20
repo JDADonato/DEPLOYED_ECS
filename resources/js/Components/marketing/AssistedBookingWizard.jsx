@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import EventIdentity from '../client/EventIdentity';
 import CalendarView from '../client/CalendarView';
 import GuestLogistics from '../client/GuestLogistics';
@@ -191,7 +192,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         setCustomerResults([]);
         setCustomerSearchMeta(emptyCustomerSearchMeta);
         setCustomerSearchPage(1);
-        setSummaryCollapsed(false);
+        setSummaryCollapsed(typeof window !== 'undefined' && window.innerWidth < 1024);
         setResult(null);
         logAssistedConversionEvent('assisted_booking_started', {
             step: 'Customer',
@@ -534,7 +535,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                         <button
                             type="button"
                             onClick={() => setCustomerState(prev => ({ ...prev, mode: 'existing' }))}
-                            className={`rounded-2xl border p-5 text-left transition ${customerState.mode === 'existing' ? 'border-[#720101] bg-[#720101] text-white shadow-lg shadow-[#720101]/15' : 'border-slate-200 bg-white text-slate-800 hover:border-[#720101]/30 hover:bg-[#fff7e8]'}`}
+                            className={`cursor-pointer touch-manipulation rounded-2xl border p-5 text-left transition active:scale-[0.99] ${customerState.mode === 'existing' ? 'border-[#720101] bg-[#720101] text-white shadow-lg shadow-[#720101]/15' : 'border-slate-200 bg-white text-slate-800 hover:border-[#720101]/30 hover:bg-[#fff7e8]'}`}
                         >
                             <span className="text-xs font-black uppercase tracking-widest opacity-70">Recommended</span>
                             <strong className="mt-2 block text-xl font-black">Existing customer</strong>
@@ -545,7 +546,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                         <button
                             type="button"
                             onClick={() => setCustomerState(prev => ({ ...prev, mode: 'new', selected: null }))}
-                            className={`rounded-2xl border p-5 text-left transition ${customerState.mode === 'new' ? 'border-[#720101] bg-[#720101] text-white shadow-lg shadow-[#720101]/15' : 'border-slate-200 bg-white text-slate-800 hover:border-[#720101]/30 hover:bg-[#fff7e8]'}`}
+                            className={`cursor-pointer touch-manipulation rounded-2xl border p-5 text-left transition active:scale-[0.99] ${customerState.mode === 'new' ? 'border-[#720101] bg-[#720101] text-white shadow-lg shadow-[#720101]/15' : 'border-slate-200 bg-white text-slate-800 hover:border-[#720101]/30 hover:bg-[#fff7e8]'}`}
                         >
                             <span className="text-xs font-black uppercase tracking-widest opacity-70">Walk-in</span>
                             <strong className="mt-2 block text-xl font-black">New customer</strong>
@@ -906,7 +907,11 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         );
     };
 
-    if (result) return renderSuccess();
+    if (result) {
+        const successContent = renderSuccess();
+        if (typeof document === 'undefined') return successContent;
+        return createPortal(successContent, document.body);
+    }
 
     const renderStep = () => {
         if (currentStep === 0) return renderCustomerStep();
@@ -920,8 +925,11 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
         return renderReviewStep();
     };
 
-    return (
-        <div className="booking-page !pb-0 fixed inset-0 z-[9998] overflow-hidden bg-[#fffaf3] font-sans text-slate-900" style={{ paddingBottom: 0 }}>
+    const content = (
+        <div 
+            className="booking-page fixed inset-0 z-[9999] overflow-y-auto lg:overflow-hidden bg-[#fffaf3] font-sans text-slate-900"
+            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+        >
             <Modal
                 isOpen={modal.isOpen}
                 onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
@@ -929,13 +937,20 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                 message={modal.message}
                 type={modal.type}
             />
-            <div className="flex absolute inset-0 min-h-0">
-                <main className="min-w-0 flex-1 h-full overflow-y-auto overscroll-none pb-32 lg:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="min-h-full w-full lg:flex lg:absolute lg:inset-0 lg:min-h-0">
+                <main 
+                    className="min-w-0 flex-1 w-full lg:h-full lg:overflow-y-auto pb-32 lg:pb-8"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                >
                     <div className="border-b border-[#720101]/10 bg-white">
                         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                 <div>
-                                    <button type="button" onClick={onClose} className="text-xs font-black uppercase tracking-widest text-slate-400 transition hover:text-[#720101]">
+                                    <button 
+                                        type="button" 
+                                        onClick={onClose} 
+                                        className="inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 transition hover:text-[#720101] active:text-[#720101] cursor-pointer py-1"
+                                    >
                                         <span className="mr-2 text-base leading-none">&larr;</span>
                                         Back to Marketing
                                     </button>
@@ -965,7 +980,7 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
                                             key={item.step}
                                             type="button"
                                             onClick={() => handleStepperClick(item.step)}
-                                            className={`min-w-[6rem] flex-shrink-0 rounded-full border px-4 py-2 text-xs font-black transition ${isActive
+                                            className={`cursor-pointer touch-manipulation min-w-[6rem] flex-shrink-0 rounded-full border px-4 py-2 text-xs font-black transition ${isActive
                                                 ? 'border-[#720101] bg-[#720101] text-white'
                                                 : isComplete
                                                     ? 'border-[#720101]/15 bg-[#fff7e8] text-[#720101]'
@@ -994,6 +1009,9 @@ const AssistedBookingWizard = ({ isOpen, onClose, onCreated, onOpenBooking, toas
             </div>
         </div>
     );
+
+    if (typeof document === 'undefined') return content;
+    return createPortal(content, document.body);
 };
 
 export default AssistedBookingWizard;
