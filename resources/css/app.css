@@ -15392,6 +15392,7 @@
   z-index: 95;
   width: 100%;
   min-width: 0;
+  overflow-x: hidden;
 }
 
 .staff-workspace.has-workspace-topnav .staff-sidebar {
@@ -19778,6 +19779,7 @@ select.admin-select:not([multiple])::-ms-expand {
     height: auto;
     row-gap: .7rem;
     padding: .85rem .9rem;
+    overflow-x: hidden;
   }
 
   .staff-workspace-navbar-menu {
@@ -19844,6 +19846,16 @@ select.admin-select:not([multiple])::-ms-expand {
 
   .staff-workspace-navbar.has-search .staff-workspace-switcher {
     grid-row: 3;
+  }
+
+  /* Prevent the switcher tab bar from overflowing viewport width on mobile */
+  .staff-workspace-switcher {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-self: stretch;
   }
 
   .staff-navbar-search,
