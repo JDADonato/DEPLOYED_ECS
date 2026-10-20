@@ -196,9 +196,9 @@ const StaffWorkspaceLayout = ({
     );
 
     return (
-        <div className={`staff-workspace ${workspaceClassName} ${hasTopNav ? 'has-workspace-topnav' : ''} ${isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${densityClass} ${isCollapsed ? 'is-sidebar-collapsed' : 'is-sidebar-expanded'}`.trim()}>
+        <div className={`staff-workspace min-w-0 max-w-full overflow-x-clip ${workspaceClassName} ${hasTopNav ? 'has-workspace-topnav' : ''} ${isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${densityClass} ${isCollapsed ? 'is-sidebar-collapsed' : 'is-sidebar-expanded'}`.trim()}>
             {hasTopNav && (
-                <div className="staff-workspace-topnav">
+                <div className="staff-workspace-topnav min-w-0 max-w-full overflow-x-hidden">
                     <StaffWorkspaceTopNav
                         {...topNav}
                         menuOpen={isMobileSidebarOpen}
@@ -332,8 +332,8 @@ const StaffWorkspaceLayout = ({
                 <ToggleIcon aria-hidden="true" />
             </button>
 
-            <div className="staff-workspace-main">
-                <main>
+            <div className="staff-workspace-main min-w-0 max-w-full overflow-x-clip">
+                <main className="min-w-0 max-w-full">
                     <div className="staff-global-sync-region">
                         <LiveSyncIndicator state={syncState} compact visibility={syncVisibility} />
                     </div>

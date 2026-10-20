@@ -24,7 +24,7 @@ const StaffWorkspaceTopNav = ({
     const hasWorkspaceTabs = workspaces.length > 0;
 
     return (
-        <header className={`staff-workspace-navbar ${hasWorkspaceTabs ? 'has-switcher' : 'has-context'} ${searchSlot ? 'has-search' : ''}`}>
+        <header className={`staff-workspace-navbar min-w-0 max-w-full ${hasWorkspaceTabs ? 'has-switcher' : 'has-context'} ${searchSlot ? 'has-search' : ''}`}>
             <button
                 type="button"
                 className="staff-workspace-navbar-menu"
@@ -35,13 +35,13 @@ const StaffWorkspaceTopNav = ({
                 {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
             </button>
 
-            <div className="staff-workspace-navbar-brand">
+            <div className="staff-workspace-navbar-brand min-w-0">
                 {logo && <img src={logo} alt={logoAlt} />}
                 {badge && <span>{badge}</span>}
             </div>
 
             {hasWorkspaceTabs && (
-                <nav className="staff-workspace-switcher" aria-label="Staff workspaces">
+                <nav className="staff-workspace-switcher min-w-0 max-w-full overflow-x-auto" aria-label="Staff workspaces">
                     {workspaces.map((workspace) => (
                         <button
                             key={workspace.id}

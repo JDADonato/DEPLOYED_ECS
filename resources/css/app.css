@@ -16,6 +16,15 @@
   html,
   body {
     overscroll-behavior: auto;
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  @supports not (overflow-x: clip) {
+    html,
+    body {
+      overflow-x: hidden;
+    }
   }
 
   *::-webkit-scrollbar {
@@ -15383,6 +15392,14 @@
   grid-template-areas:
     "topnav topnav"
     "sidebar main";
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .staff-workspace.has-workspace-topnav {
+    overflow-x: hidden;
+  }
 }
 
 .staff-workspace.has-workspace-topnav .staff-workspace-topnav {
@@ -15391,8 +15408,15 @@
   top: 0;
   z-index: 95;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .staff-workspace.has-workspace-topnav .staff-workspace-topnav {
+    overflow-x: hidden;
+  }
 }
 
 .staff-workspace.has-workspace-topnav .staff-sidebar {
@@ -15402,6 +15426,14 @@
 .staff-workspace.has-workspace-topnav .staff-workspace-main {
   grid-area: main;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .staff-workspace.has-workspace-topnav .staff-workspace-main {
+    overflow-x: hidden;
+  }
 }
 
 .admin-page.has-workspace-topnav .staff-sidebar {
@@ -19407,7 +19439,8 @@ select.admin-select:not([multiple])::-ms-expand {
 
 .staff-workspace-switcher {
   display: inline-flex;
-  min-width: max-content;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   justify-self: start;
   gap: .35rem;
@@ -19415,6 +19448,14 @@ select.admin-select:not([multiple])::-ms-expand {
   border-radius: 999px;
   background: rgba(255, 255, 255, .08);
   padding: .28rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.staff-workspace-switcher::-webkit-scrollbar {
+  display: none;
 }
 
 .staff-workspace-switcher button {
@@ -19750,7 +19791,16 @@ select.admin-select:not([multiple])::-ms-expand {
     order: 3;
     grid-column: 1 / -1;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .staff-workspace-navbar.has-switcher .staff-workspace-switcher::-webkit-scrollbar {
+    display: none;
   }
 
   .staff-workspace-navbar.has-switcher {
@@ -19766,6 +19816,8 @@ select.admin-select:not([multiple])::-ms-expand {
     --staff-sidebar-visible-width: min(20rem, calc(100vw - 2rem));
     display: grid;
     min-height: 100vh;
+    max-width: 100vw;
+    overflow-x: clip;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
@@ -19779,7 +19831,17 @@ select.admin-select:not([multiple])::-ms-expand {
     height: auto;
     row-gap: .7rem;
     padding: .85rem .9rem;
-    overflow-x: hidden;
+    overflow-x: clip;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  @supports not (overflow-x: clip) {
+    .staff-workspace.has-workspace-topnav,
+    .staff-workspace-navbar,
+    .staff-workspace-navbar.has-switcher {
+      overflow-x: hidden;
+    }
   }
 
   .staff-workspace-navbar-menu {
@@ -19832,6 +19894,8 @@ select.admin-select:not([multiple])::-ms-expand {
     grid-row: 2;
     width: 100%;
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .staff-workspace-navbar-brand img {
@@ -19856,12 +19920,21 @@ select.admin-select:not([multiple])::-ms-expand {
     overflow-x: auto;
     overflow-y: hidden;
     justify-self: stretch;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-sizing: border-box;
+  }
+
+  .staff-workspace-switcher::-webkit-scrollbar {
+    display: none;
   }
 
   .staff-navbar-search,
   .staff-navbar-search-results {
     width: 100%;
-    max-width: none;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .staff-navbar-search-results {
@@ -19918,8 +19991,25 @@ select.admin-select:not([multiple])::-ms-expand {
   .staff-workspace.has-workspace-topnav .staff-workspace-main main {
     height: auto;
     min-height: calc(100vh - var(--admin-shell-header-height, 4.55rem));
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
     padding: .9rem;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  @supports not (overflow-x: clip) {
+    .staff-workspace.has-workspace-topnav .staff-workspace-main main {
+      overflow-x: hidden;
+    }
+  }
+
+  .admin-page .staff-page-header {
+    margin: 0 0 .75rem !important;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .staff-role-shell .staff-page-header {
@@ -20007,10 +20097,21 @@ select.admin-select:not([multiple])::-ms-expand {
 
 /* Fix clustered charts on mobile by enabling horizontal scroll */
 @media (max-width: 1024px) {
+  .admin-analytics-panel-wide {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+    box-sizing: border-box;
+  }
   .admin-analytics-panel-wide .admin-analytics-chart-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.5rem; /* space for scrollbar */
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
   }
   .admin-analytics-panel-wide .admin-analytics-chart-inner {
     min-width: 700px;
